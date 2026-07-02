@@ -202,15 +202,16 @@ cmd_install() {
 
   local agent
   while IFS= read -r agent; do
-    local cfg folder subdir dest
+    local cfg folder subdir dest tmp
     cfg="$(agent_config "$agent")" || { err "内部错误: agent_config $agent"; exit 1; }
     folder="${cfg%%|*}"
     subdir="${cfg##*|}"
     dest="$TARGET_DIR/$folder/$subdir/$skill_name"
 
-    # 清理后重建，避免残留旧文件
-    rm -rf "$dest"
-    mkdir -p "$dest"
+    # 原子替换：先复制到临时目录，成功后再替换原目录，避免数据丢失
+    tmp="$dest.tmp"
+    rm -rf "$tmp"
+    mkdir -p "$tmp"
 
     # 复制源目录顶层条目，跳过排除项（避免复制 .venv / .git 等大目录）
     # 纯 bash 实现：dotglob 让 * 匹配隐藏文件，遍历时按名跳过 EXCLUDE_PATTERNS
@@ -227,7 +228,7 @@ cmd_install() {
         [[ "$ename" == "$p" ]] && { excluded=1; break; }
       done
       [[ $excluded -eq 1 ]] && continue
-      if ! cp -r "$item" "$dest/" 2>/dev/null; then
+      if ! cp -r "$item" "$tmp/" 2>/dev/null; then
         cp_failed=1
         break
       fi
@@ -236,13 +237,18 @@ cmd_install() {
     [[ $_ng -eq 0 ]] && shopt -u nullglob
 
     if [[ $cp_failed -ne 0 ]]; then
-      err "复制失败: $src -> $dest"
+      err "复制失败: $src -> $dest（原目录已保留）"
+      rm -rf "$tmp"
       failed=1
       printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$RED" "FAILED" "$RESET"
       continue
     fi
     # specmark/changes 为运行时产物（specmark skill 本身保留）
-    rm -rf "$dest/specmark/changes" 2>/dev/null || true
+    rm -rf "$tmp/specmark/changes" 2>/dev/null || true
+
+    # 复制成功后，原子替换原目录
+    rm -rf "$dest"
+    mv "$tmp" "$dest"
 
     printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$GREEN" "OK" "$RESET"
   done <<< "$agents"
@@ -526,17 +532,23 @@ cmd_generate_commands() {
 
     mkdir -p "$cmddir"
 
-    local sub desc file created=0
+    local sub desc file created=0 _content
     for sub in "${unique_subs[@]}"; do
       desc="$(extract_subcommand_desc "$skillmd" "$sub")"
       file="$cmddir/$skill_name-$sub.md"
-      cat > "$file" <<EOF
+      cat > "$file" <<'EOF'
 ---
-description: $desc
+description: __DESC__
 ---
 
-使用 $skill_name skill 的 $sub 子命令进行以下任务：$desc。
+使用 __SKILL_NAME__ skill 的 __SUB__ 子命令进行以下任务：__DESC__。
 EOF
+      # 安全替换占位符：bash 参数展开不会解析替换值中的命令替换/变量
+      _content=$(<"$file")
+      _content="${_content//__SKILL_NAME__/$skill_name}"
+      _content="${_content//__SUB__/$sub}"
+      _content="${_content//__DESC__/$desc}"
+      printf '%s\n' "$_content" > "$file"
       created=$((created+1))
     done
 

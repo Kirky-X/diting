@@ -136,7 +136,7 @@ flowchart TD
     Lens --> Refine["Refinement Pass (写完后)<br/>事后清晰度精炼"]
 ```
 
-1. **Engine A** —— 扫描 security / performance / quality / architecture / simplification 五个默认维度,产出带置信度(0–100,仅报告 ≥50)和严重度(Critical/High/Medium/Low)的具体问题
+1. **Engine A** —— 扫描 security / performance / quality / architecture / simplification 五个默认维度,产出带置信度(0–100,仅报告 ≥80)和严重度(Critical/High/Medium/Low)的具体问题
 2. **Engine B** —— 对同一范围运行 PR-Review 衰减扫描:6 大衰变风险(R1–R6),每个写成 Symptom → Source → Consequence → Remedy,遵循 Iron Law(没有诊断后果就不写修复)
 3. **Engine C** —— 仅做过度工程一次 pass,使用 `delete:` / `stdlib:` / `native:` / `yagni:` / `shrink:` 标签(范围限定,正确性/安全/性能留给 Engine A,不重复)
 4. **合并** —— 使用 `templates/report.md` 作为外壳(Summary 表 + Overall Score + Verdict),Engine B 发现单独占 `### 🧬 Decay Risks` 小节,Engine C 发现单独占 `### ✂️ Simplification Opportunities` 小节

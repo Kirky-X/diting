@@ -424,7 +424,8 @@ class CodeAnalyzer:
                     continue
                 if re.search(pattern, line):
                     # Reduce false positives by checking for existing null checks
-                    if 'if ' in line or '?' in line or '?. ' in line:
+                    # D-P1-1: '?. ' (with space) should be '?.' (no space) for JS optional chaining
+                    if 'if ' in line or '?' in line or '?.' in line:
                         continue
                     issues.append({
                         'file': file_path,
@@ -459,13 +460,18 @@ class CodeAnalyzer:
                         break  # Only report once per file
 
         # Check for division without zero check
-        div_pattern = re.compile(r'\b\w+\s*/\s*\w+')
+        # D-P1-2: narrowed pattern to identifier/identifier form to reduce false positives
+        div_pattern = re.compile(r'\b[a-zA-Z_]\w*\s*/\s*[a-zA-Z_]\w*\b')
         for i, line in enumerate(lines, 1):
             if line.strip().startswith(('#', '//', '/*', '*')):
                 continue
             if div_pattern.search(line):
-                # Check if there's a zero check nearby
-                if 'if ' not in line and '== 0' not in line and '!= 0' not in line:
+                # D-P1-2: skip lines containing string literals to avoid matching / inside strings
+                if '"' in line or "'" in line:
+                    continue
+                # Check if there's a zero check nearby (current line or ±2 lines context)
+                context = ' '.join(lines[max(0, i - 3):min(len(lines), i + 1)])
+                if 'if ' not in context and '== 0' not in context and '!= 0' not in context:
                     issues.append({
                         'file': file_path,
                         'line': i,

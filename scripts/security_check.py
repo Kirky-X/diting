@@ -117,7 +117,9 @@ _UNSAFE_PATTERNS = {
     },
     "insecure_random": {
         "pattern": re.compile(
-            r'\b(Math\.random\s*\(\s*\)|random\.random\s*\(\s*\)|new Random\s*\(\s*\))\b',
+            # D-P1-3: removed trailing \b — after ')' (non-word char) \b never matches,
+            # causing Math.random() / random.random() / new Random() to be silently missed
+            r'\b(Math\.random\s*\(\s*\)|random\.random\s*\(\s*\)|new Random\s*\(\s*\))',
         ),
         "level": SecurityLevel.MEDIUM,
         "description": "使用非密码学安全的随机数生成器",

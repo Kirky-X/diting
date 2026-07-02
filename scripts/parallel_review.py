@@ -173,7 +173,13 @@ def get_review_agents() -> Dict[str, Dict[str, Any]]:
 
 
 def calculate_confidence(issue: Dict[str, Any]) -> int:
-    """Calculate confidence score for an issue (0-100)."""
+    """Calculate confidence score for an issue (0-100).
+
+    D-P1-4: confidence now varies by severity — critical/high patterns are
+    higher-confidence (more specific signatures), low/info are lower (often
+    stylistic). Previously every issue scored 95, making the threshold filter
+    a no-op.
+    """
     base_score = 50
     if issue.get('has_code_evidence'):
         base_score += 20
@@ -181,6 +187,14 @@ def calculate_confidence(issue: Dict[str, Any]) -> int:
         base_score += 15
     if issue.get('has_fix_suggestion'):
         base_score += 10
+    # D-P1-4: severity-aware adjustment to break the uniform 95-score plateau
+    severity = issue.get('severity', 'info').lower()
+    if severity in ('critical', 'high'):
+        pass  # high-confidence patterns, keep score
+    elif severity == 'medium':
+        base_score -= 10
+    else:  # low, info — often stylistic, lower confidence
+        base_score -= 20
     # Penalties
     if issue.get('is_pre_existing'):
         base_score -= 30
@@ -493,6 +507,22 @@ async def run_review_agent(
     start_time = datetime.now()
     dimension = agent_config['dimension']
 
+    # D-P0-1: surface dimensions that have no analyzer implemented in dispatch.
+    # Previously these silently returned [] and the report showed "0 issues",
+    # giving users a false sense of safety. Now they are explicitly marked skipped.
+    _SUPPORTED_DIMENSIONS = {'security', 'performance', 'quality', 'architecture', 'simplification'}
+    if dimension.lower() not in _SUPPORTED_DIMENSIONS:
+        execution_time = (datetime.now() - start_time).total_seconds()
+        return ReviewResult(
+            agent_name=agent_config['name'],
+            dimension=dimension,
+            issues=[],
+            confidence_scores=[],
+            execution_time=execution_time,
+            status='skipped',
+            error=f'no analyzer implemented for "{dimension}" — this dimension was not actually checked',
+        )
+
     try:
         # FIX #10: use asyncio.to_thread() so blocking file I/O doesn't block
         # the event loop — all agents can now run truly concurrently.
@@ -592,6 +622,10 @@ def _report_markdown(results: List[ReviewResult], all_issues: List[Dict[str, Any
     lines.append("| Dimension | Issues | Highest Severity |")
     lines.append("|---|---|---|")
     for r in results:
+        # D-P0-1: explicitly show skipped dimensions instead of "0 issues"
+        if r.status == 'skipped':
+            lines.append(f"| {r.dimension} | skipped | not checked — {r.error or 'not implemented'} |")
+            continue
         max_sev = 'none'
         if r.issues:
             max_sev = r.issues[0].get('severity', 'info')
@@ -724,7 +758,7 @@ async def main() -> None:
     report = generate_report(results, args.format)
 
     if args.output:
-        with open(args.output, 'w') as fp:
+        with open(args.output, 'w', encoding='utf-8') as fp:
             fp.write(report)
         print(f"Report written to {args.output}", file=sys.stderr)
     else:

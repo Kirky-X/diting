@@ -91,7 +91,7 @@ license: MIT
 
 用户要求无维度名的普通审查时，跑全部三个引擎并合并为**一份**报告：
 
-1. **Engine A** — 扫描 security、performance、quality、architecture、simplification（[review-workflow.md](references/review-workflow.md) 的五个默认维度），找具体、定位清晰的问题。用 Confidence（0–100，仅报告 ≥50）和 Severity（Critical/High/Medium/Low）逐项评分。
+1. **Engine A** — 扫描 security、performance、quality、architecture、simplification（[review-workflow.md](references/review-workflow.md) 的五个默认维度），找具体、定位清晰的问题。用 Confidence（0–100，仅报告 ≥80）和 Severity（Critical/High/Medium/Low）逐项评分。
 2. **Engine B** — 同范围内跑 PR-Review decay scan（[decay/pr-review-guide.md](references/decay/pr-review-guide.md)）：Six Decay Risks（R1–R6），每条写成 Symptom → Source → Consequence → Remedy。应用 [decay/common.md](references/decay/common.md) 的 Iron Law：禁止无诊断后果就陈述修复方案。
 3. **Engine C** — 仅做一次过度工程 pass，使用 [simplicity/overengineering-review.md](references/simplicity/overengineering-review.md) 的 tag（`delete:` `stdlib:` `native:` `yagni:` `shrink:`）。范围受限 — correctness/security/performance 留在 Engine A，此处不重复。
 4. **Merge**：用 [templates/report.md](references/templates/report.md) 的报告骨架作为外壳（Summary 表、Overall Score、Verdict），但给 Engine B 发现项单独开一个 `### 🧬 Decay Risks` 子章节（S→S→C→R 格式，不塞进 Engine A 的 Problem/Fix 格式 — 推理链才是重点），给 Engine C 发现项单独开一个 `### ✂️ Simplification Opportunities` 子章节（每条一行，结尾 `net: -N lines possible`）。

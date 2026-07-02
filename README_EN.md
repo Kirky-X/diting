@@ -136,7 +136,7 @@ flowchart TD
     Lens --> Refine["Refinement Pass (after writing)<br/>Post-hoc clarity edit"]
 ```
 
-1. **Engine A** — scans security / performance / quality / architecture / simplification (the five default dimensions) for concrete, located issues, each scored with Confidence (0–100, report only ≥50) and Severity (Critical/High/Medium/Low)
+1. **Engine A** — scans security / performance / quality / architecture / simplification (the five default dimensions) for concrete, located issues, each scored with Confidence (0–100, report only ≥80) and Severity (Critical/High/Medium/Low)
 2. **Engine B** — for the same scope, runs the PR-Review decay scan: the Six Decay Risks (R1–R6), each written as Symptom → Source → Consequence → Remedy, following the Iron Law (never state a fix without a diagnosed consequence)
 3. **Engine C** — one pass for over-engineering only, using the `delete:` / `stdlib:` / `native:` / `yagni:` / `shrink:` tags (scope-limited — correctness/security/performance stay in Engine A, not duplicated here)
 4. **Merge** — uses `templates/report.md` as the outer shell (Summary table + Overall Score + Verdict); Engine B findings get their own `### 🧬 Decay Risks` subsection, Engine C findings get their own `### ✂️ Simplification Opportunities` subsection
