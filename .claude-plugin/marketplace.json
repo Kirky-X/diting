@@ -1,0 +1,12 @@
+{
+  "metadata": {
+    "pluginRoot": "."
+  },
+  "plugins": [
+    {
+      "name": "diting",
+      "source": ".",
+      "skills": ["./"]
+    }
+  ]
+}
