@@ -1,26 +1,26 @@
-# Documentation Review
+# 文档审查
 
-Documentation completeness and accuracy review.
+文档完整性和准确性审查。
 
-## Checklist
+## 检查清单
 
 ### README
-- Clear project description
-- Complete installation steps
-- Usage examples
-- Contribution guidelines
+- 清晰的项目描述
+- 完整的安装步骤
+- 使用示例
+- 贡献指南
 
-### API Documentation
-- Complete endpoint descriptions
-- Request/response examples
-- Error code explanations
-- Authentication instructions
+### API 文档
+- 完整的端点描述
+- 请求/响应示例
+- 错误码说明
+- 认证说明
 
-### Code Comments
-- Public APIs have comments
-- Complex logic has explanations
-- TODO/FIXME annotations
+### 代码注释
+- 公共 API 有注释
+- 复杂逻辑有解释
+- TODO/FIXME 标注
 
-### Changelog
-- Version history
-- Breaking change notes
+### 变更日志
+- 版本历史
+- 破坏性变更说明

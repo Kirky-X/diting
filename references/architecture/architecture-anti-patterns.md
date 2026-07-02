@@ -1,200 +1,199 @@
-# Architecture Anti-Patterns & Deep Dive
+# 架构反模式与深度技术
 
 > 架构深度技术：高可用、高并发、分布式、文档、安全架构。主流程详见 [architect-guide.md](architect-guide.md)。
 
-## High-Availability Design
+## 高可用设计
 
-### Fault Tolerance Patterns
+### 容错模式
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                  Fault Tolerance                         │
+│                  容错                         │
 ├─────────────────────────────────────────────────────────┤
-│ Circuit Breaker                                          │
-│   └── Prevent cascade failures                           │
+│ 断路器                                          │
+│   └── 防止级联失败                           │
 │                                                          │
-│ Retry with Backoff                                       │
-│   └── Handle transient failures                          │
+│ 退避重试                                       │
+│   └── 处理瞬时失败                          │
 │                                                          │
-│ Bulkhead Isolation                                       │
-│   └── Isolate failure domains                            │
+│ 舱壁隔离                                       │
+│   └── 隔离故障域                            │
 │                                                          │
-│ Timeout                                                  │
-│   └── Prevent resource exhaustion                        │
+│ 超时                                                  │
+│   └── 防止资源耗尽                        │
 │                                                          │
-│ Fallback                                                 │
-│   └── Graceful degradation                               │
+│ 降级                                                 │
+│   └── 优雅降级                               │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Availability Targets
+### 可用性目标
 
-| Nines | Availability | Downtime/Year |
+| 9 的数量 | 可用性 | 年停机时间 |
 |-------|--------------|---------------|
-| 99% | Two nines | 3.65 days |
-| 99.9% | Three nines | 8.77 hours |
-| 99.99% | Four nines | 52.6 minutes |
-| 99.999% | Five nines | 5.26 minutes |
+| 99% | 两个 9 | 3.65 天 |
+| 99.9% | 三个 9 | 8.77 小时 |
+| 99.99% | 四个 9 | 52.6 分钟 |
+| 99.999% | 五个 9 | 5.26 分钟 |
 
-## High-Concurrency Architecture
+## 高并发架构
 
-### Caching Strategies
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                 Caching Layers                           │
-├─────────────────────────────────────────────────────────┤
-│ CDN Cache                                                │
-│   └── Static assets, edge caching                        │
-│                                                          │
-│ Application Cache                                        │
-│   └── In-memory (local), Redis (distributed)             │
-│                                                          │
-│ Database Cache                                           │
-│   └── Query cache, buffer pool                           │
-│                                                          │
-│ Cache Patterns                                           │
-│   ├── Cache-aside: Application manages cache             │
-│   ├── Read-through: Cache reads from source              │
-│   └── Write-through: Cache writes to source              │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Database Optimization
+### 缓存策略
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│              Database Scaling                            │
+│                 缓存层                           │
 ├─────────────────────────────────────────────────────────┤
-│ Vertical Scaling                                         │
-│   └── More CPU, RAM, SSD                                 │
+│ CDN 缓存                                                │
+│   └── 静态资源、边缘缓存                        │
 │                                                          │
-│ Read Replicas                                            │
-│   └── Distribute read traffic                            │
+│ 应用缓存                                        │
+│   └── 内存（本地）、Redis（分布式）             │
 │                                                          │
-│ Sharding                                                 │
-│   └── Horizontal partitioning                            │
+│ 数据库缓存                                           │
+│   └── 查询缓存、缓冲池                           │
 │                                                          │
-│ Partitioning                                             │
-│   └── Range, Hash, List partitioning                     │
+│ 缓存模式                                           │
+│   ├── Cache-aside：应用管理缓存             │
+│   ├── Read-through：缓存读源              │
+│   └── Write-through：缓存写源              │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Async Processing
+### 数据库优化
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              数据库扩展                            │
+├─────────────────────────────────────────────────────────┤
+│ 垂直扩展                                         │
+│   └── 更多 CPU、RAM、SSD                                 │
+│                                                          │
+│ 读副本                                            │
+│   └── 分散读流量                            │
+│                                                          │
+│ 分片                                                 │
+│   └── 水平分区                            │
+│                                                          │
+│ 分区                                             │
+│   └── 范围、哈希、列表分区                     │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 异步处理
 
 ```mermaid
 flowchart TD
-    subgraph Sync["Synchronous Flow"]
-        SUser["User"] --> SAPI["API"]
-        SAPI --> SDB["Database"]
-        SDB --> SResp["Response (blocking)"]
+    subgraph Sync["同步流"]
+        SUser["用户"] --> SAPI["API"]
+        SAPI --> SDB["数据库"]
+        SDB --> SResp["响应（阻塞）"]
     end
-    subgraph Async["Asynchronous Flow"]
-        AUser["User"] --> AAPI["API"]
-        AAPI --> AQueue["Queue"]
-        AAPI --> AResp["Response (immediate)"]
+    subgraph Async["异步流"]
+        AUser["用户"] --> AAPI["API"]
+        AAPI --> AQueue["队列"]
+        AAPI --> AResp["响应（立即）"]
         AQueue --> AWorker["Worker"]
-        AWorker --> ADB["Database"]
+        AWorker --> ADB["数据库"]
     end
 ```
 
-## Distributed System Design
+## 分布式系统设计
 
-### CAP Theorem
+### CAP 定理
 
-| Property | Description | Trade-off |
+| 属性 | 描述 | 权衡 |
 |----------|-------------|-----------|
-| **Consistency** | All nodes see same data | Latency |
-| **Availability** | Every request gets response | Stale data |
-| **Partition Tolerance** | System works despite network failures | Must have |
+| **一致性（Consistency）** | 所有节点看到相同数据 | 延迟 |
+| **可用性（Availability）** | 每个请求都得到响应 | 旧数据 |
+| **分区容错（Partition Tolerance）** | 网络故障时系统仍工作 | 必须有 |
 
-**Choose**: CP (Consistency + Partition) or AP (Availability + Partition)
+**选择**：CP（一致性 + 分区）或 AP（可用性 + 分区）
 
-### Distributed Transactions
+### 分布式事务
 
-| Pattern | Use Case | Trade-off |
+| 模式 | 适用场景 | 权衡 |
 |---------|----------|-----------|
-| **2PC** | Strong consistency | Blocking, single point of failure |
-| **Saga** | Long-running transactions | Compensation logic complexity |
-| **TCC** | High performance | Implementation complexity |
+| **2PC** | 强一致性 | 阻塞、单点故障 |
+| **Saga** | 长事务 | 补偿逻辑复杂度 |
+| **TCC** | 高性能 | 实现复杂度 |
 
-### Saga Pattern
+### Saga 模式
 
 ```mermaid
 sequenceDiagram
-    participant OS as Order Service
-    participant PS as Payment Service
-    participant IS as Inventory Service
+    participant OS as 订单服务
+    participant PS as 支付服务
+    participant IS as 库存服务
     OS->>PS: OrderCreated
     PS->>IS: PaymentProcessed
     IS->>OS: InventoryReserved
     OS->>OS: OrderConfirmed
-    Note over OS,IS: Compensation (if failure)
+    Note over OS,IS: 补偿（失败时）
     IS->>PS: InventoryReleased
     PS->>OS: PaymentRefunded
     OS->>OS: OrderCancelled
 ```
 
-## Architecture Documentation
+## 架构文档
 
-### C4 Model
+### C4 模型
 
 ```mermaid
 flowchart TD
-    L1["Level 1: Context<br/>System in its environment"]
-    L2["Level 2: Container<br/>Applications and data stores"]
-    L3["Level 3: Component<br/>Components within containers"]
-    L4["Level 4: Code<br/>Implementation details"]
+    L1["Level 1: 上下文<br/>环境中的系统"]
+    L2["Level 2: 容器<br/>应用与数据存储"]
+    L3["Level 3: 组件<br/>容器内的组件"]
+    L4["Level 4: 代码<br/>实现细节"]
     L1 --> L2 --> L3 --> L4
 ```
 
-### Architecture Decision Records (ADR)
+### 架构决策记录（ADR）
 
 ```markdown
-# ADR-001: Use Event-Driven Architecture
+# ADR-001: 使用事件驱动架构
 
-## Status
+## 状态
 Accepted
 
-## Context
-System needs to handle high volume of async operations
-with loose coupling between services.
+## 上下文
+系统需处理大量异步操作，且服务间需松耦合。
 
-## Decision
-Implement event-driven architecture using message queues.
+## 决策
+使用消息队列实现事件驱动架构。
 
-## Consequences
-- Pros: Decoupling, scalability, resilience
-- Cons: Complexity, eventual consistency, debugging challenges
+## 后果
+- 优点：解耦、可扩展、弹性
+- 缺点：复杂度、最终一致、调试挑战
 
-## Alternatives Considered
-1. Synchronous REST - Rejected due to tight coupling
-2. gRPC streaming - Rejected due to complexity
+## 考虑的替代方案
+1. 同步 REST —— 因紧耦合否决
+2. gRPC 流 —— 因复杂度否决
 ```
 
-## Security Architecture
+## 安全架构
 
-### Authentication Architecture
+### 认证架构
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│              Authentication Flow                         │
+│              认证流                         │
 ├─────────────────────────────────────────────────────────┤
-│ Client → API Gateway → Auth Service                     │
+│ 客户端 → API 网关 → 认证服务                     │
 │                          │                               │
-│                          ├── Validate credentials        │
-│                          ├── Generate JWT                │
-│                          └── Return token                │
+│                          ├── 验证凭据        │
+│                          ├── 生成 JWT                │
+│                          └── 返回 token                │
 │                                                          │
-│ Subsequent Requests:                                     │
-│ Client → API Gateway → Validate JWT → Backend Service   │
+│ 后续请求：                                     │
+│ 客户端 → API 网关 → 验证 JWT → 后端服务   │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Authorization Patterns
+### 授权模式
 
-| Pattern | Use Case | Complexity |
+| 模式 | 适用场景 | 复杂度 |
 |---------|----------|------------|
-| **RBAC** | Role-based access | Low |
-| **ABAC** | Attribute-based access | Medium |
-| **PBAC** | Policy-based access | High |
+| **RBAC** | 基于角色访问 | 低 |
+| **ABAC** | 基于属性访问 | 中 |
+| **PBAC** | 基于策略访问 | 高 |

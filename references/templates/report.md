@@ -1,19 +1,19 @@
-# Review Report Template
+# 审查报告模板
 
-## Output Modes
+## 输出模式
 
-Two output formats are available:
+提供两种输出格式：
 
-| Mode | When to Use | Content |
+| 模式 | 使用场景 | 内容 |
 |---|---|---|
-| **Detailed** | Full review, PR feedback | All issues with full context |
-| **Concise** | Quick check, CI integration | Critical/High issues only |
+| **详细** | 完整审查、PR 反馈 | 所有问题及完整上下文 |
+| **简洁** | 快速检查、CI 集成 | 仅 Critical/High 问题 |
 
 ---
 
-## Output Format (Detailed)
+## 输出格式（详细）
 
-Use this exact structure when reporting:
+报告时使用以下结构：
 
 ---
 
@@ -124,30 +124,30 @@ for order in orders:
 
 ---
 
-## Score Calculation
+## 评分计算
 
 ```
-Base score: 100
-Deductions:
-  Critical issue: -15 each
-  High issue:     -8 each
-  Medium issue:   -3 each
-  Low issue:      -1 each
+基础分：100
+扣分：
+  Critical 问题：每个 -15
+  High 问题：    每个 -8
+  Medium 问题：  每个 -3
+  Low 问题：     每个 -1
 
-Floor: 0 (cannot go negative)
+下限：0（不能为负）
 ```
 
-## Verdict Criteria
+## 结论标准
 
-| Verdict | Condition |
+| 结论 | 条件 |
 |---|---|
-| ✅ Approved | Score ≥ 85, no Critical or High issues |
-| ⚠️ Changes Requested | Score 60–84, or any Critical/High issue present |
-| ❌ Rejected | Score < 60, or systemic security vulnerabilities |
+| ✅ 通过 | 评分 ≥ 85，无 Critical 或 High 问题 |
+| ⚠️ 需要修改 | 评分 60–84，或存在任何 Critical/High 问题 |
+| ❌ 拒绝 | 评分 < 60，或系统性安全漏洞 |
 
-## Issue ID Convention
+## 问题 ID 约定
 
-| Prefix | Severity |
+| 前缀 | 严重度 |
 |---|---|
 | `CRIT-` | Critical |
 | `HIGH-` | High |
@@ -155,13 +155,13 @@ Floor: 0 (cannot go negative)
 | `LOW-` | Low |
 | `INFO-` | Info |
 
-Sequence: `CRIT-001`, `CRIT-002`, `HIGH-001`, etc.
+序号：`CRIT-001`、`CRIT-002`、`HIGH-001` 等
 
 ---
 
-## Output Format (Concise)
+## 输出格式（简洁）
 
-Use this format for quick checks or CI integration — Critical and High issues only:
+快速检查或 CI 集成时使用此格式 —— 仅 Critical 和 High 问题：
 
 ```markdown
 ## 🔍 Code Review Report (Concise)
@@ -185,7 +185,7 @@ Use this format for quick checks or CI integration — Critical and High issues 
 
 ---
 
-## Related
+## 相关
 
 - [review-workflow.md](../review-workflow.md)
 - [commands/security.md](../commands/security.md)

@@ -1,7 +1,7 @@
-# Review Report Template
+# 审查报告模板
 
-> **Migrated**: This file's content has been merged into [`templates/report.md`](../templates/report.md), please use that file instead.
+> **已迁移**：此文件内容已合并到 [`templates/report.md`](../templates/report.md)，请改用该文件。
 >
-> This file is retained only for backward compatibility with old links. Report templates, scoring formulas, and verdict criteria are all maintained in `templates/report.md`.
+> 此文件仅为兼容旧链接而保留。报告模板、评分公式和结论标准均维护在 `templates/report.md` 中。
 
-→ [View Full Report Template](../templates/report.md)
+[查看完整报告模板](../templates/report.md)

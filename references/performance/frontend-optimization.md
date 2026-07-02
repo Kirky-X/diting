@@ -1,14 +1,14 @@
-# Frontend Performance Optimization Reference
+# 前端性能优化参考
 
-## Core Web Vitals Optimization
+## Core Web Vitals 优化
 
-| Metric | Optimization Strategy |
+| 指标 | 优化策略 |
 |------|----------|
-| **LCP** | Preload critical resources, CDN, caching, SSR |
-| **FID** | Reduce main thread work, code splitting, lazy loading |
-| **CLS** | Fixed image dimensions, font loading strategy, avoid dynamic content |
+| **LCP** | 预加载关键资源、CDN、缓存、SSR |
+| **FID** | 减少主线程工作、代码分割、懒加载 |
+| **CLS** | 固定图片尺寸、字体加载策略、避免动态内容 |
 
-## Resource Optimization
+## 资源优化
 
 ```javascript
 const LazyComponent = lazy(() => import('./LazyComponent'));
@@ -24,7 +24,7 @@ const HeavyChart = React.lazy(() => import('./HeavyChart'));
 <link rel="preload" href="/fonts/inter-var.woff2" as="font" crossorigin>
 ```
 
-## Rendering Optimization
+## 渲染优化
 
 ```javascript
 const MemoizedComponent = React.memo(Component, (prev, next) => {
@@ -40,7 +40,7 @@ const handleClick = useCallback(() => {
 }, [id]);
 ```
 
-## CSS Optimization
+## CSS 优化
 
 ```css
 .list-container {
@@ -57,7 +57,7 @@ const handleClick = useCallback(() => {
 }
 ```
 
-## Performance Budget Configuration
+## 性能预算配置
 
 ```yaml
 performance_budget:

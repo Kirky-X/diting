@@ -1,161 +1,161 @@
-# Security Expert Reference
+# 安全专家参考
 
-> Comprehensive security analysis guide integrating application security, code auditing, and compliance management.
+> 整合应用安全、代码审计与合规管理的综合安全分析指南。
 
-## Role Definition
+## 角色定义
 
-A Senior Security Expert with 10+ years of hands-on experience, specializing in:
-- Application security
-- Code security auditing
-- Compliance management
-- Defense system design
+拥有 10+ 年实战经验的高级安全专家，专长：
+- 应用安全
+- 代码安全审计
+- 合规管理
+- 防御系统设计
 
-## Core Expertise
+## 核心专长
 
-### Application Security
+### 应用安全
 
-#### Web Security (OWASP Top 10 — 2021)
+#### Web 安全（OWASP Top 10 — 2021）
 
-> Source: https://owasp.org/Top10/
+> 来源：https://owasp.org/Top10/
 
-| # | Category | Risk | Defense Strategy |
+| # | 类别 | 风险 | 防御策略 |
 |---|----------|------|------------------|
-| A01 | **Broken Access Control** | Unauthorized resource access, IDOR, path traversal | Deny by default; verify ownership on every request; CORS lockdown |
-| A02 | **Cryptographic Failures** | Plaintext PII, weak ciphers, hardcoded keys | TLS 1.2+; AES-256-GCM; bcrypt/Argon2; secrets via KMS |
-| A03 | **Injection** | SQL/NoSQL/LDAP/OS command/SSTI execution | Parameterized queries; whitelist validation; no eval/shell=True |
-| A04 | **Insecure Design** | Missing threat modeling, security debt from design | Threat modeling in design phase; security user stories |
-| A05 | **Security Misconfiguration** | Debug on, default creds, unnecessary features | Hardening checklists; config-as-code; disable defaults |
-| A06 | **Vulnerable Components** | Known CVEs in libs/frameworks | `npm audit` / `safety` / `trivy`; pin versions; Dependabot |
-| A07 | **Auth & Session Failures** | Weak passwords, no MFA, session fixation, insecure JWT | Strong policy; TOTP; regenerate session on login; JWT exp < 15m |
-| A08 | **Software & Data Integrity** | Unsigned packages, unsafe deserialization, CI/CD tampering | Verify checksums; SLSA; ObjectInputStream allowlists |
-| A09 | **Logging & Monitoring Failures** | No audit trail, PII in logs, undetected breaches | Structured security logs; mask PII; SIEM alerting |
-| A10 | **SSRF** | Internal network scanning via server-side fetch | URL allowlist; no user-controlled hosts; block 169.254/10.x |
+| A01 | **失效的访问控制（Broken Access Control）** | 未授权资源访问、IDOR、路径穿越 | 默认拒绝；每次请求验证所有权；CORS 收紧 |
+| A02 | **加密失败（Cryptographic Failures）** | 明文 PII、弱密码、硬编码密钥 | TLS 1.2+；AES-256-GCM；bcrypt/Argon2；密钥经 KMS |
+| A03 | **注入（Injection）** | SQL/NoSQL/LDAP/OS 命令/SSTI 执行 | 参数化查询；白名单验证；禁用 eval/shell=True |
+| A04 | **不安全设计（Insecure Design）** | 缺少威胁建模、设计阶段安全债 | 设计阶段威胁建模；安全用户故事 |
+| A05 | **安全配置错误（Security Misconfiguration）** | 调试开启、默认凭据、多余功能 | 加固清单；配置即代码；禁用默认 |
+| A06 | **易受攻击的组件（Vulnerable Components）** | 库/框架中的已知 CVE | `npm audit` / `safety` / `trivy`；锁定版本；Dependabot |
+| A07 | **认证与会话失败（Auth & Session Failures）** | 弱密码、无 MFA、会话固定、不安全 JWT | 强策略；TOTP；登录时重新生成会话；JWT exp < 15m |
+| A08 | **软件与数据完整性（Software & Data Integrity）** | 未签名包、不安全反序列化、CI/CD 篡改 | 验证校验和；SLSA；ObjectInputStream 白名单 |
+| A09 | **日志与监控失败（Logging & Monitoring Failures）** | 无审计轨迹、日志含 PII、入侵未发现 | 结构化安全日志；PII 脱敏；SIEM 告警 |
+| A10 | **SSRF** | 通过服务端请求扫描内网 | URL 白名单；禁止用户控制主机；屏蔽 169.254/10.x |
 
-#### API Security
+#### API 安全
 
-- **Authentication/Authorization**: Token validation, OAuth 2.0, JWT security
-- **Parameter Tampering**: Input validation, signature verification
-- **Unauthorized Access**: RBAC/ABAC, resource ownership verification
-- **Replay Attacks**: Nonce, timestamp validation, idempotency
+- **认证/授权**：Token 验证、OAuth 2.0、JWT 安全
+- **参数篡改**：输入验证、签名验证
+- **未授权访问**：RBAC/ABAC、资源所有权验证
+- **重放攻击**：Nonce、时间戳验证、幂等性
 
-#### Business Security
+#### 业务安全
 
-- Anti-fraud detection
-- Order brushing prevention
-- Spam registration blocking
-- Account security measures
+- 反欺诈检测
+- 防刷单
+- 拦截垃圾注册
+- 账户安全措施
 
-### Code Security Auditing
+### 代码安全审计
 
-#### Static Application Security Testing (SAST)
+#### 静态应用安全测试（SAST）
 
-**Analysis areas** (verify each on every code path):
-- **Input Validation**: All external inputs validated? Whitelist used? Length/format restricted?
-- **Output Encoding**: Properly encoded? Special chars handled? Secure template engines?
-- **Auth & Authorization**: Appropriate auth mechanism? Backend authorization checked? Session management?
-- **Sensitive Data**: Stored encrypted? Desensitized in logs? HTTPS for transmission?
-- **Error Handling**: Exceptions handled properly? Sensitive details leaked? Security logs recorded?
+**分析领域**（每条代码路径均需验证）：
+- **输入验证**：所有外部输入是否验证？是否使用白名单？长度/格式是否限制？
+- **输出编码**：是否正确编码？特殊字符是否处理？是否使用安全模板引擎？
+- **认证与授权**：认证机制是否适当？后端授权是否检查？会话管理如何？
+- **敏感数据**：存储是否加密？日志是否脱敏？传输是否用 HTTPS？
+- **错误处理**：异常是否正确处理？是否泄露敏感细节？是否记录安全日志？
 
-#### Software Composition Analysis (SCA)
+#### 软件组成分析（SCA）
 
-- Regularly scan dependency vulnerabilities
-- Timely update high-risk components
-- Use trusted dependency sources
-- Lock versions to avoid supply chain attacks
-- Audit security of critical dependencies
+- 定期扫描依赖漏洞
+- 及时更新高危组件
+- 使用可信依赖源
+- 锁定版本以防供应链攻击
+- 审计关键依赖的安全性
 
-### Compliance Management
+### 合规管理
 
-#### MLPS 2.0 (Multi-Level Protection Scheme)
+#### 等保 2.0（网络安全等级保护）
 
-| Domain | Requirements |
+| 领域 | 要求 |
 |--------|--------------|
-| Physical Environment | Data center security, equipment security |
-| Communication Network | Network architecture, transmission, boundary protection |
-| Area Boundary | Access control, intrusion prevention, malware prevention |
-| Computing Environment | Identity, access control, auditing, data integrity/confidentiality |
-| Security Management | Policies, systems, personnel, construction, O&M |
+| 物理环境 | 数据中心安全、设备安全 |
+| 通信网络 | 网络架构、传输、边界防护 |
+| 区域边界 | 访问控制、入侵防护、恶意代码防护 |
+| 计算环境 | 身份、访问控制、审计、数据完整性/机密性 |
+| 安全管理 | 策略、制度、人员、建设、运维 |
 
-#### GDPR / Personal Data Protection
+#### GDPR / 个人数据保护
 
-- Legal basis for data processing
-- User consent mechanism (explicit and specific)
-- Data subject rights (access, rectification, erasure, portability)
-- Data collection minimization
-- Data Protection Impact Assessment (DPIA)
-- Data breach notification (within 72 hours)
+- 数据处理的法律依据
+- 用户同意机制（明确且具体）
+- 数据主体权利（访问、更正、删除、可携带性）
+- 数据收集最小化
+- 数据保护影响评估（DPIA）
+- 数据泄露通知（72 小时内）
 
-## Tech Stack Security
+## 技术栈安全
 
-### Frontend Security
+### 前端安全
 
-**Key controls**:
-- CSP: `default-src 'self'; script-src 'self' 'unsafe-inline'`
-- Cookies: `HttpOnly; Secure; SameSite=Strict`
-- XSS: sanitize with DOMPurify (`DOMPurify.sanitize(userInput)`)
+**关键控制**：
+- CSP：`default-src 'self'; script-src 'self' 'unsafe-inline'`
+- Cookies：`HttpOnly; Secure; SameSite=Strict`
+- XSS：用 DOMPurify 净化（`DOMPurify.sanitize(userInput)`）
 
-### Backend Security by Language
+### 后端安全（按语言）
 
 #### Rust
-- Memory safety considerations
-- Unsafe code auditing
-- Dependency security
+- 内存安全考量
+- unsafe 代码审计
+- 依赖安全
 
 #### Python
-- Deserialization vulnerabilities
-- Template injection prevention
-- Command injection prevention: avoid `shell=True`; use `subprocess.run(['ls', '-la'], check=True)` with explicit args
+- 反序列化漏洞
+- 模板注入防护
+- 命令注入防护：避免 `shell=True`；用 `subprocess.run(['ls', '-la'], check=True)` 显式参数
 
 #### Java
-- Deserialization attacks
-- Expression injection (SpEL, OGNL)
-- XXE prevention
+- 反序列化攻击
+- 表达式注入（SpEL、OGNL）
+- XXE 防护
 
 ```java
-// Disable DTD for XML parsing
+// 禁用 XML 解析的 DTD
 factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
 ```
 
-### Database Security
+### 数据库安全
 
-- SQL injection prevention
-- Access control implementation
-- Data encryption at rest
-- Audit logging
-- Connection pooling security
+- SQL 注入防护
+- 访问控制实现
+- 静态数据加密
+- 审计日志
+- 连接池安全
 
-### Cloud Platform Security
+### 云平台安全
 
-- WAF configuration
-- Cloud Security Center integration
-- Resource Access Management (RAM)
-- Key Management Service (KMS)
+- WAF 配置
+- 云安全中心集成
+- 资源访问管理（RAM）
+- 密钥管理服务（KMS）
 
-## Security Design Principles
+## 安全设计原则
 
-### Core Principles
+### 核心原则
 
-1. **Defense in Depth**: Multiple layers of protection; single failure should not lead to total compromise
-2. **Least Privilege**: Grant only minimum necessary permissions
-3. **Default Deny**: Deny by default, explicitly allow
-4. **Fail-Safe**: Maintain secure state upon failure
-5. **Never Trust Input**: All external inputs must be validated
-6. **Shift-Left Security**: Consider security during design and development phases
+1. **纵深防御**：多层防护；单点失败不应导致全面沦陷
+2. **最小权限**：仅授予必要的最小权限
+3. **默认拒绝**：默认拒绝，显式允许
+4. **失败安全**：失败时保持安全状态
+5. **永不信任输入**：所有外部输入必须验证
+6. **安全左移**：设计与开发阶段即考虑安全
 
-### Authentication Best Practices
+### 认证最佳实践
 
-| Practice | Implementation |
+| 实践 | 实现 |
 |----------|----------------|
-| Password Hashing | bcrypt, Argon2, scrypt |
-| Multi-Factor Auth | TOTP, SMS, Hardware keys |
-| Account Lockout | Progressive delays, CAPTCHA |
-| Session Management | Short-lived tokens, secure cookies |
-| Token Security | JWT with short expiry, refresh tokens |
+| 密码哈希 | bcrypt、Argon2、scrypt |
+| 多因素认证 | TOTP、短信、硬件密钥 |
+| 账户锁定 | 渐进延迟、CAPTCHA |
+| 会话管理 | 短期 token、安全 cookie |
+| Token 安全 | JWT 短过期、refresh token |
 
-### Authorization Best Practices
+### 授权最佳实践
 
 ```python
-# RBAC Example
+# RBAC 示例
 class Permission(Enum):
     READ = "read"
     WRITE = "write"
@@ -173,117 +173,117 @@ def check_permission(user: User, resource: Resource, permission: Permission) -> 
     return permission in role_permissions and user.has_access(resource)
 ```
 
-## Data Security
+## 数据安全
 
-### Sensitive Data Protection
+### 敏感数据保护
 
-| Layer | Protection |
+| 层 | 保护 |
 |-------|------------|
-| Transmission | HTTPS/TLS 1.2+ |
-| Storage | Database encryption, field encryption |
-| Key Management | Use KMS, never hardcode |
-| Logging | Data masking/desensitization |
-| Backup | Encrypted backups |
+| 传输 | HTTPS/TLS 1.2+ |
+| 存储 | 数据库加密、字段加密 |
+| 密钥管理 | 使用 KMS，绝不硬编码 |
+| 日志 | 数据脱敏 |
+| 备份 | 加密备份 |
 
-### Data Classification
+### 数据分级
 
-| Level | Description | Protection |
+| 级别 | 描述 | 保护 |
 |-------|-------------|------------|
-| Public | No restrictions | Standard access controls |
-| Internal | Internal use only | Authentication required |
-| Sensitive | Business sensitive | Encryption, access logging |
-| Confidential | Critical data | Strong encryption, strict access |
+| 公开 | 无限制 | 标准访问控制 |
+| 内部 | 仅内部使用 | 需认证 |
+| 敏感 | 业务敏感 | 加密、访问日志 |
+| 机密 | 关键数据 | 强加密、严格访问 |
 
-## Security Testing
+## 安全测试
 
-### Testing Types
+### 测试类型
 
-| Type | Description | Tools |
+| 类型 | 描述 | 工具 |
 |------|-------------|-------|
-| SAST | Static code analysis | SonarQube, Checkmarx, Semgrep |
-| DAST | Dynamic testing | OWASP ZAP, Burp Suite |
-| SCA | Dependency scanning | Snyk, Dependabot |
-| Penetration Testing | Manual security testing | Custom tools |
-| Security Regression | Automated security tests | Custom test suites |
+| SAST | 静态代码分析 | SonarQube、Checkmarx、Semgrep |
+| DAST | 动态测试 | OWASP ZAP、Burp Suite |
+| SCA | 依赖扫描 | Snyk、Dependabot |
+| 渗透测试 | 人工安全测试 | 自定义工具 |
+| 安全回归 | 自动化安全测试 | 自定义测试套件 |
 
-### Testing Stages
+### 测试阶段
 
-**Pipeline**: Development (IDE plugins) → Commit (Git hooks) → CI (auto scan) → Pre-release (pen test) → Production (monitoring).
+**流水线**：开发（IDE 插件）→ 提交（Git hooks）→ CI（自动扫描）→ 发布前（渗透测试）→ 生产（监控）。
 
-## Common Vulnerabilities & Defense
+## 常见漏洞与防御
 
 > SQL注入、XSS、CSRF、IDOR 等漏洞的详细检测与修复代码详见 [security-fixes.md](security-fixes.md)。
 
-## Emergency Response
+## 应急响应
 
-### Incident Response Workflow
+### 事件响应工作流
 
 ```mermaid
 flowchart TD
-    Det["Detection"] --> Con["Containment"]
-    Con --> Era["Eradication"]
-    Era --> Rec["Recovery"]
-    Rec --> LL["Lessons Learned"]
-    Det --> Det1["Alert<br/>Monitor"]
-    Con --> Con1["Block IP<br/>Take Down"]
-    Era --> Era1["Fix Vuln<br/>Patch"]
-    Rec --> Rec1["Restore<br/>Verify"]
-    LL --> LL1["Update Process"]
+    Det["检测"] --> Con["遏制"]
+    Con --> Era["根除"]
+    Era --> Rec["恢复"]
+    Rec --> LL["经验教训"]
+    Det --> Det1["告警<br/>监控"]
+    Con --> Con1["封禁 IP<br/>下线"]
+    Era --> Era1["修漏洞<br/>打补丁"]
+    Rec --> Rec1["恢复<br/>验证"]
+    LL --> LL1["更新流程"]
 ```
 
-### Response Actions
+### 响应行动
 
-1. **Rapid Assessment**: Evaluate scope and severity
-2. **Mitigation**: Block IPs, take features offline, switch WAF
-3. **Evidence Preservation**: Save logs, capture state
-4. **Investigation**: Root cause analysis
-5. **Remediation**: Fix vulnerabilities, harden systems
-6. **Reporting**: Document incident and lessons learned
+1. **快速评估**：评估范围与严重度
+2. **缓解**：封禁 IP、下线功能、切换 WAF
+3. **证据保全**：保存日志、捕获状态
+4. **调查**：根因分析
+5. **修复**：修复漏洞、加固系统
+6. **报告**：记录事件与经验教训
 
-## Pitfalls to Avoid
+## 应避免的陷阱
 
-- [ ] Relying on frontend validation only
-- [ ] Trusting external input (including Cookies/Headers)
-- [ ] Storing sensitive information client-side
-- [ ] Using weak encryption (MD5, SHA1)
-- [ ] Ignoring security configurations (default passwords, debug mode)
-- [ ] Over-collecting user data
+- [ ] 仅依赖前端验证
+- [ ] 信任外部输入（包括 Cookies/Headers）
+- [ ] 客户端存储敏感信息
+- [ ] 使用弱加密（MD5、SHA1）
+- [ ] 忽视安全配置（默认密码、调试模式）
+- [ ] 过度收集用户数据
 
-### Rate Limiting & Abuse Prevention
+### 限流与防滥用
 
-Rate limiting is a critical control missing from many applications. Apply at multiple layers (e.g., `slowapi` for Python/FastAPI, `express-rate-limit` for Node.js).
+限流是许多应用缺失的关键控制。在多层应用（如 Python/FastAPI 用 `slowapi`、Node.js 用 `express-rate-limit`）。
 
-**Key endpoints to rate-limit:**
-- `POST /login` — 5 req/min per IP (prevent brute force)
-- `POST /register` — 3 req/hour per IP (prevent spam accounts)
-- `POST /password-reset` — 3 req/hour per account
-- `GET /api/*` (unauthenticated) — 60 req/min per IP
-- `POST /api/*` (authenticated) — 100 req/min per user
+**需限流的关键端点：**
+- `POST /login` —— 每 IP 5 次/分钟（防暴力破解）
+- `POST /register` —— 每 IP 3 次/小时（防垃圾账号）
+- `POST /password-reset` —— 每账号 3 次/小时
+- `GET /api/*`（未认证）—— 每 IP 60 次/分钟
+- `POST /api/*`（已认证）—— 每用户 100 次/分钟
 
-**Rate limiting checklist:**
+**限流清单：**
 ```
-□ Rate limits applied on all auth endpoints (login, register, reset)
-□ Responses use HTTP 429 with Retry-After header
-□ Limits enforced server-side (not client-side)
-□ Distributed rate limiting for multi-instance deployments (Redis-backed)
-□ API keys / OAuth tokens have their own per-key limits
-□ Monitoring/alerting on rate limit threshold hits
+□ 所有认证端点（登录、注册、重置）应用限流
+□ 响应使用 HTTP 429 与 Retry-After 头
+□ 限制在服务端强制（非客户端）
+□ 多实例部署使用分布式限流（Redis 支持）
+□ API 密钥 / OAuth token 有独立的每密钥限制
+□ 限流阈值命中时有监控/告警
 ```
 
-## Code Examples
+## 代码示例
 
-See [examples.md](examples.md) for full working implementations of:
-- Security Proxy Pattern (access control + audit logging)
-- Parameterized query patterns across languages
-- JWT validation with expiry and signature checks
-- Input sanitization examples
+完整可运行实现见 [examples.md](examples.md)，包括：
+- 安全代理模式（访问控制 + 审计日志）
+- 跨语言参数化查询模式
+- 带过期与签名校验的 JWT 验证
+- 输入净化示例
 
 
 
-| Role | Collaboration |
+| 角色 | 协作 |
 |------|---------------|
-| Architect | Security architecture review, threat modeling |
-| Developers | Secure coding training, code auditing |
-| QA Engineers | Security test cases, tool integration |
-| DevOps | CI/CD security, production hardening |
-| Product Teams | Business risk assessment, compliance |
+| 架构师 | 安全架构审查、威胁建模 |
+| 开发者 | 安全编码培训、代码审计 |
+| QA 工程师 | 安全测试用例、工具集成 |
+| DevOps | CI/CD 安全、生产加固 |
+| 产品团队 | 业务风险评估、合规 |

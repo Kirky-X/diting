@@ -1,142 +1,142 @@
-# Review Workflow — Complete Review Workflow
+# 审查工作流 —— 完整审查流程
 
-## Overview
+## 概述
 
-Comprehensive code review: multi-dimensional parallel analysis + confidence scoring + unified report.
+全面代码审查：多维度并行分析 + 置信度评分 + 统一报告。
 
-Two review modes available:
-- **Parallel Analysis** — AI Agent automated process, fast and consistent
-- **Three-Pass Review** — Human reviewer systematic scan, comprehensive and thorough
+提供两种审查模式：
+- **并行分析** —— AI Agent 自动化流程，快速且一致
+- **三遍审查** —— 人工审查者系统化扫描，全面且深入
 
 ---
 
-## Workflow Modes
+## 工作流模式
 
-| Mode | Use Case | Advantages | Reference |
+| 模式 | 适用场景 | 优势 | 参考 |
 |---|---|---|---|
-| Parallel Analysis | AI Agent, automated processes | Fast, consistent | This document |
-| Three-Pass Review | Human reviewers, learning process | Comprehensive, systematic | [workflow/three-pass-review.md](workflow/three-pass-review.md) |
+| 并行分析 | AI Agent、自动化流程 | 快速、一致 | 本文档 |
+| 三遍审查 | 人工审查者、学习过程 | 全面、系统 | [workflow/three-pass-review.md](workflow/three-pass-review.md) |
 
-### Combined Usage
-
-```
-1. AI parallel analysis generates initial report
-2. Human three-pass review confirms and supplements
-3. Merge to output final review report
-```
-
----
-
-## Phase 1: Pre-Review Checklist
+### 组合使用
 
 ```
-□ Identify language(s) and runtime
-□ Read CLAUDE.md / .editorconfig / linting configs for project standards
-□ Determine what changed (PR diff vs. full codebase)
-□ Check if tests exist (affects confidence scoring)
-□ Note any explicitly stated constraints or priorities
+1. AI 并行分析生成初始报告
+2. 人工三遍审查确认并补充
+3. 合并输出最终审查报告
 ```
 
 ---
 
-## Phase 2: Parallel Analysis (5 Agents)
+## 阶段 1：审查前清单
 
-Execute all 5 dimensions independently, then merge findings:
+```
+□ 识别语言和运行时
+□ 阅读 CLAUDE.md / .editorconfig / lint 配置了解项目标准
+□ 确定变更范围（PR diff 还是完整代码库）
+□ 检查是否存在测试（影响置信度评分）
+□ 记录任何明确声明的约束或优先级
+```
 
-| Agent | Focus | Key Reference |
+---
+
+## 阶段 2：并行分析（5 个 Agent）
+
+独立执行全部 5 个维度，然后合并发现项：
+
+| Agent | 关注点 | 关键参考 |
 |---|---|---|
-| **Security** | OWASP Top 10 (2021), CWE, auth, crypto, secrets | [commands/security.md](commands/security.md) |
-| **Performance** | Big-O, DB queries, caching, async, Web Vitals | [commands/performance.md](commands/performance.md) |
-| **Quality** | Code smells, SOLID, complexity, test coverage | [commands/quality.md](commands/quality.md) |
-| **Architecture** | Patterns, coupling, cohesion, dependencies | [commands/architecture.md](commands/architecture.md) |
-| **Simplification** | Readability, duplication, dead code, naming | [commands/simplification.md](commands/simplification.md) |
+| **安全** | OWASP Top 10 (2021)、CWE、认证、加密、密钥 | [commands/security.md](commands/security.md) |
+| **性能** | Big-O、数据库查询、缓存、异步、Web Vitals | [commands/performance.md](commands/performance.md) |
+| **质量** | 代码坏味、SOLID、复杂度、测试覆盖率 | [commands/quality.md](commands/quality.md) |
+| **架构** | 模式、耦合、内聚、依赖 | [commands/architecture.md](commands/architecture.md) |
+| **简化** | 可读性、重复、死代码、命名 | [commands/simplification.md](commands/simplification.md) |
 
 ---
 
-## Phase 3: Score & Filter
+## 阶段 3：评分与过滤
 
-For each finding:
+对每个发现项：
 
 ```
-1. Assign severity: Critical / High / Medium / Low / Info
-2. Score confidence: 0–100
-3. Filter: discard anything < 80
-4. Deduplicate: merge findings that refer to the same root cause
-5. Prioritize: Critical first, then High, Medium, Low, Info
+1. 分配严重度：Critical / High / Medium / Low / Info
+2. 评分置信度：0–100
+3. 过滤：丢弃 < 80 的项
+4. 去重：合并指向同一根因的发现项
+5. 排序：Critical 优先，然后 High、Medium、Low、Info
 ```
 
-### Confidence Calibration
+### 置信度校准
 
-Use these anchors when scoring:
+评分时使用以下锚点：
 
-| Scenario | Confidence |
+| 场景 | 置信度 |
 |---|---|
-| Hardcoded password in code | 98 |
-| SQL string concatenation with user input | 95 |
-| O(n²) nested loop on potentially large dataset | 85 |
-| Missing null check (language has no null safety) | 80 |
-| Method is 60 lines (threshold is 50) | 75 — borderline |
-| Possible race condition (unclear concurrency model) | 55 — skip unless context confirms |
-| Naming could be improved | 40 — skip |
+| 代码中硬编码密码 | 98 |
+| 用户输入直接拼接 SQL 字符串 | 95 |
+| 大数据集上的 O(n²) 嵌套循环 | 85 |
+| 缺少 null 检查（语言无 null 安全） | 80 |
+| 方法 60 行（阈值 50） | 75 —— 边界 |
+| 可能的竞态条件（并发模型不明确） | 55 —— 上下文确认前跳过 |
+| 命名可以改进 | 40 —— 跳过 |
 
 ---
 
-## Phase 4: Generate Report
+## 阶段 4：生成报告
 
-Follow the template in [templates/report.md](templates/report.md).
+遵循 [templates/report.md](templates/report.md) 中的模板。
 
-### Report Must Include
+### 报告必须包含
 
-1. **Executive Summary** — Score, file count, issue count by severity
-2. **Issues table** — ID, file:line, severity, confidence, brief description
-3. **Per-issue detail** — Problem explanation, risk, and concrete fix suggestion with code
-4. **Verdict** — Approved / Changes Requested / Rejected
+1. **执行摘要** —— 评分、文件数、按严重度统计的问题数
+2. **问题表** —— ID、file:line、严重度、置信度、简要描述
+3. **单问题详情** —— 问题说明、风险、带代码的具体修复建议
+4. **结论** —— 通过 / 需要修改 / 拒绝
 
 ---
 
-## Review Priorities
+## 审查优先级
 
 ```
-1. Security       → Always highest. Never skip.
-2. Correctness    → Functional bugs, data integrity
-3. Performance    → Significant impact only (≥ High severity)
-4. Quality        → Maintainability, test coverage
-5. Simplification → Lowest. Skip if time-constrained.
+1. 安全         → 始终最高。绝不跳过。
+2. 正确性       → 功能性 bug、数据完整性
+3. 性能         → 仅显著影响（≥ High 严重度）
+4. 质量         → 可维护性、测试覆盖率
+5. 简化         → 最低。时间紧张时跳过。
 ```
 
 ---
 
-## False Positive Reduction
+## 误报减少
 
-Before reporting an issue, verify:
+报告问题前，验证：
 
-- [ ] Does the project already handle this elsewhere? (e.g., middleware auth, ORM escaping)
-- [ ] Is there an existing lint rule or annotation suppressing it?
-- [ ] Does the CLAUDE.md explicitly allow this pattern?
-- [ ] Is this code path actually reachable / exercised?
-- [ ] Would a senior developer on this project agree this is a real issue?
-
----
-
-## Special Cases
-
-### PR / Diff Review
-- Focus only on changed lines
-- Consider context of surrounding unchanged code
-- Check that tests cover the new code paths
-
-### Single-File Review
-- Full analysis, all dimensions
-- Note what's missing (tests, types, error handling)
-
-### Full Codebase Review
-- Sample representative files per module
-- Focus on architectural and cross-cutting concerns
-- Report systemic patterns rather than individual occurrences
+- [ ] 项目是否已在其他地方处理？（如中间件认证、ORM 转义）
+- [ ] 是否存在抑制它的 lint 规则或注解？
+- [ ] CLAUDE.md 是否明确允许此模式？
+- [ ] 此代码路径是否实际可达 / 被执行？
+- [ ] 该项目的资深开发者是否会认同这是真实问题？
 
 ---
 
-## Related
+## 特殊场景
+
+### PR / Diff 审查
+- 仅关注变更行
+- 考虑周围未变更代码的上下文
+- 检查测试是否覆盖新代码路径
+
+### 单文件审查
+- 全面分析所有维度
+- 记录缺失项（测试、类型、错误处理）
+
+### 完整代码库审查
+- 每模块抽样代表性文件
+- 关注架构和横切关注点
+- 报告系统性模式而非个别出现
+
+---
+
+## 相关
 
 - [commands/security.md](commands/security.md)
 - [commands/performance.md](commands/performance.md)

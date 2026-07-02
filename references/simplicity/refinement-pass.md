@@ -1,60 +1,25 @@
-# Refinement Pass
+# 精炼遍
 
-Proactive clarity pass for code Claude just wrote or modified in this session.
-Distinct from the other two Simplicity Lens modes: the Ladder decides how much
-code to write *before* writing it (minimal-first); Over-engineering Review/Audit
-*lists* what to cut without touching code. This mode *edits* already-written
-code for clarity and consistency — and explicitly guards against the Ladder's
-own failure mode of over-compressing at the cost of readability.
+为 Claude 在本会话中刚写或修改的代码进行主动清晰度遍。与其他两种简化视角模式不同：阶梯决定在写之前写多少代码（最小优先）；过度工程审查/审计列出要削减什么但不触碰代码。这个模式编辑已写代码以提升清晰度和一致性 —— 并明确防范阶梯自身的失败模式：以可读性为代价过度压缩。
 
-## When to run
+## 何时运行
 
-Run silently, without being asked, immediately after finishing any write/add/
-refactor/fix task — on the code just touched, not the whole file or repo
-unless asked. Also run on explicit request: "clean this up", "make this more
-readable/consistent", "refine this code", "polish this".
+在完成任何 write/add/refactor/fix 任务后立即静默运行，无需被要求 —— 针对刚触碰的代码，不是整个文件或仓库，除非被要求。也在明确请求时运行："清理这个"、"让这更可读/一致"、"精炼这段代码"、"打磨"。
 
-Do not run standalone on an unmodified file the user hasn't touched this
-session unless they explicitly ask — that is Over-engineering Audit's job
-(report-only) or a full Dimensional Review, not this pass.
+不要在用户本会话未修改的文件上独立运行，除非他们明确要求 —— 那是过度工程审计的工作（仅报告）或完整维度审查，而非这个遍。
 
-## Rules
+## 规则
 
-1. **Preserve behavior exactly.** Only change *how* the code works, never
-   *what* it does — same inputs, same outputs, same side effects, same edge
-   cases. If a "simplification" would change behavior, it is a bug fix, not a
-   refinement — call it out separately instead of folding it in silently.
-2. **Follow project standards first.** Read `CLAUDE.md` / linter config /
-   existing sibling files for naming, module, and error-handling conventions
-   before applying generic style preferences. A project-specific convention
-   always wins over a generic one below.
-3. **Reduce accidental complexity**: unnecessary nesting, redundant
-   abstractions, unclear names, obvious comments that restate the code,
-   duplicated logic that could be one place.
-4. **Clarity outranks brevity.** Fewer lines is not the goal — an explicit
-   if/else chain beats a nested ternary; a named intermediate variable beats a
-   dense one-liner nobody can read at 2am. If a shorter version is harder to
-   follow, keep the longer, clearer one.
-5. **Do not over-simplify.** Never collapse genuinely separate concerns into
-   one function/component to save lines, never remove an abstraction that
-   earns its keep (more than one caller, or one caller today with a second
-   one clearly coming from the task itself — not speculative), never make
-   code harder to step through in a debugger for the sake of density.
+1. **精确保持行为。** 仅改变代码如何工作，永不改变它做什么 —— 相同输入、相同输出、相同副作用、相同边界情况。如果一个"简化"会改变行为，它是 bug 修复，不是精炼 —— 单独标出而非悄悄并入。
+2. **先遵循项目标准。** 读 `CLAUDE.md` / linter 配置 / 现有兄弟文件，了解命名、模块和错误处理约定，再应用通用风格偏好。项目特定约定永远胜过下面的通用约定。
+3. **减少偶然复杂度**：不必要的嵌套、冗余抽象、不清晰的名称、重述代码的明显注释、可以合并为一处的重复逻辑。
+4. **清晰度胜过简洁。** 更少行不是目标 —— 显式的 if/else 链胜过嵌套三元；命名的中间变量胜过凌晨 2 点没人能读的密集单行。如果更短版本更难跟进，保留更长、更清晰的那个。
+5. **不要过度简化。** 永不为省行数将真正独立的关注点合并到一个函数/组件中，永不移除有存在价值的抽象（多于一个调用方，或今天一个调用方但任务本身明确有第二个即将到来 —— 非投机），永不为密度让代码更难在调试器中单步执行。
 
-## Output
+## 输出
 
-If nothing needs refining, say nothing — do not report "no issues found" as
-its own message when this runs proactively. If something is refined, note
-only the changes that affect understanding (e.g. "renamed `x` to
-`retryCount` for clarity" or "flattened nested if into a guard clause") in one
-or two lines, not a walkthrough. When run on explicit request with real
-findings, a short before/after diff is enough — this is not a scored report
-like the other engines and gets no severity/confidence numbers.
+如果无需精炼，什么都不说 —— 当主动运行时不要把"未发现问题"作为自己的消息报告。如果精炼了什么，仅记录影响理解的变更（如"为清晰度将 `x` 重命名为 `retryCount`"或"将嵌套 if 展平为卫语句"）一两行，不是走查。当在明确请求且有真实发现时运行，简短的前后 diff 就够了 —— 这不是像其他引擎那样的评分报告，没有严重度/置信度数字。
 
-## Boundaries
+## 边界
 
-Scope: clarity, consistency, and maintainability of code that exists or was
-just written. Not a substitute for the other Simplicity Lens modes (deletion
-candidates, dependency count) or Dimensional Review (bugs, security,
-performance) — route those requests to the matching mode instead of trying to
-cover them here.
+范围：已存在或刚写代码的清晰度、一致性和可维护性。不替代其他简化视角模式（删除候选、依赖数）或维度审查（bug、安全、性能）—— 将这些请求路由到匹配的模式而非试图在这里覆盖它们。

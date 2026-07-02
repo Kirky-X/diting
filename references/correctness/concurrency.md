@@ -1,51 +1,51 @@
-# Concurrency Correctness Guide
+# 并发正确性指南
 
-Concurrency Correctness — Race Condition Detection and Concurrency Patterns
+并发正确性 —— 竞态条件检测与并发模式
 
-## Overview
+## 概述
 
-Concurrency issues are among the hardest to detect during code review. This document provides patterns for identifying common race conditions and correct concurrency handling methods.
+并发问题是代码审查中最难发现的问题之一。本文档提供识别常见竞态条件和正确并发处理方法的模式。
 
 ---
 
-## 1. Common Race Condition Patterns
+## 1. 常见竞态条件模式
 
-### Check-Then-Act
+### 检查-然后-执行
 
 ```python
-# Race condition
+# 竞态条件
 if not file.exists():
-    file.write(data)  # May have been created by another process
+    file.write(data)  # 可能已被另一个进程创建
 
-# Atomic operation
+# 原子操作
 try:
-    with open(path, 'xb') as f:  # Exclusive create
+    with open(path, 'xb') as f:  # 排他性创建
         f.write(data)
 except FileExistsError:
     handle_conflict()
 ```
 
-### Read-Modify-Write
+### 读取-修改-写入
 
 ```python
-# Race condition
+# 竞态条件
 counter = Counter.objects.get(id=1)
-counter.value += 1  # Two requests may read the same value
+counter.value += 1  # 两个请求可能读到相同的值
 counter.save()
 
-# Atomic update
+# 原子更新
 Counter.objects.filter(id=1).update(value=F('value') + 1)
 
-# Optimistic locking
+# 乐观锁
 counter = Counter.objects.get(id=1)
 counter.value += 1
-counter.save(update_fields=['value'])  # Requires version field check
+counter.save(update_fields=['value'])  # 需要版本字段检查
 ```
 
-### Double-Checked Locking
+### 双重检查锁定
 
 ```java
-// Wrong implementation (visibility issue)
+// 错误实现（可见性问题）
 if (instance == null) {
     synchronized (lock) {
         if (instance == null) {
@@ -54,69 +54,69 @@ if (instance == null) {
     }
 }
 
-// Correct implementation (volatile)
+// 正确实现（volatile）
 private volatile Singleton instance;
 ```
 
 ---
 
-## 2. Concurrency Primitive Selection
+## 2. 并发原语选择
 
-### Lock Types
+### 锁类型
 
-| Type | Use Case | Notes |
+| 类型 | 适用场景 | 注意事项 |
 |------|----------|----------|
-| Mutex | Mutually exclusive access to single resource | Avoid deadlock |
-| RLock | Reentrant lock | Same thread can acquire multiple times |
-| Semaphore | Limit concurrent count | Pay attention to release order |
-| ReadWriteLock | More reads than writes | Avoid writer starvation |
-| SpinLock | Short wait times | High CPU consumption |
+| Mutex | 单个资源的互斥访问 | 避免死锁 |
+| RLock | 可重入锁 | 同一线程可多次获取 |
+| Semaphore | 限制并发数 | 注意释放顺序 |
+| ReadWriteLock | 读多写少 | 避免写者饥饿 |
+| SpinLock | 短时间等待 | CPU 消耗高 |
 
-### Atomic Operations
+### 原子操作
 
 ```python
 import threading
 
-# Use atomic operations instead of locks
+# 使用原子操作代替锁
 counter = threading.AtomicLong(0)
 counter.incrementAndGet()
 
-# Lock-free counting
+# 无锁计数
 from itertools import count
 seq = count()
-next(seq)  # Atomic increment
+next(seq)  # 原子递增
 ```
 
-### Thread-Safe Collections
+### 线程安全集合
 
 ```python
 from queue import Queue
 from concurrent.futures import ThreadPoolExecutor
 
-# Thread-safe queue
+# 线程安全队列
 queue = Queue()
 queue.put(item)
 item = queue.get()
 
-# Lists are not thread-safe
+# 列表不是线程安全的
 items = []
-items.append(item)  # Data may be lost under multi-threading
+items.append(item)  # 多线程下可能丢失数据
 ```
 
 ---
 
-## 3. Database Concurrency
+## 3. 数据库并发
 
-### Transaction Isolation Levels
+### 事务隔离级别
 
-| Isolation Level | Dirty Read | Non-repeatable Read | Phantom Read |
+| 隔离级别 | 脏读 | 不可重复读 | 幻读 |
 |----------|------|-----------|------|
-| Read Uncommitted | Yes | Yes | Yes |
-| Read Committed | No | Yes | Yes |
-| Repeatable Read | No | No | Yes |
-| Serializable | No | No | No |
+| Read Uncommitted | 是 | 是 | 是 |
+| Read Committed | 否 | 是 | 是 |
+| Repeatable Read | 否 | 否 | 是 |
+| Serializable | 否 | 否 | 否 |
 
-### Pessimistic Locking
+### 悲观锁
 
 ```python
 # SELECT FOR UPDATE
@@ -126,31 +126,31 @@ with transaction.atomic():
     account.save()
 ```
 
-### Optimistic Locking
+### 乐观锁
 
 ```python
-# Version number check
+# 版本号检查
 account = Account.objects.get(user=user)
 account.balance -= amount
 account.version += 1
 
 rows = Account.objects.filter(
     id=account.id,
-    version=account.version - 1  # Check version
+    version=account.version - 1  # 检查版本
 ).update(
     balance=account.balance,
     version=account.version
 )
 
 if rows == 0:
-    raise ConcurrentModificationError("Data has been modified")
+    raise ConcurrentModificationError("数据已被修改")
 ```
 
 ---
 
-## 4. Distributed Concurrency
+## 4. 分布式并发
 
-### Distributed Lock
+### 分布式锁
 
 ```python
 import redis
@@ -158,101 +158,101 @@ from redis.lock import Lock
 
 client = redis.Redis()
 
-# Distributed lock with timeout
+# 带超时的分布式锁
 lock = client.lock('resource_name', timeout=30)
 if lock.acquire(blocking=True, timeout=10):
     try:
-        # Critical section operation
+        # 临界区操作
         pass
     finally:
         lock.release()
 ```
 
-### Idempotency Design
+### 幂等性设计
 
 ```python
 def process_order(order_id: str):
-    # Use unique key to guarantee idempotency
+    # 使用唯一键保证幂等性
     with redis.lock(f'order:{order_id}'):
         order = Order.objects.get(id=order_id)
         if order.status == 'processed':
-            return  # Already processed, return directly
+            return  # 已处理，直接返回
 
-        # Process order
+        # 处理订单
         order.status = 'processed'
         order.save()
 ```
 
 ---
 
-## 5. Deadlock Prevention
+## 5. 死锁预防
 
-### Four Necessary Conditions for Deadlock
+### 死锁的四个必要条件
 
-1. Mutual exclusion
-2. Hold and wait
-3. No preemption
-4. Circular wait
+1. 互斥
+2. 持有并等待
+3. 不可抢占
+4. 循环等待
 
-### Prevention Strategies
+### 预防策略
 
 ```python
-# Acquire locks in fixed order
+# 按固定顺序获取锁
 def transfer(from_account, to_account, amount):
     accounts = sorted([from_account, to_account], key=lambda a: a.id)
     with lock(accounts[0]), lock(accounts[1]):
-        # Transfer operation
+        # 转账操作
         pass
 
-# Use timeout
+# 使用超时
 lock.acquire(timeout=5)
 
-# Avoid nested locks
-# Refactor code to reduce lock nesting levels
+# 避免嵌套锁
+# 重构代码以减少锁嵌套层级
 ```
 
 ---
 
-## 6. Concurrency Detection Checklist
+## 6. 并发检测清单
 
-### Static Checks
-
-```
-Are shared variables synchronized?
-Are check-then-act patterns atomic?
-Are read-modify-write operations locked?
-Is lock acquisition order consistent?
-Are there any lock leaks (acquired but not released)?
-Are locks released in exception handling?
-```
-
-### Runtime Checks
+### 静态检查
 
 ```
-Concurrency test coverage?
-Stress test verification?
-Using thread detection tools (ThreadSanitizer)?
-Deadlock detection tools (JConsole, pprof)?
+共享变量是否同步？
+检查-然后-执行模式是否原子？
+读取-修改-写入操作是否加锁？
+锁获取顺序是否一致？
+是否存在锁泄漏（获取但未释放）？
+异常处理中是否释放锁？
+```
+
+### 运行时检查
+
+```
+并发测试覆盖？
+压力测试验证？
+使用线程检测工具（ThreadSanitizer）？
+死锁检测工具（JConsole、pprof）？
 ```
 
 ---
 
-## 7. Common Pitfalls
+## 7. 常见陷阱
 
-### Lazy Initialization
+### 延迟初始化
 
 ```python
-# Not thread-safe
+# 非线程安全
 class Singleton:
     _instance = None
 
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
-            cls._instance = cls()  # Multiple threads may create multiple instances
+            cls._instance = cls()  # 多个线程可能创建多个实例
         return cls._instance
 
-# Thread-safe
+# 线程安全
 import threading
 
 class Singleton:
@@ -268,21 +268,21 @@ class Singleton:
         return cls._instance
 ```
 
-### Publication-Escape
+### 发布-逃逸
 
 ```java
-// this escape
+// this 逃逸
 public class Example {
     public Example() {
-        new Thread(() -> use(this)).start();  // this published before construction completes
+        new Thread(() -> use(this)).start();  // 构造完成前 this 已发布
     }
 }
 
-// Safe publication
+// 安全发布
 public class Example {
     public static Example create() {
         Example e = new Example();
-        // Publish after construction completes
+        // 构造完成后发布
         register(e);
         return e;
     }
@@ -291,7 +291,7 @@ public class Example {
 
 ---
 
-## References
+## 参考
 
-- [edge-cases.md](edge-cases.md) — Edge case handling
-- [../commands/correctness.md](../commands/correctness.md) — Correctness review command
+- [edge-cases.md](edge-cases.md) —— 边界情况处理
+- [../commands/correctness.md](../commands/correctness.md) —— 正确性审查命令

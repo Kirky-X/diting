@@ -1,9 +1,9 @@
-# Backend Performance Optimization Reference
+# 后端性能优化参考
 
-> **Scope**: Concrete code patterns for backend optimization — DB indexing, caching, connection pools, async processing.  
-> For metrics, thresholds, and bottleneck identification workflow see [performance-engineer-guide.md](performance-engineer-guide.md).
+> **范围**：后端优化的具体代码模式 —— 数据库索引、缓存、连接池、异步处理。  
+> 指标、阈值和瓶颈识别工作流见 [performance-engineer-guide.md](performance-engineer-guide.md)。
 
-## Database Optimization
+## 数据库优化
 
 ```sql
 CREATE INDEX idx_orders_user_date 
@@ -16,7 +16,7 @@ ORDER BY created_at DESC
 LIMIT 20;
 ```
 
-## Caching Strategy
+## 缓存策略
 
 ```python
 import redis
@@ -40,7 +40,7 @@ for user_id in user_ids:
 results = pipe.execute()
 ```
 
-## Connection Pool Configuration
+## 连接池配置
 
 ```python
 from sqlalchemy import create_engine
@@ -54,7 +54,7 @@ engine = create_engine(
 )
 ```
 
-## Async Processing
+## 异步处理
 
 ```python
 from celery import Celery
@@ -70,7 +70,7 @@ def process_order(self, order_id):
         self.retry(exc=e, countdown=60)
 ```
 
-## Database Query Analysis
+## 数据库查询分析
 
 ```sql
 SET GLOBAL slow_query_log = 'ON';

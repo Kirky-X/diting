@@ -1,30 +1,26 @@
-# Agent Code Review — 12-Factor Agents Audit
+# Agent 代码审查 —— 12-Factor Agents 审计
 
-Agent code review mode — audit LLM agent code against the 12-factor agents
-architecture principles.
+Agent 代码审查模式 —— 按 12-factor agents 架构原则审计 LLM agent 代码。
 
-## Usage
+## 用法
 
 ```bash
 review agent [target-path]
 ```
 
-## Scope & Overlap
+## 范围与重叠
 
-This dimension audits LLM agent code against the 12-factor agents architecture
-principles. It is **non-overlapping** with the general-purpose dimensions
-(security / performance / quality / architecture / correctness / …): those
-check generic software properties, none of them carry any agent-specific
-check. `agent` checks agent-specific architectural and reliability patterns —
-control-flow ownership, prompt ownership, context serialization, intent
-dispatch, error compaction, human-as-tool, state unification. If a finding
-would apply equally to non-agent code, route it to the general dimension
-instead; do not double-report here.
+本维度按 12-factor agents 架构原则审计 LLM agent 代码。它与通用维度
+（security / performance / quality / architecture / correctness / …）
+**不重叠**：那些检查通用软件属性，都不含 agent 专属检查。`agent` 检查
+agent 专属的架构和可靠性模式 —— 控制流所有权、prompt 所有权、context
+序列化、intent 分发、错误压缩、人即工具、状态统一。如果某个发现项
+对非 agent 代码同样适用，路由到通用维度；不要在此重复报告。
 
-**Activation gate**: apply only when the target imports an agent framework
-(`langgraph` / `crewai` / `autogen` / `llama_index.agent` / OpenAI Agents SDK
-/ equivalent) or hand-rolls an LLM loop (`while True` + LLM call + tool
-dispatch). Skip silently for non-agent code — do not force-fit.
+**激活门槛**：仅当目标导入了 agent 框架
+（`langgraph` / `crewai` / `autogen` / `llama_index.agent` / OpenAI Agents SDK
+/ 等价物）或手写 LLM 循环（`while True` + LLM 调用 + 工具分发）时才应用。
+对非 agent 代码静默跳过 —— 不要强行套用。
 
 ## 检测方法
 

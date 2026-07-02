@@ -1,45 +1,37 @@
-Review diffs for unnecessary complexity. One line per finding: location, what
-to cut, what replaces it. The diff's best outcome is getting shorter.
+审查 diff 中的不必要复杂度。每个发现一行：位置、要削减什么、用什么替代。diff 的最佳结果是变得更短。
 
-## Format
+## 格式
 
-`L<line>: <tag> <what>. <replacement>.`, or `<file>:L<line>: ...` for
-multi-file diffs.
+`L<行号>: <标签> <什么>. <替代>.`，或多文件 diff 时 `<文件>:L<行号>: ...`。
 
-Tags:
+标签：
 
-- `delete:` dead code, unused flexibility, speculative feature. Replacement: nothing.
-- `stdlib:` hand-rolled thing the standard library ships. Name the function.
-- `native:` dependency or code doing what the platform already does. Name the feature.
-- `yagni:` abstraction with one implementation, config nobody sets, layer with one caller.
-- `shrink:` same logic, fewer lines. Show the shorter form.
+- `delete:` 死代码、未使用的灵活性、投机性功能。替代：无。
+- `stdlib:` 标准库已有的手写东西。命名函数。
+- `native:` 依赖或代码做了平台已做的事。命名特性。
+- `yagni:` 单一实现的抽象、无人设置的配置、单一调用方的层。
+- `shrink:` 相同逻辑，更少行。展示更短形式。
 
-## Examples
+## 示例
 
-❌ "This EmailValidator class might be more complex than necessary, have you
-considered whether all these validation rules are needed at this stage?"
+❌ "这个 EmailValidator 类可能比必要的更复杂，你考虑过在这个阶段是否需要所有这些验证规则吗？"
 
-✅ `L12-38: stdlib: 27-line validator class. "@" in email, 1 line, real validation is the confirmation mail.`
+✅ `L12-38: stdlib: 27 行验证器类。email 中有 "@"，1 行，真正的验证是确认邮件。`
 
-✅ `L4: native: moment.js imported for one format call. Intl.DateTimeFormat, 0 deps.`
+✅ `L4: native: moment.js 仅为一次格式化调用导入。Intl.DateTimeFormat，0 依赖。`
 
-✅ `repo.py:L88: yagni: AbstractRepository with one implementation. Inline it until a second one exists.`
+✅ `repo.py:L88: yagni: 单一实现的 AbstractRepository。内联它直到第二个实现出现。`
 
-✅ `L52-71: delete: retry wrapper around an idempotent local call. Nothing replaces it.`
+✅ `L52-71: delete: 幂等本地调用周围的重试包装器。无替代。`
 
-✅ `L30-44: shrink: manual loop builds dict. dict(zip(keys, values)), 1 line.`
+✅ `L30-44: shrink: 手动循环构建 dict。dict(zip(keys, values))，1 行。`
 
-## Scoring
+## 评分
 
-End with the only metric that matters: `net: -<N> lines possible.`
+以唯一重要的指标结束：`净: -<N> 行可能。`
 
-If there is nothing to cut, say `Lean already. Ship.` and stop.
+如果无可削减，说 `已经精简。交付。` 并停止。
 
-## Boundaries
+## 边界
 
-Scope: over-engineering and complexity only. Correctness bugs, security holes,
-and performance are explicitly out of scope. Route them to a normal review
-pass, not this one. A single smoke test or `assert`-based
-self-check is the simplicity-lens minimum, not bloat, never flag it for deletion.
-Does not apply the fixes, only lists them.
-"stop simplify-review" or "normal mode": revert to verbose review style.
+范围：仅过度工程和复杂度。正确性 bug、安全漏洞和性能明确不在范围内。将它们路由到正常审查流程，而非这个。单个冒烟测试或基于 `assert` 的自检是简化视角的最低要求，不是臃肿，永不标记它为删除。不应用修复，仅列出。"stop simplify-review" 或 "normal mode"：恢复到详细审查风格。

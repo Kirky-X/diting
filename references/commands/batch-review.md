@@ -1,22 +1,22 @@
-# Batch Review
+# 批量审查
 
-Batch review multiple files.
+批量审查多个文件。
 
-## Usage
+## 用法
 
 ```bash
 review batch ./src ./tests
 review batch --pattern "**/*.ts"
 ```
 
-## Review Method
+## 审查方法
 
-1. File-by-file review
-2. Cross-reference check
-3. Dependency analysis
+1. 逐文件审查
+2. 交叉引用检查
+3. 依赖分析
 
-## Output
+## 输出
 
-- Issues listed by file
-- Grouped by severity
-- Overall assessment
+- 按文件列出问题
+- 按严重度分组
+- 总体评估

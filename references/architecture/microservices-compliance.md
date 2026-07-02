@@ -1,237 +1,237 @@
-# Microservices Architecture Compliance
+# 微服务架构合规
 
-> **Scope**: Rules specific to microservices deployments.  
-> General quality attributes (coupling metrics, reliability patterns) are in [system-architecture.md](system-architecture.md) and apply here too — this document focuses on what's *unique* to microservices.
+> **范围**：微服务部署专属规则。  
+> 通用质量属性（耦合指标、可靠性模式）见 [system-architecture.md](system-architecture.md)，此处同样适用 —— 本文档聚焦微服务*独有*的内容。
 
-## Core Principles
+## 核心原则
 
-### 1. Single Responsibility per Service
+### 1. 每服务单一职责
 
-**Guidelines**
-- Each service owns one business capability
-- Service boundaries align with business domains
-- Services are independently deployable
+**指南**
+- 每个服务拥有一个业务能力
+- 服务边界与业务领域对齐
+- 服务可独立部署
 
-**Compliance Check**
+**合规检查**
 ```
-[ ] Service has clear business purpose
-[ ] Service can be developed independently
-[ ] Service can be deployed independently
-[ ] Service can scale independently
+[ ] 服务有清晰业务目的
+[ ] 服务可独立开发
+[ ] 服务可独立部署
+[ ] 服务可独立扩展
 ```
 
-### 2. Loose Coupling
+### 2. 松耦合
 
-**Metrics**
-| Metric | Target | Description |
+**指标**
+| 指标 | 目标 | 描述 |
 |--------|--------|-------------|
-| Service Dependencies | < 5 | Direct dependencies per service |
-| API Stability | > 95% | Interface change frequency |
-| Deployment Independence | Yes | Can deploy without coordination |
+| 服务依赖数 | < 5 | 每服务直接依赖 |
+| API 稳定性 | > 95% | 接口变更频率 |
+| 部署独立性 | 是 | 可无需协调即部署 |
 
-**Anti-Patterns**
-- Distributed Monolith (services tightly coupled)
-- Chatty Services (excessive inter-service calls)
-- Shared Database (database-level coupling)
+**反模式**
+- 分布式单体（服务紧耦合）
+- 唠叨服务（过多服务间调用）
+- 共享数据库（数据库级耦合）
 
-### 3. High Cohesion
+### 3. 高内聚
 
-**Guidelines**
-- Related functionality grouped within service
-- Clear service boundaries
-- Minimal cross-service transactions
+**指南**
+- 相关功能聚合在服务内
+- 清晰的服务边界
+- 最小化跨服务事务
 
-**Cohesion Indicators**
+**内聚指标**
 ```
-Good Cohesion:
-- User service handles all user-related operations
-- Order service owns complete order lifecycle
+良好内聚：
+- 用户服务处理所有用户相关操作
+- 订单服务拥有完整订单生命周期
 
-Poor Cohesion:
-- User service handles users AND notifications
-- Order service depends on multiple other services for basic operations
+不良内聚：
+- 用户服务既处理用户又处理通知
+- 订单服务基础操作依赖多个其他服务
 ```
 
-## Service Communication
+## 服务通信
 
-| Style | Mechanism | Pros | Cons |
+| 风格 | 机制 | 优点 | 缺点 |
 |-------|-----------|------|------|
-| Sync | REST/HTTP | Simple, debuggable, public-API friendly | Tight coupling, failure propagation, no retry |
-| Sync | gRPC | High perf, strong typing, bidirectional streaming | Complex setup, less readable, needs protobuf |
-| Async | Message Queue | Loose coupling, built-in retry, load leveling | Eventual consistency, harder debugging, ordering |
-| Async | Event Streaming | Event sourcing, replay, real-time | Infra complexity, event versioning |
+| 同步 | REST/HTTP | 简单、可调试、对公开 API 友好 | 紧耦合、失败传播、无重试 |
+| 同步 | gRPC | 高性能、强类型、双向流 | 配置复杂、可读性差、需 protobuf |
+| 异步 | 消息队列 | 松耦合、内置重试、负载均衡 | 最终一致、调试难、顺序问题 |
+| 异步 | 事件流 | 事件溯源、重放、实时 | 基础设施复杂、事件版本化 |
 
-### Communication Patterns
+### 通信模式
 
-| Pattern | Use Case | Example |
+| 模式 | 适用场景 | 示例 |
 |---------|----------|---------|
-| Request-Response | Simple queries | GET /users/123 |
-| Fire-and-Forget | Notifications | Send email |
-| Publish-Subscribe | Event propagation | Order created |
-| Saga | Distributed transactions | Order + Payment + Inventory |
+| 请求-响应 | 简单查询 | GET /users/123 |
+| 即发即忘 | 通知 | 发送邮件 |
+| 发布-订阅 | 事件传播 | 订单已创建 |
+| Saga | 分布式事务 | 订单 + 支付 + 库存 |
 
-## Data Management
+## 数据管理
 
-### Database per Service
+### 每服务一库
 
-**Principles**
-- Each service owns its data
-- No direct database access across services
-- Data consistency through events
+**原则**
+- 每个服务拥有自己的数据
+- 服务间不直接访问数据库
+- 通过事件保证数据一致性
 
-**Compliance Check**
+**合规检查**
 ```
-[ ] No shared database between services
-[ ] No direct table access from other services
-[ ] Data replication through events
-[ ] Each service manages its schema
-```
-
-### Data Consistency Patterns
-
-**Saga Pattern**
-```
-Order Service -> OrderCreated
-  -> Payment Service -> PaymentProcessed
-    -> Inventory Service -> InventoryReserved
-      -> Order Service -> OrderConfirmed
+[ ] 服务间无共享数据库
+[ ] 其他服务不直接访问表
+[ ] 通过事件复制数据
+[ ] 每个服务管理自己的 schema
 ```
 
-**Compensation**
-```
-If any step fails:
-  -> Trigger compensating transactions
-  -> Roll back previous operations
-```
+### 数据一致性模式
 
-### CQRS (Command Query Responsibility Segregation)
-
-**When to Use**
-- Different read/write models
-- Complex queries across data
-- Performance optimization needed
-
-**Structure**
+**Saga 模式**
 ```
-Write Side: Commands -> Events -> Write DB
-Read Side: Events -> Projections -> Read DB
+订单服务 -> OrderCreated
+  -> 支付服务 -> PaymentProcessed
+    -> 库存服务 -> InventoryReserved
+      -> 订单服务 -> OrderConfirmed
 ```
 
-## Service Discovery
-
-### Patterns
-
-**Client-Side Discovery**
+**补偿**
 ```
-Client -> Service Registry -> Available Instances
-Client -> Direct call to instance
+任何步骤失败时：
+  -> 触发补偿事务
+  -> 回滚之前的操作
 ```
 
-**Server-Side Discovery**
-```
-Client -> Load Balancer -> Service Instance
-```
+### CQRS（命令查询职责分离）
 
-### Health Checks
+**何时使用**
+- 不同的读写模型
+- 跨数据复杂查询
+- 需要性能优化
 
-**Requirements**
+**结构**
 ```
-[ ] Health endpoint exposed (/health)
-[ ] Liveness probe implemented
-[ ] Readiness probe implemented
-[ ] Graceful shutdown supported
+写侧：命令 -> 事件 -> 写库
+读侧：事件 -> 投影 -> 读库
 ```
 
-## API Gateway Pattern
+## 服务发现
 
-### Responsibilities
+### 模式
+
+**客户端发现**
+```
+客户端 -> 服务注册表 -> 可用实例
+客户端 -> 直接调用实例
+```
+
+**服务端发现**
+```
+客户端 -> 负载均衡器 -> 服务实例
+```
+
+### 健康检查
+
+**要求**
+```
+[ ] 暴露健康端点（/health）
+[ ] 实现 liveness 探针
+[ ] 实现 readiness 探针
+[ ] 支持优雅关闭
+```
+
+## API 网关模式
+
+### 职责
 
 ```mermaid
 flowchart TD
-    subgraph GW["API Gateway"]
-        A1["Authentication"]
-        A2["Rate Limiting"]
-        A3["Request Routing"]
-        A4["Response Aggregation"]
-        A5["Protocol Translation"]
-        A6["Circuit Breaking"]
+    subgraph GW["API 网关"]
+        A1["认证"]
+        A2["限流"]
+        A3["请求路由"]
+        A4["响应聚合"]
+        A5["协议转换"]
+        A6["断路"]
     end
-    GW --> SA["Service A"]
-    GW --> SB["Service B"]
-    GW --> SC["Service C"]
+    GW --> SA["服务 A"]
+    GW --> SB["服务 B"]
+    GW --> SC["服务 C"]
 ```
 
-### Gateway Checklist
-- [ ] Single entry point for clients
-- [ ] Cross-cutting concerns handled
-- [ ] Service routing configured
-- [ ] Rate limiting implemented
-- [ ] Authentication/Authorization enforced
+### 网关清单
+- [ ] 客户端单一入口
+- [ ] 横切关注点已处理
+- [ ] 服务路由已配置
+- [ ] 实现限流
+- [ ] 强制认证/授权
 
-## Resilience Patterns
+## 弹性模式
 
-### Circuit Breaker
+### 断路器
 
-**States**
+**状态**
 ```mermaid
 stateDiagram-v2
     [*] --> Closed
-    Closed --> Open : failures exceed threshold
-    Open --> HalfOpen : timeout
-    HalfOpen --> Closed : success
-    HalfOpen --> Open : failure
+    Closed --> Open : 失败超过阈值
+    Open --> HalfOpen : 超时
+    HalfOpen --> Closed : 成功
+    HalfOpen --> Open : 失败
 ```
 
-**Configuration**
-| Parameter | Typical Value |
+**配置**
+| 参数 | 典型值 |
 |-----------|---------------|
-| Failure Threshold | 5 failures |
-| Open Timeout | 30 seconds |
-| Half-Open Requests | 3 |
+| 失败阈值 | 5 次失败 |
+| Open 超时 | 30 秒 |
+| Half-Open 请求数 | 3 |
 
-### Retry with Exponential Backoff
+### 指数退避重试
 
-`delay = base * 2^attempt`; cap retries (e.g., 3); re-raise on final attempt. Combine with jitter to avoid thundering herd.
+`delay = base * 2^attempt`；限制重试次数（如 3 次）；最后一次重新抛出。结合 jitter 避免惊群。
 
-### Bulkhead Isolation
+### 舱壁隔离
 
-**Pattern**
+**模式**
 ```mermaid
 flowchart TD
-    SA["Service A"]
-    SA --> TP1["Thread Pool 1 (for Service B calls)"]
-    SA --> TP2["Thread Pool 2 (for Service C calls)"]
-    SA --> TP3["Thread Pool 3 (for async tasks)"]
+    SA["服务 A"]
+    SA --> TP1["线程池 1（服务 B 调用）"]
+    SA --> TP2["线程池 2（服务 C 调用）"]
+    SA --> TP3["线程池 3（异步任务）"]
 ```
 
-**Benefit**: Failure in one pool doesn't affect others
+**收益**：一个池的失败不影响其他池
 
-## Observability
+## 可观测性
 
-### Three Pillars
+### 三大支柱
 
-| Pillar | Key practices |
+| 支柱 | 关键实践 |
 |--------|---------------|
-| Logs | Structured (JSON), correlation IDs, appropriate levels, PII masked |
-| Metrics | Request/error rate, latency percentiles, resource utilization |
-| Traces | Distributed tracing, spans at service boundaries, context propagation, sampling |
+| 日志 | 结构化（JSON）、关联 ID、适当级别、PII 脱敏 |
+| 指标 | 请求/错误率、延迟百分位、资源利用率 |
+| 追踪 | 分布式追踪、服务边界 span、上下文传播、采样 |
 
-### Health Indicators
+### 健康指标
 
-| Indicator | Description | Threshold |
+| 指标 | 描述 | 阈值 |
 |-----------|-------------|-----------|
-| Error Rate | Failed requests / Total | < 1% |
-| Latency P99 | 99th percentile response time | < 1s |
-| Saturation | Resource usage | < 80% |
-| Availability | Uptime percentage | > 99.9% |
+| 错误率 | 失败请求 / 总请求 | < 1% |
+| 延迟 P99 | 第 99 百分位响应时间 | < 1s |
+| 饱和度 | 资源使用率 | < 80% |
+| 可用性 | 正常运行时间百分比 | > 99.9% |
 
-## Deployment
+## 部署
 
-### Containerization
+### 容器化
 
-**Dockerfile Best Practices**
+**Dockerfile 最佳实践**
 ```dockerfile
-# Multi-stage build
+# 多阶段构建
 FROM builder AS build
 COPY . .
 RUN build
@@ -241,58 +241,58 @@ COPY --from=build /app/dist /app
 CMD ["./start"]
 ```
 
-**Checklist**
-- [ ] Multi-stage builds used
-- [ ] Minimal base image
-- [ ] No secrets in image
-- [ ] Health check defined
+**清单**
+- [ ] 使用多阶段构建
+- [ ] 最小基础镜像
+- [ ] 镜像中无密钥
+- [ ] 定义健康检查
 
-### Kubernetes Deployment
+### Kubernetes 部署
 
-**Requirements**
+**要求**
 ```
-[ ] Resource limits defined
-[ ] Liveness probe configured
-[ ] Readiness probe configured
-[ ] ConfigMap for configuration
-[ ] Secret for sensitive data
-[ ] Horizontal Pod Autoscaler
+[ ] 定义资源限制
+[ ] 配置 liveness 探针
+[ ] 配置 readiness 探针
+[ ] ConfigMap 管理配置
+[ ] Secret 管理敏感数据
+[ ] 水平 Pod 自动伸缩
 ```
 
-## Compliance Checklist
+## 合规清单
 
-### Architecture
-- [ ] Services are independently deployable
-- [ ] Clear service boundaries defined
-- [ ] No distributed monolith patterns
-- [ ] API Gateway implemented
+### 架构
+- [ ] 服务可独立部署
+- [ ] 定义清晰的服务边界
+- [ ] 无分布式单体模式
+- [ ] 实现 API 网关
 
-### Communication
-- [ ] Appropriate communication patterns used
-- [ ] Circuit breakers implemented
-- [ ] Retry logic with backoff
-- [ ] Timeout configurations appropriate
+### 通信
+- [ ] 使用适当的通信模式
+- [ ] 实现断路器
+- [ ] 带退避的重试逻辑
+- [ ] 超时配置适当
 
-### Data
-- [ ] Database per service
-- [ ] No shared database
-- [ ] Event-driven consistency
-- [ ] CQRS where appropriate
+### 数据
+- [ ] 每服务一库
+- [ ] 无共享数据库
+- [ ] 事件驱动一致性
+- [ ] 适当处使用 CQRS
 
-### Resilience
-- [ ] Circuit breakers configured
-- [ ] Bulkhead isolation implemented
-- [ ] Graceful degradation supported
-- [ ] Health checks exposed
+### 弹性
+- [ ] 配置断路器
+- [ ] 实现舱壁隔离
+- [ ] 支持优雅降级
+- [ ] 暴露健康检查
 
-### Observability
-- [ ] Structured logging
-- [ ] Metrics collection
-- [ ] Distributed tracing
-- [ ] Alerting configured
+### 可观测性
+- [ ] 结构化日志
+- [ ] 指标采集
+- [ ] 分布式追踪
+- [ ] 配置告警
 
-### Security
-- [ ] Service-to-service authentication
-- [ ] API Gateway security
-- [ ] Secret management
-- [ ] Network policies
+### 安全
+- [ ] 服务间认证
+- [ ] API 网关安全
+- [ ] 密钥管理
+- [ ] 网络策略

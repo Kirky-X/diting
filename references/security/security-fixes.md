@@ -1,27 +1,27 @@
-# Security Issues and Design Pattern Solutions
+# 安全问题与设计模式解决方案
 
 > 安全修复策略：注入攻击与认证授权问题。详细修复（数据保护/加密/其他安全）详见 [security-fixes-catalog.md](security-fixes-catalog.md)。
 
-## Injection Attacks
+## 注入攻击
 
-### SQL Injection
+### SQL 注入
 
-**Problematic Code**:
+**问题代码**：
 ```java
-// DANGEROUS! Direct SQL concatenation
+// 危险！直接 SQL 拼接
 String query = "SELECT * FROM users WHERE id = " + userId;
 Statement stmt = connection.createStatement();
 ResultSet rs = stmt.executeQuery(query);
 ```
 
-**Solution: Parameterized Queries + Decorator Pattern**
+**解决方案：参数化查询 + 装饰器模式**
 ```java
-// Use parameterized queries
+// 使用参数化查询
 String query = "SELECT * FROM users WHERE id = ?";
 PreparedStatement pstmt = connection.prepareStatement(query);
 pstmt.setString(1, userId);
 
-// Or use Decorator pattern to add SQL injection detection
+// 或用装饰器模式添加 SQL 注入检测
 public class SqlInjectionDetector extends SecurityDecorator {
     private static final Pattern SQL_PATTERN = Pattern.compile(
         "(?i)(union|select|insert|update|delete|drop|create|alter|exec|execute)"
@@ -30,31 +30,31 @@ public class SqlInjectionDetector extends SecurityDecorator {
     @Override
     public String execute(String sql) {
         if (SQL_PATTERN.matcher(sql).find()) {
-            throw new SecurityException("Potential SQL injection detected");
+            throw new SecurityException("检测到潜在 SQL 注入");
         }
         return wrapped.execute(sql);
     }
 }
 ```
 
-**Checklist**:
-- [ ] All database queries use parameterized queries
-- [ ] Use ORM framework query builders
-- [ ] Implement strict input validation
-- [ ] Database uses least privilege account
+**清单**：
+- [ ] 所有数据库查询使用参数化查询
+- [ ] 使用 ORM 框架查询构建器
+- [ ] 实施严格输入验证
+- [ ] 数据库使用最小权限账户
 
-### XSS Attack
+### XSS 攻击
 
-**Problematic Code**:
+**问题代码**：
 ```java
-// DANGEROUS! Direct output of user input
+// 危险！直接输出用户输入
 String userInput = request.getParameter("comment");
 response.getWriter().write("<div>" + userInput + "</div>");
 ```
 
-**Solution: Output Encoding + Decorator Pattern**
+**解决方案：输出编码 + 装饰器模式**
 ```java
-// HTML encoding
+// HTML 编码
 public class XssProtectionDecorator extends SecurityDecorator {
     private static final Map<Character, String> HTML_ENTITIES = Map.of(
         '<', "&lt;", '>', "&gt;",
@@ -72,7 +72,7 @@ public class XssProtectionDecorator extends SecurityDecorator {
     }
 }
 
-// Or use existing library
+// 或使用现有库
 import org.owasp.encoder.Encode;
 
 public String sanitizeHtml(String input) {
@@ -80,16 +80,16 @@ public String sanitizeHtml(String input) {
 }
 ```
 
-### Command Injection
+### 命令注入
 
-**Problematic Code**:
+**问题代码**：
 ```java
-// DANGEROUS! Direct execution of user input as command
+// 危险！直接执行用户输入作为命令
 String filename = request.getParameter("file");
 Runtime.getRuntime().exec("cat " + filename);
 ```
 
-**Solution: Whitelist Validation + Strategy Pattern**
+**解决方案：白名单验证 + 策略模式**
 ```java
 public class SafeCommandExecutor {
     private final CommandStrategy strategy;
@@ -99,11 +99,11 @@ public class SafeCommandExecutor {
     }
 
     public CommandResult execute(CommandRequest request) {
-        // Validate filename against whitelist
+        // 用白名单验证文件名
         if (!isAllowedFilename(request.getFilename())) {
-            throw new SecurityException("Filename not allowed");
+            throw new SecurityException("文件名不允许");
         }
-        // Execute using strategy
+        // 用策略执行
         return strategy.execute(buildCommand(request));
     }
 
@@ -114,11 +114,11 @@ public class SafeCommandExecutor {
 }
 ```
 
-## Authentication and Authorization Issues
+## 认证与授权问题
 
-### Weak Password Policy
+### 弱密码策略
 
-**Solution: Strategy Pattern + Validation Decorator**
+**解决方案：策略模式 + 验证装饰器**
 ```java
 public class PasswordPolicyValidator extends SecurityDecorator {
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
@@ -129,7 +129,7 @@ public class PasswordPolicyValidator extends SecurityDecorator {
     public boolean validate(String password) {
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
             throw new SecurityException(
-                "Password must contain: 8+ chars, uppercase, lowercase, number, special char"
+                "密码须包含：8+ 字符、大写、小写、数字、特殊字符"
             );
         }
         return wrapped.validate(password);
@@ -137,9 +137,9 @@ public class PasswordPolicyValidator extends SecurityDecorator {
 }
 ```
 
-### Session Management Issues
+### 会话管理问题
 
-**Solution: Secure Session Management Strategy**
+**解决方案：安全会话管理策略**
 ```java
 public class SecureSessionStrategy implements SessionStrategy {
     @Override
@@ -154,7 +154,7 @@ public class SecureSessionStrategy implements SessionStrategy {
         session.setIpAddress(getClientIp());
         session.setUserAgent(getClientUserAgent());
 
-        // Set security attributes
+        // 设置安全属性
         Cookie cookie = new Cookie("SESSION_ID", sessionId);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
@@ -169,13 +169,13 @@ public class SecureSessionStrategy implements SessionStrategy {
         Session session = sessionStore.get(sessionId);
         if (session == null) return false;
 
-        // Validate IP and User-Agent
+        // 验证 IP 与 User-Agent
         if (!session.getIpAddress().equals(request.getClientIp())) {
             logSecurityEvent("SESSION_HIJACK", session.getUserId());
             return false;
         }
 
-        // Check session expiration
+        // 检查会话过期
         if (session.isExpired(Duration.ofHours(24))) {
             sessionStore.remove(sessionId);
             return false;
@@ -186,9 +186,9 @@ public class SecureSessionStrategy implements SessionStrategy {
 }
 ```
 
-### Privilege Escalation
+### 权限提升
 
-**Solution: Proxy Pattern + Least Privilege Check**
+**解决方案：代理模式 + 最小权限检查**
 ```java
 public class AuthorizationProxy implements SecureResource {
     private final RealSecureResource realResource;
@@ -197,7 +197,7 @@ public class AuthorizationProxy implements SecureResource {
 
     @Override
     public Data access(String userId, String resourceId, String action) {
-        // Check permission
+        // 检查权限
         Permission required = Permission.from(action);
         if (!permissionService.hasPermission(userId, resourceId, required)) {
             auditLogger.logSecurityEvent("PRIVILEGE_VIOLATION",
@@ -205,23 +205,23 @@ public class AuthorizationProxy implements SecureResource {
             throw new AccessDeniedException();
         }
 
-        // Log access
+        // 记录访问
         auditLogger.logAccess(userId, resourceId, action);
 
-        // Execute operation
+        // 执行操作
         return realResource.access(userId, resourceId, action);
     }
 }
 ```
 
-## Security Checklist Quick Reference
+## 安全清单快速参考
 
-| Vulnerability Type | Detection Method | Fix Pattern | Validation Method |
+| 漏洞类型 | 检测方法 | 修复模式 | 验证方法 |
 |----------|----------|----------|----------|
-| SQL Injection | Code review, SAST | Parameterized queries | Penetration testing |
-| XSS | DAST, Code review | Output encoding | Automated scanning |
-| CSRF | Test verification | CSRF Token | Security testing |
-| Authentication Flaw | Code review, Testing | Strong auth strategy | Penetration testing |
-| Sensitive Data Leak | DAST, Manual review | Encryption, Sanitization | Data flow analysis |
-| Access Control Flaw | Code review, Testing | Proxy pattern check | Permission testing |
-| Encryption Flaw | Static analysis | Strategy pattern replacement | Algorithm audit |
+| SQL 注入 | 代码审查、SAST | 参数化查询 | 渗透测试 |
+| XSS | DAST、代码审查 | 输出编码 | 自动化扫描 |
+| CSRF | 测试验证 | CSRF Token | 安全测试 |
+| 认证缺陷 | 代码审查、测试 | 强认证策略 | 渗透测试 |
+| 敏感数据泄露 | DAST、人工审查 | 加密、脱敏 | 数据流分析 |
+| 访问控制缺陷 | 代码审查、测试 | 代理模式检查 | 权限测试 |
+| 加密缺陷 | 静态分析 | 策略模式替换 | 算法审计 |

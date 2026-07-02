@@ -1,28 +1,28 @@
-# Dependency Analysis Guide
+# 依赖分析指南
 
-## Dependency Types
+## 依赖类型
 
-### Direct Dependencies
+### 直接依赖
 
-Declared in project config: `package.json` (`{"express": "^4.18.0"}`), `requirements.txt` (`flask==2.0.0`), `Cargo.toml`, etc.
+在项目配置中声明：`package.json`（`{"express": "^4.18.0"}`）、`requirements.txt`（`flask==2.0.0`）、`Cargo.toml` 等。
 
-### Transitive Dependencies
+### 传递依赖
 
-Dependencies pulled in by direct dependencies:
+由直接依赖引入的依赖：
 
 ```mermaid
 flowchart TD
-    Project["Project"]
-    Project --> Express["express (direct)"]
-    Project --> Lodash["lodash (direct)"]
-    Express --> BP["body-parser (transitive)"]
-    Express --> CP["cookie-parser (transitive)"]
-    Express --> DBG["debug (transitive)"]
+    Project["项目"]
+    Project --> Express["express（直接）"]
+    Project --> Lodash["lodash（直接）"]
+    Express --> BP["body-parser（传递）"]
+    Express --> CP["cookie-parser（传递）"]
+    Express --> DBG["debug（传递）"]
 ```
 
-### Development Dependencies
+### 开发依赖
 
-Dependencies only needed during development:
+仅开发期间需要的依赖：
 
 ```json
 {
@@ -33,91 +33,91 @@ Dependencies only needed during development:
 }
 ```
 
-## Dependency Metrics
+## 依赖指标
 
-### Coupling Analysis
+### 耦合分析
 
-| Metric | Formula | Target |
+| 指标 | 公式 | 目标 |
 |--------|---------|--------|
-| Afferent Coupling (Ca) | Incoming dependencies | Lower is better |
-| Efferent Coupling (Ce) | Outgoing dependencies | Lower is better |
-| Instability (I) | Ce / (Ca + Ce) | 0.0 - 1.0 |
-| Abstractness (A) | Abstract classes / Total | Balance with I |
+| 入向耦合（Ca） | 入向依赖 | 越低越好 |
+| 出向耦合（Ce） | 出向依赖 | 越低越好 |
+| 不稳定度（I） | Ce / (Ca + Ce) | 0.0 - 1.0 |
+| 抽象度（A） | 抽象类 / 总数 | 与 I 平衡 |
 
-### Dependency Distance
+### 依赖距离
 
 ```
-Direct dependency: Distance = 1
-Transitive (1 level): Distance = 2
-Transitive (2 levels): Distance = 3
+直接依赖：距离 = 1
+传递（1 层）：距离 = 2
+传递（2 层）：距离 = 3
 ```
 
-**Risk**: Higher distance = less visibility = more risk
+**风险**：距离越远 = 可见性越低 = 风险越高
 
-## Dependency Issues
+## 依赖问题
 
-### 1. Circular Dependencies
+### 1. 循环依赖
 
-**Detection**
+**检测**
 ```mermaid
 flowchart LR
-    A["Module A"] --> B["Module B"]
-    B --> C["Module C"]
+    A["模块 A"] --> B["模块 B"]
+    B --> C["模块 C"]
     C --> A
 ```
 
-**Problems**
-- Unclear ownership
-- Initialization issues
-- Testing difficulties
-- Deployment complexity
+**问题**
+- 所有权不清
+- 初始化问题
+- 测试困难
+- 部署复杂度
 
-**Solutions**
-- **Dependency Injection**: pass instances as parameters instead of importing
-- **Extract shared dependency**: move the common logic to a third module
-- **Invert dependency**: define an interface in a lower-level module
+**解决方案**
+- **依赖注入**：以参数形式传入实例，而非导入
+- **提取共享依赖**：将公共逻辑移至第三个模块
+- **反转依赖**：在低层模块定义接口
 
 ```python
-# Before: A imports B, B imports A (circular)
-# After: A receives B via DI — no import cycle
+# 之前：A 导入 B，B 导入 A（循环）
+# 之后：A 通过 DI 接收 B —— 无导入环
 class A:
-    def use_b(self, b_instance):  # injected, not imported
+    def use_b(self, b_instance):  # 注入，而非导入
         return b_instance
 ```
 
-### 2. Dependency Hell
+### 2. 依赖地狱
 
-**Symptoms**
-- Conflicting version requirements
-- Diamond dependency problem
-- Version lock
+**症状**
+- 版本需求冲突
+| 菱形依赖问题
+- 版本锁定
 
-**Example Diamond Problem**
+**菱形问题示例**
 ```mermaid
 flowchart TD
-    Project["Project"]
-    Project --> LibA["Library A (needs X v1.0)"]
-    Project --> LibB["Library B (needs X v2.0)"]
-    LibA --> X["X (incompatible versions)"]
+    Project["项目"]
+    Project --> LibA["库 A（需 X v1.0）"]
+    Project --> LibB["库 B（需 X v2.0）"]
+    LibA --> X["X（不兼容版本）"]
     LibB --> X
 ```
 
-**Solutions**
-- Use dependency resolution tools
-- Lock files (package-lock.json, Pipfile.lock)
-- Version ranges carefully managed
+**解决方案**
+- 使用依赖解析工具
+- 锁文件（package-lock.json、Pipfile.lock）
+- 谨慎管理版本范围
 
-### 3. Bloated Dependencies
+### 3. 依赖膨胀
 
-**Detection**
+**检测**
 ```
-[ ] Unused dependencies in project
-[ ] Development dependencies in production
-[ ] Duplicate functionality across dependencies
-[ ] Overly large dependencies
+[ ] 项目中存在未使用的依赖
+[ ] 生产环境包含开发依赖
+[ ] 跨依赖功能重复
+[ ] 依赖过大
 ```
 
-**Analysis Commands**
+**分析命令**
 ```bash
 # npm
 npm ls --depth=0
@@ -132,20 +132,20 @@ cargo tree
 cargo tree --duplicates
 ```
 
-### 4. Outdated Dependencies
+### 4. 过期依赖
 
-**Security Risks**
-- Known vulnerabilities in old versions
-- Missing security patches
-- Deprecated dependencies
+**安全风险**
+- 旧版本的已知漏洞
+- 缺失安全补丁
+- 已弃用依赖
 
-**Analysis**
+**分析**
 ```bash
 # npm audit
 npm audit
 npm audit fix
 
-# pip safety check
+# pip 安全检查
 safety check
 pip-audit
 
@@ -153,50 +153,50 @@ pip-audit
 cargo audit
 ```
 
-## Dependency Health Metrics
+## 依赖健康指标
 
-### Version Health
+### 版本健康
 
-| Status | Description | Action |
+| 状态 | 描述 | 行动 |
 |--------|-------------|--------|
-| Latest | Current version | None |
-| Outdated | Behind latest | Plan update |
-| Deprecated | No longer maintained | Migrate |
-| Vulnerable | Security issues | Update immediately |
+| 最新 | 当前版本 | 无 |
+| 过期 | 落后于最新 | 计划更新 |
+| 已弃用 | 不再维护 | 迁移 |
+| 有漏洞 | 安全问题 | 立即更新 |
 
-### Dependency Freshness
+### 依赖新鲜度
 
 ```
-Freshness Score = (Dependencies at latest) / (Total dependencies) * 100
+新鲜度分数 = （最新依赖数）/（总依赖数）* 100
 
-Target: > 80%
+目标：> 80%
 ```
 
-### License Compliance
+### 许可证合规
 
-**License Categories**
-| Category | Risk Level | Examples |
+**许可证类别**
+| 类别 | 风险等级 | 示例 |
 |----------|------------|----------|
-| Permissive | Low | MIT, Apache 2.0, BSD |
-| Weak Copyleft | Medium | LGPL, MPL |
-| Strong Copyleft | High | GPL, AGPL |
-| Proprietary | Variable | Custom licenses |
+| 宽松 | 低 | MIT、Apache 2.0、BSD |
+| 弱 Copyleft | 中 | LGPL、MPL |
+| 强 Copyleft | 高 | GPL、AGPL |
+| 专有 | 可变 | 自定义许可证 |
 
-**Compliance Check**
+**合规检查**
 ```
-[ ] All licenses identified
-[ ] License compatibility verified
-[ ] Attribution requirements met
-[ ] No prohibited licenses
+[ ] 所有许可证已识别
+[ ] 许可证兼容性已验证
+[ ] 署名要求已满足
+[ ] 无禁止的许可证
 ```
 
-## Dependency Visualization
+## 依赖可视化
 
-### Dependency Graph
+### 依赖图
 
 ```mermaid
 flowchart TD
-    App["Application"]
+    App["应用"]
     App --> Express["Express"]
     App --> Lodash["Lodash"]
     App --> Axios["Axios"]
@@ -206,9 +206,9 @@ flowchart TD
     Axios --> IsStream["Is-Stream"]
 ```
 
-### Dependency Matrix
+### 依赖矩阵
 
-| From \ To | App | Auth | DB | API | Utils |
+| 从 \ 到 | App | Auth | DB | API | Utils |
 |-----------|-----|------|----|-----|-------|
 | App       | -   | 1    | 1  | 1   | 1     |
 | Auth      | 0   | -    | 1  | 0   | 1     |
@@ -216,77 +216,77 @@ flowchart TD
 | API       | 0   | 1    | 1  | -   | 1     |
 | Utils     | 0   | 0    | 0  | 0   | -     |
 
-## Dependency Management Best Practices
+## 依赖管理最佳实践
 
-### 1. Version Pinning
+### 1. 版本锁定
 
-- **Exact** (`4.18.2`): pin critical deps to a known-good version
-- **Patch** (`~4.17.21`): allow patch updates only
-- **Minor** (`^1.4.0`): allow minor updates within same major
-- **Lock files** (`package-lock.json`, `Pipfile.lock`, `Cargo.lock`): commit to VCS, update deliberately
+- **精确**（`4.18.2`）：将关键依赖锁定到已知良好版本
+- **补丁**（`~4.17.21`）：仅允许补丁更新
+- **次版本**（`^1.4.0`）：允许同主版本内的次版本更新
+- **锁文件**（`package-lock.json`、`Pipfile.lock`、`Cargo.lock`）：提交到 VCS，有意识地更新
 
-### 2. Dependency Groups
+### 2. 依赖分组
 
-Group by purpose: `dependencies/{web,database,auth,utils}` (core) vs `dev-dependencies/{testing,linting,building}` (dev only). Keeps blast radius of a dep change bounded to one concern.
+按用途分组：`dependencies/{web,database,auth,utils}`（核心）vs `dev-dependencies/{testing,linting,building}`（仅开发）。使依赖变更的影响范围限定在一个关注点内。
 
-### 3. Regular Maintenance
+### 3. 定期维护
 
-**Schedule**
-| Task | Frequency |
+**计划**
+| 任务 | 频率 |
 |------|-----------|
-| Security audit | Weekly |
-| Update check | Monthly |
-| Major version review | Quarterly |
-| Dependency cleanup | Quarterly |
+| 安全审计 | 每周 |
+| 更新检查 | 每月 |
+| 主版本审查 | 每季度 |
+| 依赖清理 | 每季度 |
 
-### 4. Dependency Decisions
+### 4. 依赖决策
 
-**Before Adding Dependency**
+**添加依赖前**
 ```
-[ ] Is it actively maintained?
-[ ] Is it well-documented?
-[ ] Is the bundle size acceptable?
-[ ] Are there security issues?
-[ ] Is the license compatible?
-[ ] Can it be implemented simply in-house?
+[ ] 是否积极维护？
+[ ] 文档是否良好？
+[ ] 包大小是否可接受？
+[ ] 是否有安全问题？
+[ ] 许可证是否兼容？
+[ ] 是否可在内部简单实现？
 ```
 
-## Dependency Analysis Tools
+## 依赖分析工具
 
-| Ecosystem | Tree / Duplicates | Security | License | Outdated |
+| 生态 | 树 / 重复 | 安全 | 许可证 | 过期 |
 |-----------|-------------------|----------|---------|----------|
-| JS/TS | `npx depcheck`, `npx bundle-analyzer` | `npm audit` | `npx license-checker` | `npm outdated` |
-| Python | `pipdeptree` | `safety check`, `pip-audit` | `pip-licenses` | `pip list --outdated` |
-| Rust | `cargo tree`, `cargo tree --duplicates` | `cargo audit` | (cargo metadata) | `cargo outdated` |
+| JS/TS | `npx depcheck`、`npx bundle-analyzer` | `npm audit` | `npx license-checker` | `npm outdated` |
+| Python | `pipdeptree` | `safety check`、`pip-audit` | `pip-licenses` | `pip list --outdated` |
+| Rust | `cargo tree`、`cargo tree --duplicates` | `cargo audit` | （cargo metadata） | `cargo outdated` |
 
-## Dependency Review Checklist
+## 依赖审查清单
 
-### Security
-- [ ] No known vulnerabilities
-- [ ] Security audit passed
-- [ ] Dependencies from trusted sources
-- [ ] No unnecessary dependencies
+### 安全
+- [ ] 无已知漏洞
+- [ ] 安全审计通过
+- [ ] 依赖来自可信来源
+- [ ] 无不必要的依赖
 
-### Maintenance
-- [ ] Dependencies actively maintained
-- [ ] Compatible with project versions
-- [ ] Update path clear
-- [ ] Migration plan for deprecated
+### 维护
+- [ ] 依赖积极维护
+- [ ] 与项目版本兼容
+- [ ] 更新路径清晰
+- [ ] 已弃用有迁移计划
 
-### Performance
-- [ ] Bundle size acceptable
-- [ ] No duplicate dependencies
-- [ ] Tree-shaking supported
-- [ ] Lazy loading possible
+### 性能
+- [ ] 包大小可接受
+- [ ] 无重复依赖
+- [ ] 支持 tree-shaking
+- [ ] 可懒加载
 
-### Legal
-- [ ] All licenses identified
-- [ ] License compatibility verified
-- [ ] Attribution requirements met
-- [ ] No prohibited licenses
+### 法律
+- [ ] 所有许可证已识别
+- [ ] 许可证兼容性已验证
+- [ ] 署名要求已满足
+- [ ] 无禁止的许可证
 
-### Architecture
-- [ ] No circular dependencies
-- [ ] Clear dependency direction
-- [ ] Appropriate abstraction level
-- [ ] Testability not compromised
+### 架构
+- [ ] 无循环依赖
+- [ ] 依赖方向清晰
+- [ ] 抽象层级适当
+- [ ] 可测试性未受损

@@ -1,18 +1,18 @@
-# Security Auth & Config Examples
+# 安全认证与配置示例
 
 > 认证+配置类安全案例：观察者模式、策略模式、配置管理、配置策略。详见主索引 [examples.md](examples.md)。
 
-## 1. Complete Observer Pattern Implementation
+## 1. 完整观察者模式实现
 
 ```java
-// Security event types
+// 安全事件类型
 enum SecurityEventType {
     LOGIN_SUCCESS, LOGIN_FAILURE,
     UNAUTHORIZED_ACCESS, DATA_BREACH_ATTEMPT,
     CONFIG_CHANGE, PRIVILEGE_ESCALATION
 }
 
-// Security event
+// 安全事件
 public class SecurityEvent {
     private final SecurityEventType type;
     private final String user;
@@ -30,12 +30,12 @@ public class SecurityEvent {
     }
 }
 
-// Security event observer
+// 安全事件观察者
 public interface SecurityObserver {
     void update(SecurityEvent event);
 }
 
-// Event manager
+// 事件管理器
 public class SecurityEventManager {
     private static final SecurityEventManager INSTANCE =
         new SecurityEventManager();
@@ -57,13 +57,13 @@ public class SecurityEventManager {
             try {
                 observer.update(event);
             } catch (Exception e) {
-                System.err.println("Observer failed: " + e.getMessage());
+                System.err.println("观察者执行失败: " + e.getMessage());
             }
         }
     }
 }
 
-// Brute force detection observer
+// 暴力破解检测观察者
 public class BruteForceDetector implements SecurityObserver {
     private final Map<String, List<Instant>> loginAttempts =
         new ConcurrentHashMap<>();
@@ -83,11 +83,11 @@ public class BruteForceDetector implements SecurityObserver {
             attempts.add(Instant.now());
 
             if (attempts.size() >= MAX_ATTEMPTS) {
-                // Trigger account lockout
+                // 触发账户锁定
                 SecurityEvent lockEvent = new SecurityEvent(
                     SecurityEventType.DATA_BREACH_ATTEMPT,
                     user, "BruteForceDetector",
-                    "Multiple failed login attempts detected"
+                    "检测到多次登录失败尝试"
                 );
                 SecurityEventManager.getInstance().notifyObservers(lockEvent);
             }
@@ -96,29 +96,29 @@ public class BruteForceDetector implements SecurityObserver {
 }
 ```
 
-## 2. Strategy Pattern Implementation
+## 2. 策略模式实现
 
 ```java
-// Encryption strategy interface
+// 加密策略接口
 public interface EncryptionStrategy {
     String encrypt(String data);
     String decrypt(String encryptedData);
     String getAlgorithmName();
 }
 
-// AES encryption strategy
+// AES 加密策略
 public class AESEncryptionStrategy implements EncryptionStrategy {
     private static final String ALGORITHM = "AES/GCM/NoPadding";
     private final SecretKey key;
 
     @Override
     public String encrypt(String data) {
-        // Implement AES encryption
+        // 实现 AES 加密
     }
 
     @Override
     public String decrypt(String encryptedData) {
-        // Implement AES decryption
+        // 实现 AES 解密
     }
 
     @Override
@@ -127,18 +127,18 @@ public class AESEncryptionStrategy implements EncryptionStrategy {
     }
 }
 
-// RSA encryption strategy
+// RSA 加密策略
 public class RSAStrategy implements EncryptionStrategy {
     private static final String ALGORITHM = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
 
     @Override
     public String encrypt(String data) {
-        // Implement RSA encryption
+        // 实现 RSA 加密
     }
 
     @Override
     public String decrypt(String encryptedData) {
-        // Implement RSA decryption
+        // 实现 RSA 解密
     }
 
     @Override
@@ -147,7 +147,7 @@ public class RSAStrategy implements EncryptionStrategy {
     }
 }
 
-// Security context using strategy
+// 使用策略的安全上下文
 public class EncryptionContext {
     private EncryptionStrategy strategy;
 
@@ -165,7 +165,7 @@ public class EncryptionContext {
 }
 ```
 
-## 3. Security Configuration Management
+## 3. 安全配置管理
 
 ```java
 public class SecureConfigurationManager {
@@ -204,7 +204,7 @@ public class SecureConfigurationManager {
 
     public void updateConfig(String key, Object value, String adminUser) {
         if (!verifyAdminAccess(adminUser)) {
-            throw new SecurityException("Insufficient privileges");
+            throw new SecurityException("权限不足");
         }
         logConfigChange(adminUser, key, value);
         config.put(key, value);
@@ -216,18 +216,18 @@ public class SecureConfigurationManager {
     }
 
     private void logConfigChange(String user, String key, Object value) {
-        System.out.println("CONFIG_CHANGE: User=" + user +
-                          ", Key=" + key +
-                          ", Value=" + value +
-                          ", Time=" + new Date());
+        System.out.println("配置变更: 用户=" + user +
+                          ", 键=" + key +
+                          ", 值=" + value +
+                          ", 时间=" + new Date());
     }
 }
 ```
 
-## 4. Security Configuration Strategy
+## 4. 安全配置策略
 
 ```java
-// Configuration strategy factory
+// 配置策略工厂
 class SecurityConfigStrategyFactory {
     public static SecurityConfigStrategy getStrategy(String configType) {
         switch (configType) {
@@ -238,12 +238,12 @@ class SecurityConfigStrategyFactory {
             case "password-policy":
                 return new PasswordPolicyUpdateStrategy();
             default:
-                throw new IllegalArgumentException("Unknown config type: " + configType);
+                throw new IllegalArgumentException("未知配置类型: " + configType);
         }
     }
 }
 
-// Configuration strategy interface
+// 配置策略接口
 interface SecurityConfigStrategy {
     void apply(String value);
 }
@@ -251,24 +251,24 @@ interface SecurityConfigStrategy {
 class EncryptionKeyUpdateStrategy implements SecurityConfigStrategy {
     @Override
     public void apply(String value) {
-        System.out.println("Updating encryption key: " + value);
-        // Implement key update logic
+        System.out.println("更新加密密钥: " + value);
+        // 实现密钥更新逻辑
     }
 }
 
 class AccessPolicyUpdateStrategy implements SecurityConfigStrategy {
     @Override
     public void apply(String value) {
-        System.out.println("Updating access policy: " + value);
-        // Implement access policy update logic
+        System.out.println("更新访问策略: " + value);
+        // 实现访问策略更新逻辑
     }
 }
 
 class PasswordPolicyUpdateStrategy implements SecurityConfigStrategy {
     @Override
     public void apply(String value) {
-        System.out.println("Updating password policy: " + value);
-        // Implement password policy update logic
+        System.out.println("更新密码策略: " + value);
+        // 实现密码策略更新逻辑
     }
 }
 ```

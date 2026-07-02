@@ -1,19 +1,19 @@
-# Security Fixes Catalog
+# 安全修复目录
 
 > 安全修复详细目录：数据保护、加密、其他安全问题。修复策略详见 [security-fixes.md](security-fixes.md)。
 
-## Data Protection Issues
+## 数据保护问题
 
-### Sensitive Data Leakage
+### 敏感数据泄露
 
-**Solution: Encryption Decorator**
+**解决方案：加密装饰器**
 ```java
 public class SensitiveDataProtector extends SecurityDecorator {
     private final EncryptionService encryptionService;
 
     @Override
     public Data process(Data input) {
-        // Detect and encrypt sensitive fields
+        // 检测并加密敏感字段
         if (containsSensitiveData(input)) {
             Data protected = input.clone();
             for (Field field : protected.getSensitiveFields()) {
@@ -31,9 +31,9 @@ public class SensitiveDataProtector extends SecurityDecorator {
 }
 ```
 
-### Logging Sensitive Information
+### 日志记录敏感信息
 
-**Solution: Log Sanitization Decorator**
+**解决方案：日志清理装饰器**
 ```java
 public class LogSanitizerDecorator extends SecurityDecorator {
     private static final Set<String> SENSITIVE_FIELDS = Set.of(
@@ -45,7 +45,7 @@ public class LogSanitizerDecorator extends SecurityDecorator {
         Map<String, Object> sanitized = new HashMap<>();
         for (Map.Entry<String, Object> field : entry.getData().entrySet()) {
             if (SENSITIVE_FIELDS.contains(field.getKey().toLowerCase())) {
-                sanitized.put(field.getKey(), "***REDACTED***");
+                sanitized.put(field.getKey(), "***已脱敏***");
             } else {
                 sanitized.put(field.getKey(), field.getValue());
             }
@@ -55,11 +55,11 @@ public class LogSanitizerDecorator extends SecurityDecorator {
 }
 ```
 
-## Encryption Related Issues
+## 加密相关问题
 
-### Weak Encryption Algorithm
+### 弱加密算法
 
-**Solution: Strategy Pattern + Algorithm Whitelist**
+**解决方案：策略模式 + 算法白名单**
 ```java
 public class ApprovedEncryptionStrategies {
     public static final Map<String, EncryptionStrategy> APPROVED = Map.of(
@@ -71,7 +71,7 @@ public class ApprovedEncryptionStrategies {
     public static EncryptionStrategy getStrategy(String algorithm) {
         EncryptionStrategy strategy = APPROVED.get(algorithm);
         if (strategy == null) {
-            throw new SecurityException("Algorithm not approved: " + algorithm);
+            throw new SecurityException("算法未获批准: " + algorithm);
         }
         return strategy;
     }
@@ -82,9 +82,9 @@ public class ApprovedEncryptionStrategies {
 }
 ```
 
-### Key Management Issues
+### 密钥管理问题
 
-**Solution: Key Management Service**
+**解决方案：密钥管理服务**
 ```java
 public class KeyManagementService {
     private final KeyStore keyStore;
@@ -105,18 +105,18 @@ public class KeyManagementService {
 
     public void rotateKey(String keyId) {
         Key newKey = generateKey();
-        // Re-encrypt all data using old key
-        // Update key version
+        // 使用旧密钥重新加密所有数据
+        // 更新密钥版本
         hsm.storeKey(keyId, newKey, KeyVersion.NEXT);
     }
 }
 ```
 
-## Other Security Issues
+## 其他安全问题
 
-### Path Traversal
+### 路径遍历
 
-**Solution: Path Normalization Validation**
+**解决方案：路径规范化验证**
 ```java
 public class PathTraversalProtection extends SecurityDecorator {
     private final String baseDirectory;
@@ -126,16 +126,16 @@ public class PathTraversalProtection extends SecurityDecorator {
         Path requestedPath = Paths.get(userPath).normalize();
         Path basePath = Paths.get(baseDirectory).toAbsolutePath();
 
-        // Ensure path is within baseDirectory
+        // 确保路径在 baseDirectory 范围内
         if (!requestedPath.startsWith(basePath)) {
-            throw new SecurityException("Path traversal attempt: " + userPath);
+            throw new SecurityException("路径遍历尝试: " + userPath);
         }
 
-        // Check symbolic links
+        // 检查符号链接
         if (Files.isSymbolicLink(requestedPath)) {
             Path realPath = Files.readSymbolicLink(requestedPath);
             if (!realPath.startsWith(basePath)) {
-                throw new SecurityException("Symbolic link traversal attempt");
+                throw new SecurityException("符号链接遍历尝试");
             }
         }
 
@@ -144,9 +144,9 @@ public class PathTraversalProtection extends SecurityDecorator {
 }
 ```
 
-### Rate Limiting Bypass
+### 限流绕过
 
-**Solution: Distributed Rate Limiting + Observer Pattern**
+**解决方案：分布式限流 + 观察者模式**
 ```java
 public class RateLimitObserver implements SecurityObserver {
     private final RateLimiter rateLimiter;
@@ -165,9 +165,9 @@ public class RateLimitObserver implements SecurityObserver {
 }
 ```
 
-### Insecure Deserialization
+### 不安全的反序列化
 
-**Solution: Whitelist Validation + Strategy Pattern**
+**解决方案：白名单验证 + 策略模式**
 ```java
 public class SafeDeserializationStrategy implements DeserializationStrategy {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(
@@ -178,7 +178,7 @@ public class SafeDeserializationStrategy implements DeserializationStrategy {
     public <T> T deserialize(byte[] data, Class<T> expectedType) {
         if (!ALLOWED_CLASSES.contains(expectedType)) {
             throw new SecurityException(
-                "Deserialization not allowed for: " + expectedType.getName()
+                "不允许反序列化: " + expectedType.getName()
             );
         }
 

@@ -1,77 +1,75 @@
-# Health Dashboard Guide — Mode 5
+# 健康仪表板指南 — 模式 5
 
-**Purpose:** Produce a cross-dimensional health dashboard for the codebase.
-Every finding must follow the Iron Law: Symptom → Source → Consequence → Remedy.
+**目的：** 为代码库生成跨维度的健康仪表板。
+每条发现必须遵循铁律：Symptom → Source → Consequence → Remedy。
 
 ---
 
-## Analysis Process
+## 分析流程
 
-### Step 1: Run Lightweight Scan Across Four Dimensions
+### 步骤 1：跨四个维度运行轻量级扫描
 
-For each dimension, run an abbreviated scan using the decay-risks definitions
-from `_shared/`. Do NOT read the individual mode guide files — use the abbreviated
-checklists below. Cap each dimension at 3 findings; for Debt: cap at 2 per risk code and 3 across all risk codes.
+对于每个维度，使用 `_shared/` 中的 decay-risks 定义运行简化扫描。
+不要阅读单个模式指南文件 — 使用下方的简化清单。每个维度最多 3 条发现；
+对于 Debt：每个风险代码最多 2 条，所有风险代码合计最多 3 条。
 
-**PR dimension (if changes exist):**
-- Apply Auto Scope Detection (common.md)
-- Scan for R2 (Change Propagation) and R1 (Cognitive Overload) in the diff
+**PR 维度（如果存在变更）：**
+- 应用 Auto Scope Detection（common.md）
+- 在 diff 中扫描 R2（Change Propagation）和 R1（Cognitive Overload）
 
-**Architecture dimension:**
-- Gather codebase context: read top-level structure, entry points, import statements
-- Draw a Mermaid dependency graph (follow standard graph rules from common.md)
-- Scan for R5 (Dependency Disorder): circular deps, upward flows, fan-out > 5
-- INCLUDE the Mermaid graph in output
+**架构维度：**
+- 收集代码库上下文：阅读顶层结构、入口点、import 语句
+- 绘制 Mermaid 依赖图（遵循 common.md 中的标准图规则）
+- 扫描 R5（Dependency Disorder）：循环依赖、向上流动、扇出 > 5
+- 在输出中包含 Mermaid 图
 
-**Debt dimension:**
-- Scan for all six decay risks (R1-R6) across the codebase
-- Skip Pain × Spread scoring (use severity tier only)
+**债务维度：**
+- 跨代码库扫描所有六种衰退风险（R1-R6）
+- 跳过 Pain × Spread 评分（仅使用严重度层级）
 
-**Test dimension:**
-- Build the Test Suite Map (unit/integration/E2E counts)
-- Scan for T1 (Test Obscurity) and T2 (Test Brittleness) in test files
+**测试维度：**
+- 构建 Test Suite Map（单元/集成/E2E 计数）
+- 在测试文件中扫描 T1（Test Obscurity）和 T2（Test Brittleness）
 
-### Step 2: Compute Dashboard Scores
+### 步骤 2：计算仪表板分数
 
-Each dimension gets its own Health Score (base 100, same deduction rules from common.md).
-Composite score = weighted average of dimension scores:
+每个维度有自己的 Health Score（基础 100，扣分规则同 common.md）。
+综合分数 = 维度分数的加权平均：
 
-| Dimension | Weight | Rationale |
+| 维度 | 权重 | 理由 |
 |-----------|--------|-----------|
-| PR (code quality) | 0.25 | Only applies if changes exist; skip if no diff |
-| Architecture | 0.30 | Structural issues have highest blast radius |
-| Debt | 0.25 | Systemic but slower-moving |
-| Test | 0.20 | Supporting signal |
+| PR（代码质量） | 0.25 | 仅在存在变更时适用；无 diff 时跳过 |
+| Architecture | 0.30 | 结构性问题具有最高爆炸半径 |
+| Debt | 0.25 | 系统性但移动较慢 |
+| Test | 0.20 | 支持性信号 |
 
-If PR dimension is skipped (no changes), redistribute its 0.25 weight proportionally
-across the remaining three dimensions by dividing each remaining weight by
-(1 − 0.25) = 0.75. Compute redistribution dynamically — do not hardcode the values.
+如果 PR 维度被跳过（无变更），将其 0.25 权重按比例重新分配到其余三个维度，
+每个剩余权重除以 (1 − 0.25) = 0.75。动态计算重新分配 — 不要硬编码值。
 
-**Redistributed weights (PR skipped):**
+**重新分配的权重（PR 被跳过时）：**
 
-| Dimension | Base Weight | Redistributed Weight |
+| 维度 | 基础权重 | 重新分配权重 |
 |-----------|------------|---------------------|
 | Architecture | 0.30 | 0.30 / 0.75 = 0.40 |
 | Debt | 0.25 | 0.25 / 0.75 = 0.33 |
 | Test | 0.20 | 0.20 / 0.75 = 0.27 |
 
-**Score rules (must be deterministic — two runs on the same codebase must agree):**
+**评分规则（必须是确定性的 — 同一代码库的两次运行必须一致）：**
 
-- Each dimension's score is computed from the **capped** finding set shown in the dashboard
-  (the cap at Step 1 bounds both what is displayed and what is deducted — do not deduct for
-  findings beyond the cap).
-- Floor each dimension score at 0 **before** weighting.
-- A dimension with no findings scores **100** — it is never skipped. The **only** dimension
-  ever omitted is PR, and only when no diff exists (its weight is then redistributed above).
-- Round the weighted composite to the nearest integer (half-up).
+- 每个维度的分数从仪表板中显示的**已封顶**发现集计算
+  （步骤 1 的封顶既限制显示内容也限制扣分 — 不要为超出封顶的发现扣分）。
+- 在加权**之前**将每个维度分数下限设为 0。
+- 没有发现的维度得 **100** 分 — 永远不跳过。**唯一**会被省略的维度是 PR，
+  且仅当没有 diff 时（其权重随后被重新分配）。
+- 将加权综合分数四舍五入到最接近的整数（半数向上）。
 
-### Step 3: Output Dashboard
+### 步骤 3：输出仪表板
 
-Use the dashboard report template below instead of the standard common.md template.
+使用下方的仪表板报告模板，而非标准的 common.md 模板。
 
 ---
 
-## Dashboard Report Template
+## 仪表板报告模板
 
 ````markdown
 # Decay Diagnosis — Health Dashboard

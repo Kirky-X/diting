@@ -1,163 +1,157 @@
-# PR Review Guide — Mode 1
+# PR Review 指南 — 模式 1
 
-**Purpose:** Analyze a code diff or specific files for decay risks that are directly visible
-in the changed code. Every finding must follow the Iron Law: Symptom → Source → Consequence → Remedy.
+**目的：** 分析代码 diff 或特定文件，识别变更代码中直接可见的衰退风险。每条发现必须遵循铁律：Symptom → Source → Consequence → Remedy。
 
 ---
 
-## Before You Start
+## 开始之前
 
-**Auto-generated files:** If the diff contains generated files (protobuf stubs, OpenAPI clients,
-ORM migrations, lock files, minified bundles), skip those files entirely. Generated code reflects
-tool choices, not developer decisions. Note in the report which files were skipped and why.
+**自动生成的文件：** 如果 diff 包含生成文件（protobuf 桩、OpenAPI 客户端、ORM 迁移、lock 文件、压缩 bundle），完全跳过这些文件。生成代码反映工具选择，不是开发者决策。在报告中记录哪些文件被跳过及原因。
 
-**Scope calibration:** Adjust analysis depth based on PR size before starting.
+**范围校准：** 开始前根据 PR 大小调整分析深度。
 
-| PR Size | Approach |
+| PR 大小 | 方法 |
 |---------|----------|
-| < 50 lines | Focus on Steps 1–3 only; run Step 6a only if imports changed; run Step 6b if any class, method, or variable was renamed or introduced |
-| 50–300 lines | Full process, all steps |
-| > 300 lines | Full process; note in the Scope line that review is sampled — cover the highest-risk areas rather than every file |
+| < 50 行 | 仅关注步骤 1–3；仅在 import 变更时运行步骤 6a；如果任何类、方法或变量被重命名或引入则运行步骤 6b |
+| 50–300 行 | 完整流程，所有步骤 |
+| > 300 行 | 完整流程；在 Scope 行中记录审查为采样 — 覆盖最高风险区域而非每个文件 |
 
-For PRs > 500 lines: flag in the Summary that a PR this size is itself a Change Propagation signal. A change that cannot be reviewed in one pass suggests tangled responsibilities.
-
----
-
-## Analysis Process
-
-Work through these seven steps in order. Do not skip steps.
-
-### Step 1: Understand the scope
-
-Read the diff or files and answer:
-- What is the stated purpose of this change?
-- Which files were modified?
-- Flag immediately if the PR changes more than 10 unrelated files — that itself is a
-  🟡 Warning: Change Propagation (a PR that touches many unrelated things is a sign
-  that responsibilities are tangled).
-
-### Step 2: Scan for Change Propagation
-
-*Scan this first — it is the most visible risk in a diff.*
-
-Look for:
-- Does this change touch files in modules that have no conceptual connection to the stated purpose?
-- Does any modified class change for more than one business reason in this diff?
-- Does any method use more data from another class than from its own?
-
-If the diff shows no cross-module changes beyond what the feature requires → skip, no finding.
-
-### Step 3: Scan for Cognitive Overload
-
-Look for:
-- Are any new or modified functions longer than 20 lines?
-- Is there nesting deeper than 3 levels in new or modified code?
-- Are there more than 4 parameters in any new function signature?
-- Are there magic numbers or unexplained constants in new code?
-- Do new variable or function names require reading the implementation to understand?
-- Are there train-wreck chains (3+ method calls chained)?
-
-### Step 4: Scan for Knowledge Duplication
-
-Look for:
-- Does this change introduce logic that already exists elsewhere in the codebase?
-- Does this change introduce a new name for a concept that already has a name?
-- Does this change add a class to a hierarchy that has a parallel in another module?
-
-### Step 5: Scan for Accidental Complexity
-
-Look for:
-- Does this change add an abstraction with only one concrete use?
-- Does this change add a class that only wraps another class or delegates everything?
-- Does this change add configuration options or extension points that serve no current requirement?
-
-### Step 6a: Scan for Dependency Disorder
-
-- Do any new imports create a dependency from a high-level module to a low-level one?
-  (e.g., domain service now imports a database driver or HTTP client)
-- Do any new imports introduce a cycle between modules?
-- Does any new interface force callers to depend on methods they do not use?
-
-If no new imports and no structural changes → skip, no finding.
-
-### Step 6b: Scan for Domain Model Distortion
-
-- Do new class or variable names match the language the business uses for the same concept?
-- Does any new class hold only data with no behavior (pure data bag), where behavior was expected?
-- Does any new method put logic that belongs to the domain in a service or utility layer?
+对于 > 500 行的 PR：在 Summary 中标记此大小的 PR 本身就是一个 Change Propagation 信号。无法一次性审查的变更暗示职责纠缠。
 
 ---
 
-## Severity Calibration
+## 分析流程
 
-Apply the Iron Law format from `common.md`. Each risk in `decay-risks.md` has its own Severity
-Guide with numeric thresholds — use those as the primary reference. When a finding sits
-on the boundary between two tiers, use this as a tiebreaker:
-- 🔴 Critical — actively breaking velocity or creating production risk *today*
-- 🟡 Warning — will if left unaddressed through the next few features
-- 🟢 Suggestion — worth fixing when nearby, not urgent
+按顺序完成以下七个步骤。不要跳过步骤。
 
-When multiple findings exist, list Critical items first. If there are more than 5 findings,
-add a one-line "Recommended fix order" at the end of the Findings section.
+### 步骤 1：理解范围
+
+阅读 diff 或文件并回答：
+- 此变更的声明目的是什么？
+- 修改了哪些文件？
+- 如果 PR 修改超过 10 个不相关文件 — 立即标记 — 这本身是一个
+  🟡 Warning：Change Propagation（触及许多不相关事情的 PR 是
+  职责纠缠的信号）。
+
+### 步骤 2：扫描 Change Propagation
+
+*首先扫描此项 — 它是 diff 中最可见的风险。*
+
+寻找：
+- 此变更是否触及与声明目的没有概念联系的模块中的文件？
+- 任何被修改的类是否在此 diff 中因多个业务原因而变更？
+- 任何方法是否从另一个类使用的数据多于从自己类使用的数据？
+
+如果 diff 没有显示超出功能所需的跨模块变更 → 跳过，无发现。
+
+### 步骤 3：扫描 Cognitive Overload
+
+寻找：
+- 任何新增或修改的函数是否超过 20 行？
+- 新增或修改代码中是否有超过 3 层的嵌套？
+- 任何新函数签名中是否有超过 4 个参数？
+- 新代码中是否有魔法数字或未解释的常量？
+- 新的变量或函数名是否需要阅读实现才能理解？
+- 是否有火车残骸链（3+ 方法调用链）？
+
+### 步骤 4：扫描 Knowledge Duplication
+
+寻找：
+- 此变更是否引入了代码库中已存在的逻辑？
+- 此变更是否为已有名称的概念引入了新名称？
+- 此变更是否在某个层次中添加了一个类，而该层次在另一个模块中有并行对应？
+
+### 步骤 5：扫描 Accidental Complexity
+
+寻找：
+- 此变更是否添加了只有一个具体用途的抽象？
+- 此变更是否添加了只包装另一个类或委托一切的类？
+- 此变更是否添加了不服务于当前需求的配置选项或扩展点？
+
+### 步骤 6a：扫描 Dependency Disorder
+
+- 任何新 import 是否创建了从高层模块到低层模块的依赖？
+  （例如，领域服务现在 import 了数据库驱动或 HTTP 客户端）
+- 任何新 import 是否在模块间引入了循环？
+- 任何新接口是否强迫调用者依赖他们不使用的方法？
+
+如果没有新 import 且没有结构性变更 → 跳过，无发现。
+
+### 步骤 6b：扫描 Domain Model Distortion
+
+- 新的类或变量名是否与业务对同一概念使用的语言匹配？
+- 任何新类是否只持有数据而无行为（纯粹数据袋），而原本预期有行为？
+- 任何新方法是否将本应属于领域的逻辑放在了服务或工具层？
 
 ---
 
-## Step 7: Quick Test Check
+## 严重度校准
 
-*Run this last. Three signals only — this is not a full Mode 4 review.*
+应用 `common.md` 中的 Iron Law 格式。`decay-risks.md` 中每个风险都有自己的 Severity
+Guide 及数值阈值 — 使用这些作为主要参考。当发现处于两个层级边界时，使用以下作为决策依据：
+- 🔴 Critical — 今天正在积极破坏速度或造成生产风险
+- 🟡 Warning — 如果在接下来几个功能中不解决就会发生
+- 🟢 Suggestion — 在附近时值得修复，不紧急
 
-If the diff contains only generated files, configuration, or documentation with no
-production logic changes → skip Step 7 entirely.
+当存在多个发现时，先列出 Critical 项。如果有超过 5 个发现，
+在 Findings 部分末尾添加一行"Recommended fix order"。
 
-**Signal 1: Do tests exist for the changed behavior?**
+---
 
-- Does the diff modify production code?
-- Are corresponding test file changes included in the diff?
-- If new public behavior was added with no new tests:
-  → 🟡 Warning: Coverage Illusion — new behavior is untested
+## 步骤 7：快速测试检查
+
+*最后运行此项。仅三个信号 — 这不是完整的模式 4 审查。*
+
+如果 diff 只包含生成文件、配置或文档，没有生产逻辑变更 → 完全跳过步骤 7。
+
+**信号 1：变更的行为是否有测试？**
+
+- diff 是否修改了生产代码？
+- diff 中是否包含相应的测试文件变更？
+- 如果添加了新的公共行为但没有新测试：
+  → 🟡 Warning：Coverage Illusion — 新行为未测试
   → Source: Feathers — Working Effectively with Legacy Code, Ch. 1
-- If the change is a pure refactor and existing tests cover the behavior → no finding.
+- 如果变更是纯重构且现有测试覆盖了行为 → 无发现。
 
-**Signal 2: Quick Mock Abuse sniff**
+**信号 2：快速 Mock Abuse 嗅探**
 
-Only check if the diff includes test file changes.
+仅在 diff 包含测试文件变更时检查。
 
-- Is mock setup code in new/modified tests obviously longer than the test logic?
-- Are the primary assertions `expect(mock).toHaveBeenCalledWith(...)` with no behavior verification?
-- Does the diff add any methods to production classes that are only called from test files?
+- 新增/修改测试中的 mock 设置代码是否明显长于测试逻辑？
+- 主要断言是否是 `expect(mock).toHaveBeenCalledWith(...)` 而无行为验证？
+- diff 是否向生产类添加了仅从测试文件调用的方法？
 
-If any of these are true:
-  → 🟡 Warning: Mock Abuse — test complexity exceeds behavior complexity
+如果以上任一为真：
+  → 🟡 Warning：Mock Abuse — 测试复杂度超过行为复杂度
   → Source: Osherove — The Art of Unit Testing, mock usage guidelines
 
-**Signal 3: Quick Test Obscurity sniff**
+**信号 3：快速 Test Obscurity 嗅探**
 
-Only check if the diff includes test file changes.
+仅在 diff 包含测试文件变更时检查。
 
-- Do new test names express scenario and expected outcome?
-  (Pattern: `methodName_scenario_expectedResult` or equivalent)
-- Are there new tests with multiple assertions and no message strings on any of them?
+- 新测试名称是否表达了场景和预期结果？
+  （模式：`methodName_scenario_expectedResult` 或等效）
+- 是否有新测试包含多个断言但其中任何一个都没有消息字符串？
 
-If test names are vague or assertions lack messages:
-  → 🟢 Suggestion: Test Obscurity — test intent is unclear from the test name or assertions
+如果测试名称模糊或断言缺少消息：
+  → 🟢 Suggestion：Test Obscurity — 测试意图从测试名或断言中不清晰
   → Source: Meszaros — xUnit Test Patterns, Assertion Roulette (p.224)
 
-**Output rule:**
+**输出规则：**
 
-If all three signals are clean → write no Test findings. Proceed directly to the report.
+如果所有三个信号都干净 → 不写测试发现。直接进入报告。
 
-If findings exist → add them to the Findings section using the standard Iron Law format.
-Label the risk as the test decay risk name (e.g., "Coverage Illusion", "Mock Abuse",
-"Test Obscurity").
+如果存在发现 → 使用标准 Iron Law 格式将它们添加到 Findings 部分。
+将风险标记为测试衰退风险名称（例如 "Coverage Illusion"、"Mock Abuse"、
+"Test Obscurity"）。
 
-> **Note:** Step 7 is a fast check, not a full test audit. When systemic test problems
-> are found, note in the Summary: "Consider running `the Test Quality Review mode` for a
-> complete test quality diagnosis."
+> **注意：** 步骤 7 是快速检查，不是完整的测试审计。当发现系统性测试问题时，
+> 在 Summary 中记录："考虑运行 `Test Quality Review 模式` 以获取完整的测试质量诊断。"
 
 ---
 
-## Output
+## 输出
 
-Use the standard Report Template from `common.md`.
-Mode: PR Review
-Scope: list the files reviewed (excluding skipped generated files).
+使用 `common.md` 中的标准报告模板。
+Mode：PR Review
+Scope：列出审查的文件（排除跳过的生成文件）。

@@ -1,54 +1,45 @@
-# Architecture Audit Guide — Mode 2
+# 架构审计指南 — 模式 2
 
-**Purpose:** Analyze the module and dependency structure of a system for decay risks that
-operate at the architectural level. Every finding must follow the Iron Law:
-Symptom → Source → Consequence → Remedy.
+**目的：** 分析系统的模块和依赖结构，识别架构层面的衰退风险。每条发现必须遵循铁律：
+Symptom → Source → Consequence → Remedy。
 
-**Monorepo note:** Treat each deployable service or library as a top-level module. Draw
-dependencies between services, not between their internal packages. Apply the Conway's Law
-check at the service ownership level. Within a single service, apply standard module-level analysis.
+**单体仓库注意：** 将每个可部署的服务或库视为顶层模块。在服务之间绘制依赖关系，而不是在它们的内部包之间。在服务所有权层面应用康威定律检查。在单个服务内部，应用标准的模块级分析。
 
 ---
 
-## Analysis Process
+## 分析流程
 
-Work through these six steps in order.
+按顺序完成以下六个步骤。
 
-### Step 0: Gather Codebase Context
+### 步骤 0：收集代码库上下文
 
-Before drawing anything, establish what you can see.
+在绘制任何内容之前，先确认你能看到什么。
 
-**If the user provided a full directory tree or pasted relevant file contents:** skip the
-proactive reading below and proceed to Step 1.
+**如果用户提供了完整的目录树或粘贴了相关文件内容：** 跳过下面的主动阅读，直接进入步骤 1。
 
-**Otherwise, proactively read the project using these tools:**
+**否则，使用以下工具主动阅读项目：**
 
-1. **Top-level structure** — glob top two levels to identify module boundaries:
+1. **顶层结构** — 通过 glob 顶层两级来识别模块边界：
    ```
    Glob: **/*(depth 2, directories only)
    ```
-2. **Entry points** — read the package manifest or main config file (e.g., `package.json`,
-   `go.mod`, `pom.xml`, `Cargo.toml`, `pyproject.toml`) to confirm language, framework,
-   and declared dependencies.
-3. **Dependency edges** — grep import statements to discover inter-module calls. Run once
-   per language present; limit to the first 200 matches to avoid token overrun:
+2. **入口点** — 阅读包清单或主配置文件（例如 `package.json`、`go.mod`、`pom.xml`、`Cargo.toml`、`pyproject.toml`），确认语言、框架和声明的依赖。
+3. **依赖边** — 通过 grep import 语句发现模块间调用。每种语言运行一次；限制为前 200 个匹配以避免 token 超限：
    ```
    Grep: "^\s*(import|from|require\(|use )" across *.ts|*.py|*.go|*.rs|*.java
    ```
-4. **Large modules** — for any top-level directory with > 10 files, read the file matching
-   `index.*`, `main.*`, or `__init__.*` to understand its stated responsibility.
+4. **大型模块** — 对于任何文件数 > 10 的顶层目录，阅读匹配 `index.*`、`main.*` 或 `__init__.*` 的文件，理解其声明的职责。
 
-**Stop when you can answer all three:**
-- What are the top-level modules (names and count)?
-- Which modules import from which other modules?
-- Which module has the highest fan-in or fan-out?
+**当你能回答以下三个问题时停止：**
+- 顶层模块有哪些（名称和数量）？
+- 哪些模块从哪些其他模块导入？
+- 哪个模块的扇入或扇出最高？
 
-If the project has > 100 top-level files or > 4 levels of nesting, note which areas were
-sampled vs. inferred, and flag this in the report scope line.
+如果项目有 > 100 个顶层文件或 > 4 层嵌套，记录哪些区域是采样而非推断的，并在报告范围行中标注。
 
-### Step 1: Draw the Module Dependency Graph (Mermaid)
+### 步骤 1：绘制模块依赖图（Mermaid）
 
-Before evaluating any risk, map the dependencies as a Mermaid diagram. Use this format:
+在评估任何风险之前，将依赖关系映射为 Mermaid 图。使用以下格式：
 
 ````mermaid
 graph TD
@@ -87,109 +78,93 @@ graph TD
   class Database,MessageQueue,AuthService,WebApp,MobileApp clean
 ````
 
-Draw the graph structure first — nodes, subgraphs, and edges — without any `classDef` or
-`class` lines. You cannot assign colors until you have completed the risk scan in Steps 2–4.
+先绘制图结构 — 节点、子图和边 — 不带任何 `classDef` 或 `class` 行。在完成步骤 2-4 的风险扫描之前，你无法分配颜色。
 
-**After completing Step 4**, return to this graph and add the `classDef` and `class` lines
-based on findings. The example above shows the final colored output.
+**完成步骤 4 后**，回到此图，根据发现添加 `classDef` 和 `class` 行。上面的示例展示了最终着色输出。
 
-Rules:
-1. **Nodes** — Use top-level directories or services as nodes, not individual files
-2. **Grouping** — One `subgraph` per architectural layer or top-level directory (e.g., UI, Domain, Infrastructure)
-3. **Edges** — Solid arrows (`-->`) point FROM the depending module TO the dependency; use dotted arrows with label (`-.->|circular|`) for circular dependencies. If no circular dependencies exist, use only solid arrows
-4. **Node limit** — Keep the graph to ~50 nodes maximum; collapse low-risk leaf modules into their parent if needed
-5. **Fan-out** — For any node with fan-out > 5, use a descriptive label: `HighFanOutModule["ModuleName (fan-out: 7)"]`
-6. **Colors** — Apply `classDef` colors AFTER completing Steps 2-4: `critical` (red `#ff6b6b`) for nodes with Critical findings, `warning` (yellow `#ffd43b`) for Warning findings, `clean` (green `#51cf66`) for nodes with no findings or only Suggestions. If no findings at all, classify all nodes as `clean`
-7. **Direction** — Default to `graph TD` (top-down); use `graph LR` only if the architecture is clearly a left-to-right pipeline
+规则：
+1. **节点** — 使用顶层目录或服务作为节点，而不是单个文件
+2. **分组** — 每个架构层或顶层目录一个 `subgraph`（例如 UI、Domain、Infrastructure）
+3. **边** — 实线箭头（`-->`）从依赖模块指向被依赖模块；循环依赖使用带标签的虚线箭头（`-.->|circular|`）。如果没有循环依赖，只使用实线箭头
+4. **节点数量上限** — 图中最多约 50 个节点；如有需要，将低风险叶子模块合并到其父模块
+5. **扇出** — 对于任何扇出 > 5 的节点，使用描述性标签：`HighFanOutModule["ModuleName (fan-out: 7)"]`
+6. **颜色** — 在完成步骤 2-4 之后应用 `classDef` 颜色：`critical`（红色 `#ff6b6b`）表示有 Critical 发现的节点，`warning`（黄色 `#ffd43b`）表示有 Warning 发现的节点，`clean`（绿色 `#51cf66`）表示没有发现或只有 Suggestion 的节点。如果完全没有发现，将所有节点分类为 `clean`
+7. **方向** — 默认使用 `graph TD`（自上而下）；仅当架构明显是从左到右的管道时才使用 `graph LR`
 
-### Step 2: Scan for Dependency Disorder
+### 步骤 2：扫描依赖紊乱
 
-*The most architecturally consequential risk — scan this first.*
+*最具架构影响力的风险 — 优先扫描。*
 
-Look for:
-- Circular dependencies (any `-.->|circular|` edge in the map above)
-- Arrows flowing upward (high-level domain depending on low-level infrastructure)
-- Stable, widely-depended-on modules that import from frequently-changing modules
-- Modules with fan-out > 5
-- Absence of a clear layering rule (no consistent answer to "what depends on what?")
+寻找：
+- 循环依赖（上图中的任何 `-.->|circular|` 边）
+- 向上流动的箭头（高层领域依赖低层基础设施）
+- 稳定的、被广泛依赖的模块从频繁变更的模块导入
+- 扇出 > 5 的模块
+- 缺乏清晰的分层规则（对"什么依赖什么"没有一致的答案）
 
-### Step 3: Scan for Domain Model Distortion
+### 步骤 3：扫描领域模型扭曲
 
-Look for:
-- Do module names match the business domain vocabulary?
-- Is there a layer called "services" that contains all the business logic while domain objects
-  are pure data structures?
-- Are there modules that cross bounded context boundaries (e.g., billing logic in the user module)?
-- Is there an anti-corruption layer where external systems interface with the domain?
+寻找：
+- 模块名称是否匹配业务领域词汇？
+- 是否存在一个名为"services"的层包含所有业务逻辑，而领域对象只是纯粹的数据结构？
+- 是否有模块跨越了限界上下文边界（例如，用户模块中包含计费逻辑）？
+- 外部系统与领域接口处是否有防腐层？
 
-### Step 4: Scan for Remaining Four Risks
+### 步骤 4：扫描其余四种风险
 
-Check each in turn:
+依次检查：
 
-**Knowledge Duplication:**
-- Are there multiple modules implementing the same concept independently?
-- Does the same domain concept appear under different names in different modules?
+**知识重复：**
+- 是否有多个模块独立实现相同的概念？
+- 同一领域概念是否在不同模块中以不同名称出现？
 
-**Accidental Complexity:**
-- Are there entire layers in the architecture that do not add value?
-- Are there modules whose responsibility cannot be stated in one sentence?
+**偶然复杂性：**
+- 架构中是否存在不增加价值的整层？
+- 是否有模块的职责无法用一句话陈述？
 
-**Change Propagation:**
-- Which modules are "blast radius hotspots"? (A change here requires changes in many other modules)
-- Does the dependency map reveal why certain features are slow to develop?
+**变更传播：**
+- 哪些模块是"爆炸半径热点"？（此处的一个变更需要许多其他模块的变更）
+- 依赖图是否揭示了某些功能开发缓慢的原因？
 
-**Cognitive Overload:**
-- Can the module responsibility of each module be stated in one sentence from its name alone?
-- Would a new developer know which module to add a new feature to?
+**认知过载：**
+- 每个模块的职责能否仅从其名称用一句话陈述？
+- 新开发者是否会知道应将新功能添加到哪个模块？
 
-### Step 5: Testability Seam Assessment
+### 步骤 5：可测试性接缝评估
 
-A *seam* is a place in the architecture where behavior can be altered without editing source
-code — typically an interface, a configuration point, or a dependency injection boundary.
-Seam density is a proxy for testability and evolvability.
+*接缝*是架构中可以在不编辑源代码的情况下改变行为的位置 — 通常是接口、配置点或依赖注入边界。接缝密度是可测试性和可演进性的代理指标。
 
-Scan for:
-- **No seam at the infrastructure boundary**: can you replace a real database, file system,
-  or HTTP client with a test double without editing the module under test? If not, the
-  architecture forces integration tests where unit tests would suffice.
-- **Seam collapse**: a module that was once testable in isolation has had its seams removed
-  (e.g., direct constructor instantiation replaced a dependency injection point, or a global
-  singleton replaced an injected collaborator).
-- **Missing seam in legacy areas**: modules without an obvious injection point or interface
-  boundary — any change requires touching the entire call stack to substitute behavior.
+扫描：
+- **基础设施边界处没有接缝**：你能否在不编辑被测模块的情况下，用测试替身替换真实的数据库、文件系统或 HTTP 客户端？如果不能，架构在单元测试即可胜任的地方强制使用集成测试。
+- **接缝坍塌**：曾经可独立测试的模块其接缝已被移除（例如，直接构造函数实例化取代了依赖注入点，或全局单例取代了注入的协作者）。
+- **遗留区域缺少接缝**：没有明显注入点或接口边界的模块 — 任何变更都需要触及整个调用栈以替换行为。
 
-If all modules have clear seams at their infrastructure boundaries → no finding.
+如果所有模块在基础设施边界处都有清晰的接缝 → 无发现。
 
-If seams are absent or collapsed: flag as 🟡 Warning with a Remedy pointing to the specific
-module and the injection point that needs to be restored or introduced.
+如果接缝缺失或坍塌：标记为 🟡 Warning，Remedy 指向具体模块以及需要恢复或引入的注入点。
 
 Source: Feathers — Working Effectively with Legacy Code, Ch. 4: The Seam Model
 
-### Step 6: Conway's Law Check
+### 步骤 6：康威定律检查
 
-After the six-risk scan, assess the relationship between architecture and team structure:
+完成六风险扫描后，评估架构与团队结构之间的关系：
 
-- Does the module/service structure reflect the team structure?
-  (Conway's Law: "Organizations design systems that mirror their communication structure")
-- If yes: is this intentional design or accidental coupling?
-- A mismatch that causes cross-team coordination overhead for every feature is 🔴 Critical.
-- A mismatch that is theoretical but not yet causing pain is 🟡 Warning.
-- If team structure is unknown, note this as context missing and skip the check.
+- 模块/服务结构是否反映团队结构？
+  （康威定律："组织设计出的系统其结构会映射组织的沟通结构"）
+- 如果是：这是有意设计还是偶然耦合？
+- 导致每个功能都需要跨团队协调开销的不匹配是 🔴 Critical。
+- 理论上存在但尚未造成痛苦的不匹配是 🟡 Warning。
+- 如果团队结构未知，将其记录为上下文缺失并跳过检查。
 
-**Calibration examples:**
-- 🔴 Critical: the Payments module is owned by Team A but contains auth logic owned by Team B —
-  every Payments change requires a sync meeting with Team B
-- 🟡 Warning: two separate teams own the `utils/` and `helpers/` directories which do the same
-  things — theoretically painful but not yet causing release coordination issues
-- Not a finding: a single team owns a monorepo with multiple logical modules — Conway's Law
-  misalignment requires *separate teams* to be meaningful
+**校准示例：**
+- 🔴 Critical：Payments 模块由团队 A 拥有，但包含团队 B 拥有的认证逻辑 — 每次 Payments 变更都需要与团队 B 召开同步会议
+- 🟡 Warning：两个不同的团队分别拥有 `utils/` 和 `helpers/` 目录，它们做相同的事情 — 理论上痛苦但尚未造成发布协调问题
+- 不是发现：单个团队拥有包含多个逻辑模块的单体仓库 — 康威定律错位需要*不同的团队*才有意义
 
 ---
 
-## Output
+## 输出
 
-Use the standard Report Template from `common.md`. Mode: Architecture Audit.
+使用 `common.md` 中的标准报告模板。Mode：Architecture Audit。
 
-Place the Mermaid dependency graph FIRST under "Module Dependency Graph". Reference
-relevant node names in findings. Add `classDef` color assignments LAST, after all
-findings are identified.
+将 Mermaid 依赖图放在"Module Dependency Graph"下的最前面。在发现中引用相关节点名称。最后添加 `classDef` 颜色分配，在所有发现识别完毕之后。

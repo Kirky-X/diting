@@ -1,68 +1,68 @@
-# Simplification Command
+# 简化审查命令
 
-Simplification review mode — improve readability, eliminate redundancy, reduce cognitive load
+简化审查模式 —— 提升可读性、消除冗余、降低认知负担
 
-## Usage
+## 用法
 
 ```bash
 review simplification [target-path]
 ```
 
-## Core Principle
+## 核心原则
 
-**Simplification = reduce cognitive load, preserve behavior.**  
-Never change what code does. Only change how it does it.  
-Always verify tests still pass.
+**简化 = 降低认知负担，保留行为。**
+绝不改变代码做什么。只改变它怎么做。
+总是验证测试仍通过。
 
 ---
 
-## What to Check
+## 检查内容
 
-### Readability
-
-```
-□ Variable names clearly describe what they hold
-□ Function names clearly describe what they do (verb phrase)
-□ No abbreviations that aren't universally understood (mgr vs manager)
-□ Complex expressions extracted to named variables
-□ Magic literals replaced with named constants
-□ Boolean expressions not inverted unnecessarily (if !(!a) → if a)
-```
-
-### Structure
+### 可读性
 
 ```
-□ Functions do one thing (single responsibility)
-□ Nesting depth ≤ 3 (use guard clauses / early returns to flatten)
-□ No deeply nested ternaries (extract to if-else or separate function)
-□ Loop logic extracted to named functions (filterActiveUsers vs inline lambda)
-□ Related code grouped together, unrelated code separated
+□ 变量名清晰描述其内容
+□ 函数名清晰描述其行为（动词短语）
+□ 无非通用缩写（mgr vs manager）
+□ 复杂表达式提取为命名变量
+□ 魔法字面量替换为命名常量
+□ 布尔表达式无不必要反转（if !(!a) → if a）
 ```
 
-### Duplication
+### 结构
 
 ```
-□ No copy-paste code blocks (≥ 3 duplications → extract function)
-□ Similar logic in different places generalized (parameterize the difference)
-□ No repeated conditional checks that could be hoisted
-□ Utility functions not re-implemented (use standard library)
+□ 函数只做一件事（单一职责）
+□ 嵌套深度 ≤ 3（用 guard 子句/提前返回扁平化）
+□ 无深嵌套三元（提取为 if-else 或独立函数）
+□ 循环逻辑提取为命名函数（filterActiveUsers vs 内联 lambda）
+□ 相关代码分组，无关代码分离
 ```
 
-### Dead Code
+### 重复
 
 ```
-□ No unreachable code (after return/throw/break)
-□ No unused variables, parameters, imports
-□ No commented-out code (use version control instead)
-□ No TODO/FIXME older than 6 months with no issue reference
-□ No feature flags that are permanently enabled/disabled
+□ 无复制粘贴代码块（≥ 3 次重复 → 提取函数）
+□ 不同位置的相似逻辑泛化（参数化差异）
+□ 无可提升的重复条件检查
+□ 工具函数未重复实现（用标准库）
 ```
 
-### Modern Idioms (Language-Specific)
+### 死代码
+
+```
+□ 无不可达代码（return/throw/break 之后）
+□ 无未使用变量、参数、导入
+□ 无注释掉的代码（用版本控制）
+□ 无超过 6 个月且无 issue 引用的 TODO/FIXME
+□ 无永久启用/禁用的 feature flag
+```
+
+### 现代惯用法（语言专属）
 
 **Python**
 ```python
-# ❌ Verbose
+# ❌ 冗长
 result = []
 for item in items:
     if item.active:
@@ -71,34 +71,34 @@ for item in items:
 # ✅ Pythonic
 result = [item.name for item in items if item.active]
 
-# ❌ Manual None check
+# ❌ 手动 None 检查
 if value is not None:
     return value
 return default
 
-# ✅ Using walrus / or
+# ✅ 用 walrus / or
 return value or default
 ```
 
 **TypeScript / JavaScript**
 ```typescript
-// ❌ Nested ternary
+// ❌ 嵌套三元
 const label = isAdmin ? 'Admin' : isMod ? 'Moderator' : 'User'
 
-// ✅ Map or function
+// ✅ Map 或函数
 const ROLE_LABELS = { admin: 'Admin', mod: 'Moderator' }
 const label = ROLE_LABELS[role] ?? 'User'
 
-// ❌ Manual array flatten
+// ❌ 手动数组扁平化
 const flat = arr.reduce((acc, curr) => acc.concat(curr), [])
 
-// ✅ Built-in
+// ✅ 内置
 const flat = arr.flat()
 ```
 
 **Java**
 ```java
-// ❌ Imperative collection processing
+// ❌ 命令式集合处理
 List<String> names = new ArrayList<>();
 for (User user : users) {
     if (user.isActive()) {
@@ -106,7 +106,7 @@ for (User user : users) {
     }
 }
 
-// ✅ Streams
+// ✅ Stream
 List<String> names = users.stream()
     .filter(User::isActive)
     .map(User::getName)
@@ -115,10 +115,10 @@ List<String> names = users.stream()
 
 **Go**
 ```go
-// ❌ Error checked but ignored via blank identifier
+// ❌ 错误被检查但通过空白标识符忽略
 result, _ := riskyOperation()
 
-// ✅ Always handle errors
+// ✅ 总是处理错误
 result, err := riskyOperation()
 if err != nil {
     return fmt.Errorf("riskyOperation failed: %w", err)
@@ -127,12 +127,12 @@ if err != nil {
 
 ---
 
-## Simplification Techniques
+## 简化技法
 
-### Guard Clauses (Flatten Nesting)
+### Guard 子句（扁平化嵌套）
 
 ```python
-# ❌ Arrow-shaped code
+# ❌ 箭头型代码
 def process(user, order):
     if user:
         if user.active:
@@ -140,7 +140,7 @@ def process(user, order):
                 if order.valid:
                     do_work(user, order)
 
-# ✅ Guard clauses
+# ✅ Guard 子句
 def process(user, order):
     if not user: return
     if not user.active: return
@@ -149,29 +149,29 @@ def process(user, order):
     do_work(user, order)
 ```
 
-### Extract Variable
+### 提取变量
 
 ```python
-# ❌ Opaque condition
+# ❌ 不透明条件
 if user.created_at > datetime.now() - timedelta(days=30) and user.plan == 'trial':
     ...
 
-# ✅ Named expression
+# ✅ 命名表达式
 is_new_user = user.created_at > datetime.now() - timedelta(days=30)
 is_trial = user.plan == 'trial'
 if is_new_user and is_trial:
     ...
 ```
 
-### Replace Conditional with Polymorphism
+### 用多态替换条件
 
 ```python
-# ❌ Type switch
+# ❌ 类型 switch
 def get_area(shape):
     if shape.type == 'circle': return pi * shape.r ** 2
     if shape.type == 'rect': return shape.w * shape.h
 
-# ✅ Polymorphism
+# ✅ 多态
 class Circle:
     def area(self): return pi * self.r ** 2
 
@@ -181,21 +181,21 @@ class Rectangle:
 
 ---
 
-## When NOT to Simplify
+## 何时不简化
 
-- Code is performance-critical with proven benchmarks (don't optimize away)
-- Complex algorithm is correct and well-tested (add a comment explaining it instead)
-- Simplification would break backward compatibility
-- The team is unfamiliar with the resulting idiom (clarity > cleverness)
+- 代码是性能关键且有基准证明（不要优化掉）
+- 复杂算法正确且测试充分（加注释解释而非简化）
+- 简化会破坏向后兼容
+- 团队不熟悉结果惯用法（清晰 > 聪明）
 
 ---
 
-## References
+## 参考
 
-- [simplification-guidelines.md](../simplification/simplification-guidelines.md) — Full guideline
-- [refactoring-patterns.md](../simplification/refactoring-patterns.md) — Refactoring catalog
+- [simplification-guidelines.md](../simplification/simplification-guidelines.md) — 完整指南
+- [refactoring-patterns.md](../simplification/refactoring-patterns.md) — 重构目录
 
-## Related Commands
+## 相关命令
 
 - [security.md](security.md)
 - [performance.md](performance.md)

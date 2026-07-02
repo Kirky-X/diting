@@ -1,45 +1,45 @@
-# Code Smells Detection Guide
+# 代码坏味检测指南
 
 > 代码坏味分类总览。详细目录（Dispensables/Couplers/Other/检测工具/优先级）详见 [code-smells-catalog.md](code-smells-catalog.md)。
 
-## Code Smell Categories
+## 代码坏味分类
 
-### Bloaters
+### 膨胀者（Bloaters）
 
-Code, methods, or classes that have grown too large.
+代码、方法或类过度膨胀。
 
-#### Long Method
+#### 过长方法（Long Method）
 
-**Detection Criteria**
-- Method exceeds 50 lines
-- Method name contains "And" or "Or"
-- Multiple levels of indentation
-- Comments explaining sections
+**检测标准**
+- 方法超过 50 行
+- 方法名包含 "And" 或 "Or"
+- 多层缩进
+- 需要注释解释各部分
 
-**Metrics**
-| Lines | Status |
+**指标**
+| 行数 | 状态 |
 |-------|--------|
-| 1-10 | Good |
-| 11-30 | Acceptable |
-| 31-50 | Review needed |
-| >50 | Refactor |
+| 1-10 | 良好 |
+| 11-30 | 可接受 |
+| 31-50 | 需审查 |
+| >50 | 需重构 |
 
-**Example**
+**示例**
 ```python
 def process_order(order):
-    # Validate order
+    # 验证订单
     if not order.items:
-        raise ValueError("Empty order")
+        raise ValueError("空订单")
     for item in order.items:
         if item.quantity <= 0:
-            raise ValueError("Invalid quantity")
+            raise ValueError("无效数量")
     
-    # Calculate totals
+    # 计算合计
     subtotal = 0
     for item in order.items:
         subtotal += item.price * item.quantity
     
-    # Apply discounts
+    # 应用折扣
     if order.customer.is_vip:
         discount = subtotal * 0.1
     elif subtotal > 1000:
@@ -47,59 +47,59 @@ def process_order(order):
     else:
         discount = 0
     
-    # ... 50 more lines
+    # ... 还有 50 行
 ```
 
-**Refactoring**: Extract Method
+**重构**：提取方法（Extract Method）
 
-#### Large Class
+#### 过大类（Large Class）
 
-**Detection Criteria**
-- Class exceeds 300 lines
-- More than 10 instance variables
-- Methods grouped by different concerns
-- Multiple "sections" in class
+**检测标准**
+- 类超过 300 行
+- 超过 10 个实例变量
+- 方法按不同关注点分组
+- 类中有多个"部分"
 
-**Metrics**
-| Lines | Instance Variables | Status |
+**指标**
+| 行数 | 实例变量 | 状态 |
 |-------|-------------------|--------|
-| <150 | <5 | Good |
-| 150-300 | 5-10 | Review |
-| >300 | >10 | Refactor |
+| <150 | <5 | 良好 |
+| 150-300 | 5-10 | 需审查 |
+| >300 | >10 | 需重构 |
 
-**Refactoring**: Extract Class, Extract Subclass
+**重构**：提取类、提取子类
 
-#### Long Parameter List
+#### 过长参数列表（Long Parameter List）
 
-**Detection Criteria**
-- More than 4 parameters
-- Boolean parameters
-- Parameters of same type in sequence
-- Need to look up parameter meaning
+**检测标准**
+- 超过 4 个参数
+- 布尔参数
+- 相同类型参数连续出现
+- 需要查阅参数含义
 
-**Metrics**
-| Parameters | Status |
+**指标**
+| 参数数 | 状态 |
 |------------|--------|
-| 1-3 | Good |
-| 4 | Acceptable |
-| >4 | Refactor |
+| 1-3 | 良好 |
+| 4 | 可接受 |
+| >4 | 需重构 |
 
-**Example**
+**示例**
 ```python
 def create_user(name, email, age, address, phone, country, timezone, language):
-    # Too many parameters
+    # 参数过多
 ```
 
-**Refactoring**: Introduce Parameter Object, Preserve Whole Object
+**重构**：引入参数对象、保持完整对象
 
-#### Data Clumps
+#### 数据泥团（Data Clumps）
 
-**Detection Criteria**
-- Same group of variables appear together
-- Variables often passed together
-- Similar variable names (start/end, min/max)
+**检测标准**
+- 相同的变量组经常一起出现
+- 变量经常一起传递
+- 相似的变量名（start/end、min/max）
 
-**Example**
+**示例**
 ```python
 def find_in_range(start_date, end_date, start_time, end_time):
     pass
@@ -108,20 +108,20 @@ def schedule(start_date, end_date, start_time, end_time):
     pass
 ```
 
-**Refactoring**: Extract Class
+**重构**：提取类
 
-### Object-Orientation Abusers
+### 面向对象滥用者（Object-Orientation Abusers）
 
-Solutions that don't fully utilize object-oriented capabilities.
+未充分利用面向对象能力的解决方案。
 
-#### Switch Statements
+#### Switch 语句（Switch Statements）
 
-**Detection Criteria**
-- Switch/case or if-else chains
-- Same switch repeated in multiple places
-- Type checking with conditional
+**检测标准**
+- switch/case 或 if-else 链
+- 相同 switch 在多处重复
+- 用条件判断类型
 
-**Example**
+**示例**
 ```python
 def calculate_pay(employee):
     if employee.type == 'ENGINEER':
@@ -132,42 +132,42 @@ def calculate_pay(employee):
         return employee.monthly_salary + employee.bonus
 ```
 
-**Refactoring**: Replace Conditional with Polymorphism, Replace Type Code with Strategy
+**重构**：以多态替代条件、以策略替代类型码
 
-#### Temporary Field
+#### 临时字段（Temporary Field）
 
-**Detection Criteria**
-- Instance variable only used in certain cases
-- Object sometimes has null fields
-- Fields set only during specific operations
+**检测标准**
+- 实例变量仅在特定情况下使用
+- 对象有时有空字段
+- 字段仅在特定操作中设置
 
-**Example**
+**示例**
 ```python
 class Order:
     def __init__(self):
         self.items = []
-        self.discount = None  # Only used for VIP orders
-        self.gift_wrap = None  # Only used for gifts
+        self.discount = None  # 仅用于 VIP 订单
+        self.gift_wrap = None  # 仅用于礼品
 ```
 
-**Refactoring**: Extract Class, Introduce Null Object
+**重构**：提取类、引入空对象
 
-#### Refused Bequest
+#### 拒绝继承（Refused Bequest）
 
-**Detection Criteria**
-- Subclass doesn't use inherited methods
-- Subclass overrides methods with empty body
-- Subclass throws "NotImplemented" for parent methods
+**检测标准**
+- 子类不使用继承的方法
+- 子类用空方法体覆盖方法
+- 子类对父类方法抛出 "NotImplemented"
 
-**Refactoring**: Replace Inheritance with Delegation, Push Down Method
+**重构**：以委托替代继承、下推方法
 
-#### Alternative Classes with Different Interfaces
+#### 接口不同的替代类（Alternative Classes with Different Interfaces）
 
-**Detection Criteria**
-- Classes do the same thing with different method names
-- Similar functionality, different signatures
+**检测标准**
+- 不同类做相同的事但方法名不同
+- 功能相似但签名不同
 
-**Example**
+**示例**
 ```python
 class CustomerRepository:
     def find_by_id(self, id):
@@ -178,54 +178,54 @@ class ClientStore:
         pass
 ```
 
-**Refactoring**: Rename Method, Extract Superclass
+**重构**：重命名方法、提取超类
 
-### Change Preventers
+### 变更阻碍者（Change Preventers）
 
-Code that makes changes difficult.
+使修改变得困难的代码。
 
-#### Divergent Change
+#### 发散式变更（Divergent Change）
 
-**Detection Criteria**
-- One class changed for multiple reasons
-- Different types of changes affect same class
-- Class has multiple responsibilities
+**检测标准**
+- 一个类因多种原因被修改
+- 不同类型的变更影响同一类
+- 类有多种职责
 
-**Example**
+**示例**
 ```python
 class User:
-    def update_profile(self):  # User management
+    def update_profile(self):  # 用户管理
         pass
     
-    def send_email(self):  # Email functionality
+    def send_email(self):  # 邮件功能
         pass
     
-    def generate_report(self):  # Reporting
+    def generate_report(self):  # 报表
         pass
 ```
 
-**Refactoring**: Extract Class
+**重构**：提取类
 
-#### Shotgun Surgery
+#### 霰弹式修改（Shotgun Surgery）
 
-**Detection Criteria**
-- One change requires modifying many classes
-- Small changes scattered across codebase
-- Hard to find all affected places
+**检测标准**
+- 一次修改需要改动多个类
+- 小变更散布于代码库各处
+- 难以找到所有受影响的位置
 
-**Refactoring**: Move Method, Move Field, Inline Class
+**重构**：移动方法、移动字段、内联类
 
-#### Parallel Inheritance Hierarchies
+#### 平行继承体系（Parallel Inheritance Hierarchies）
 
-**Detection Criteria**
-- Creating subclass in one hierarchy requires creating in another
-- Similar naming patterns across hierarchies
+**检测标准**
+- 在一个继承体系中创建子类需要在另一个中创建
+- 不同体系间命名模式相似
 
-**Example**
+**示例**
 ```
 Customer -> VIPCustomer
 CustomerExporter -> VIPCustomerExporter
 CustomerValidator -> VIPCustomerValidator
 ```
 
-**Refactoring**: Move Method, Combine hierarchies
+**重构**：移动方法、合并继承体系

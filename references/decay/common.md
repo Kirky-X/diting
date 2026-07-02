@@ -1,61 +1,54 @@
-# Decay Diagnosis — Shared Framework
+# 衰退诊断 — 共享框架
 
-Code and test quality diagnosis using principles from twelve classic software engineering books.
-Use `source-coverage.md` to keep those sources grounded in real evidence, exceptions, and tradeoffs.
+基于十二本经典软件工程书籍的原则进行代码和测试质量诊断。
+使用 `source-coverage.md` 让这些来源基于真实证据、例外和权衡。
 
-## The Iron Law
+## 铁律
 
 ```
 NEVER suggest fixes before completing risk diagnosis.
 EVERY finding must follow: Symptom → Source → Consequence → Remedy.
 ```
 
-Violating this law produces reviews that list rule violations without explaining why they
-matter. A finding without a consequence and a remedy is not a finding — it is noise.
+违反此定律产出的审查只会列出规则违规而不解释为何重要。没有 Consequence 和 Remedy 的发现不是发现 — 而是噪音。
 
-> **On-demand sections (skip unless the condition applies):**
-> - "Remedy Mode" — only when user passes `--fix` or asks to fix findings
-> - "Post-Report Triage" — only in interactive sessions after the report is output
-> - "History Tracking" — only after the Health Score is computed
+> **按需章节（除非条件适用否则跳过）：**
+> - "Remedy Mode" — 仅当用户传入 `--fix` 或要求修复发现时
+> - "Post-Report Triage" — 仅在报告输出后的交互式会话中
+> - "History Tracking" — 仅在 Health Score 计算完成后
 
-## Project Config
+## 项目配置
 
-Before executing the review, attempt to read `.decay-review.yaml` from the project root.
-If the file exists, parse and apply its settings before proceeding.
-If the file does not exist, continue with defaults (all risks enabled, no ignores).
+在执行审查之前，尝试从项目根目录读取 `.decay-review.yaml`。
+如果文件存在，解析并应用其设置后再继续。
+如果文件不存在，使用默认值继续（所有风险启用，无忽略）。
 
-In a multi-mode session, re-read only if the user says the config has changed.
+在多模式会话中，仅在用户说配置已变更时重新读取。
 
-### Supported settings
+### 支持的设置
 
-**`disable`** — list of risk codes to skip entirely. Findings for disabled risks are
-silently omitted from the report and do not affect the Health Score.
-Valid codes: `R1` `R2` `R3` `R4` `R5` `R6` `T1` `T2` `T3` `T4` `T5` `T6`
+**`disable`** — 要完全跳过的风险代码列表。被禁用风险的发现在报告中被静默省略，且不影响 Health Score。
+有效代码：`R1` `R2` `R3` `R4` `R5` `R6` `T1` `T2` `T3` `T4` `T5` `T6`
 
-**`severity`** — override the severity of a specific risk for this project.
-Valid values: `critical` `warning` `suggestion`
-Example: `R1: suggestion` means every R1 finding is downgraded to Suggestion regardless
-of what the guide says.
+**`severity`** — 覆盖此项目中特定风险的严重度。
+有效值：`critical` `warning` `suggestion`
+示例：`R1: suggestion` 表示每个 R1 发现都被降级为 Suggestion，无论指南如何说明。
 
-**`ignore`** — list of glob patterns. Files matching any pattern are excluded from
-analysis. Findings that arise solely from ignored files are omitted.
-Common entries: `**/*.generated.*`, `**/vendor/**`, `**/migrations/**`
+**`ignore`** — glob 模式列表。匹配任何模式的文件被排除在分析之外。仅由被忽略文件引起的发现被省略。
+常见条目：`**/*.generated.*`、`**/vendor/**`、`**/migrations/**`
 
-**`focus`** — non-empty list of risk codes to evaluate; all others are skipped.
-Omit this key (or leave it empty) to evaluate all non-disabled risks.
-Cannot be combined with a non-empty `disable` list.
+**`focus`** — 非空的风险代码列表用于评估；其他全部跳过。
+省略此键（或留空）以评估所有未禁用的风险。
+不能与非空的 `disable` 列表组合使用。
 
-**`strictness`** — tune how harshly findings are scored, for teams at different
-maturity stages. One of:
-- `strict` — heavier deductions; for teams holding a high bar.
-- `balanced` — the default, used when the key is absent.
-- `legacy-friendly` — lighter deductions, and the Summary leads with the three
-  highest-leverage fixes so a legacy codebase's first run is not a demoralizing
-  wall of Criticals. Every finding is still reported — only the score and framing soften.
+**`strictness`** — 调整发现的评分严厉程度，适用于不同成熟度阶段的团队。取以下值之一：
+- `strict` — 更重扣分；适用于保持高标准的团队。
+- `balanced` — 默认值，键不存在时使用。
+- `legacy-friendly` — 较轻扣分，且 Summary 以三个最高杠杆的修复开头，使遗留代码库的首次运行不是令人沮丧的 Critical 之墙。每个发现仍被报告 — 只是评分和措辞软化。
 
-See **Health Score Calculation** below for the per-preset deduction weights.
+每个预设的扣分权重见下方的 **Health Score Calculation**。
 
-**Minimal example:**
+**最小示例：**
 ```yaml
 version: 1
 strictness: legacy-friendly
@@ -67,72 +60,61 @@ ignore:
   - "**/*.generated.*"
 ```
 
-If `.decay-review.yaml` contains a `custom_risks` map, read `custom-risks-guide.md`
-from the `_shared/` directory for loading and scanning instructions.
+如果 `.decay-review.yaml` 包含 `custom_risks` 映射，阅读 `_shared/` 目录中的 `custom-risks-guide.md` 获取加载和扫描说明。
 
-### Config Validation
+### 配置验证
 
-Before applying, check for errors and mention each in the report:
-- Invalid risk code (not R1–R6, T1–T6, or a defined `Cx` code): skip it, note `"Config warning: X is not a valid risk code"`
-- Invalid severity value (not `critical`/`warning`/`suggestion`): skip it, note the error
-- Both `disable` and `focus` are non-empty: treat as a config error, ignore both, note it
-- Invalid `strictness` value (not `strict`/`balanced`/`legacy-friendly`): fall back to `balanced`, note the error
+应用之前，检查错误并在报告中提及每项：
+- 无效风险代码（非 R1–R6、T1–T6 或已定义的 `Cx` 代码）：跳过，记录 `"Config warning: X is not a valid risk code"`
+- 无效严重度值（非 `critical`/`warning`/`suggestion`）：跳过，记录错误
+- `disable` 和 `focus` 都非空：视为配置错误，忽略两者，记录之
+- 无效 `strictness` 值（非 `strict`/`balanced`/`legacy-friendly`）：回退到 `balanced`，记录错误
 
-If the YAML fails to parse entirely, skip config loading and proceed with defaults.
+如果 YAML 完全无法解析，跳过配置加载并使用默认值继续。
 
-### Config Reporting
+### 配置报告
 
-If a config file was found and applied, add this line immediately after the **Scope** line
-in the report:
+如果找到并应用了配置文件，在报告的 **Scope** 行之后立即添加此行：
 `Config: .decay-review.yaml applied (strictness: <preset>, N risks disabled, M paths ignored)`
 
-Use `balanced` for `<preset>` when `strictness` is unset. Include N and M even if zero.
-Omit this line if no config file was found.
+`<preset>` 在 `strictness` 未设置时使用 `balanced`。即使 N 和 M 为零也包含。如果未找到配置文件则省略此行。
 
 ---
 
-## Auto Scope Detection
+## 自动范围检测
 
-When no files or code are specified, detect scope automatically:
+当未指定文件或代码时，自动检测范围：
 
-**PR Review:** `git diff --cached` → `git diff` → `git diff main...HEAD` → ask user.
+**PR Review：** `git diff --cached` → `git diff` → `git diff main...HEAD` → 询问用户。
 
-**Architecture Audit / Tech Debt:** Entire project by default. `--since=<ref>`: run `git diff <ref>...HEAD --name-only`, analyze only modules containing changed files; note "Incremental audit — modules touched since <ref>".
+**Architecture Audit / Tech Debt：** 默认整个项目。`--since=<ref>`：运行 `git diff <ref>...HEAD --name-only`，仅分析包含变更文件的模块；记录 "Incremental audit — modules touched since <ref>"。
 
-**Test Quality:** All test files by default. If a diff exists, prioritize test files co-located with changed production files (`src/foo.ts` → `src/foo.test.ts`).
+**Test Quality：** 默认所有测试文件。如果存在 diff，优先处理与变更生产文件共置的测试文件（`src/foo.ts` → `src/foo.test.ts`）。
 
-**Health Dashboard:** Entire project by default. If user provides a path, scope all dimension sub-scans to that path.
+**Health Dashboard：** 默认整个项目。如果用户提供路径，将所有维度子扫描范围限定在该路径。
 
-**Scope line:** Always state what was detected — e.g., `Scope: staged changes (3 files)` or `Scope: branch changes vs main (12 files)`.
+**Scope 行：** 始终陈述检测到的内容 — 例如，`Scope: staged changes (3 files)` 或 `Scope: branch changes vs main (12 files)`。
 
 ---
 
-## The Six Decay Risks
+## 六大衰退风险
 
-Navigation index only — canonical definitions (symptoms, severity guides, sources, "What Not
-to Flag" guards) live in `decay-risks.md`. Do not duplicate or edit diagnostic questions here;
-update `decay-risks.md` directly. Book-level coverage, exceptions, and tradeoffs are in
-`source-coverage.md`.
+仅为导航索引 — 权威定义（症状、严重度指南、来源、"What Not to Flag" 守卫）位于 `decay-risks.md`。不要在此复制或编辑诊断问题；直接更新 `decay-risks.md`。书籍级别的覆盖、例外和权衡在 `source-coverage.md` 中。
 
-| Code | Risk | Diagnostic Question |
+| 代码 | 风险 | 诊断问题 |
 |------|------|---------------------|
-| R1 | Cognitive Overload | How much mental effort to understand this? |
-| R2 | Change Propagation | How many unrelated things break on one change? |
-| R3 | Knowledge Duplication | Is the same decision expressed in multiple places? |
-| R4 | Accidental Complexity | Is the code more complex than the problem? |
-| R5 | Dependency Disorder | Do dependencies flow in a consistent direction? |
-| R6 | Domain Model Distortion | Does the code faithfully represent the domain? |
+| R1 | Cognitive Overload | 理解这个需要多少心智努力？ |
+| R2 | Change Propagation | 一次变更会破坏多少不相关的东西？ |
+| R3 | Knowledge Duplication | 同一个决策是否在多处表达？ |
+| R4 | Accidental Complexity | 代码是否比问题更复杂？ |
+| R5 | Dependency Disorder | 依赖是否沿一致方向流动？ |
+| R6 | Domain Model Distortion | 代码是否忠实地表示了领域？ |
 
 ---
 
-## Report Template
+## 报告模板
 
-**Language rule:** Output the report in the same language the user is using. Translate the
-per-finding content and the one-sentence verdict to match the user's language. Keep the
-following in English: Iron Law field labels (Symptom / Source / Consequence / Remedy),
-book titles, principle and smell names (e.g. "Shotgun Surgery", "Divergent Change"),
-and fixed structural headers from the template below (`Findings`, `Summary`,
-`Module Dependency Graph`, `Critical`, `Warning`, `Suggestion`).
+**语言规则：** 以用户使用的相同语言输出报告。翻译每条发现的内容和一句话结论以匹配用户语言。保持以下内容为英文：Iron Law 字段标签（Symptom / Source / Consequence / Remedy）、书名、原则和坏味名称（例如 "Shotgun Surgery"、"Divergent Change"），以及下述模板中的固定结构标题（`Findings`、`Summary`、`Module Dependency Graph`、`Critical`、`Warning`、`Suggestion`）。
 
 ````
 # Decay Diagnosis Report
@@ -195,13 +177,12 @@ Remedy: ...
 
 ## Remedy Mode
 
-When the user passes `--fix` or asks to "fix the findings", read
-`remedy-guide.md` from the `_shared/` directory before writing the report.
+当用户传入 `--fix` 或要求"修复发现"时，在写报告之前阅读 `_shared/` 目录中的 `remedy-guide.md`。
 
 ## Health Score Calculation
 
-Base score: 100. Per-finding deductions depend on the `strictness` preset
-(`balanced` is used when no preset is set):
+基础分：100。每个发现的扣分取决于 `strictness` 预设
+（未设置预设时使用 `balanced`）：
 
 | Preset | 🔴 Critical | 🟡 Warning | 🟢 Suggestion |
 |--------|------------|-----------|--------------|
@@ -209,51 +190,47 @@ Base score: 100. Per-finding deductions depend on the `strictness` preset
 | `balanced` (default) | −15 | −5 | −1 |
 | `legacy-friendly` | −8 | −3 | −1 |
 
-Floor: 0 (score cannot go below 0). The preset changes only the score weighting and
-framing — every finding is still reported in full. Under `legacy-friendly`, lead the
-**Summary** with the three highest-leverage fixes so a first run is not a wall of Criticals.
+下限：0（分数不能低于 0）。预设仅改变评分权重和措辞 — 每个发现仍被完整报告。在 `legacy-friendly` 下，**Summary** 以三个最高杠杆的修复开头，使首次运行不是 Critical 之墙。
 
 ## History Tracking
 
-After generating the Health Score, attempt to append a record to `.decay-review-history.json`
-in the project root.
+生成 Health Score 后，尝试向项目根目录的 `.decay-review-history.json` 追加一条记录。
 
-**Append logic:**
-1. Read the file (or start with empty array if it doesn't exist)
-2. Append: `{ date, mode, score, findings: { critical, warning, suggestion }, scope }`
-3. Write the file back
+**追加逻辑：**
+1. 读取文件（如果不存在则从空数组开始）
+2. 追加：`{ date, mode, score, findings: { critical, warning, suggestion }, scope }`
+3. 写回文件
 
-**Trend display:** If the history file exists and contains at least one prior record for
-the same mode, add a Trend line after the Health Score in the report:
+**趋势显示：** 如果历史文件存在且包含同一模式的至少一条先前记录，在报告的 Health Score 之后添加 Trend 行：
 
   **Trend:** 85 → 82 (−3) over last 3 runs
 
-Show the most recent prior score and the delta. If delta is 0: "Stable at 82".
-If this is the first run for this mode: "First run — no trend data".
+显示最近的先前分数和增量。如果增量为 0："Stable at 82"。
+如果是此模式的首次运行："First run — no trend data"。
 
-## Post-Report Triage (Optional)
+## Post-Report Triage（可选）
 
-**Guard:** Interactive sessions only — skip in CI/headless mode.
+**守卫：** 仅交互式会话 — 在 CI/无头模式下跳过。
 
-After reporting Warning or Suggestion findings, offer:
+报告 Warning 或 Suggestion 发现后，提供：
 > Would you like to triage these findings? (accept / dismiss / defer / skip)
 
-For each finding one at a time (lowest severity first): show title, ask `[a]ccept / [d]ismiss / [f]defer / [s]kip`; wait for reply before moving to the next.
+逐条处理每个发现（最低严重度优先）：显示标题，询问 `[a]ccept / [d]ismiss / [f]defer / [s]kip`；等待回复后再处理下一条。
 
-**Dismiss:** ask one-line reason → append to `.decay-review.yaml` under `suppress:` → downgraded to info in future runs.
+**Dismiss：** 询问一行原因 → 追加到 `.decay-review.yaml` 的 `suppress:` 下 → 在未来运行中降级为信息。
 
-**Defer:** same as dismiss, add `expires: YYYY-MM-DD` (default 90 days) → resurfaces at original severity after expiry.
+**Defer：** 同 dismiss，添加 `expires: YYYY-MM-DD`（默认 90 天）→ 到期后以原始严重度重新浮现。
 
-**Suppress matching at scan time:** for each `suppress:` entry, match `risk` code and file `pattern` against findings.
-- Both match → downgrade to info (not counted in Health Score, shown under collapsed "Suppressed" section).
-- `expires` is past → ignore entry, finding resurfaces. Note in Summary: "N suppressed findings have expired and are now active again."
+**扫描时抑制匹配：** 对每个 `suppress:` 条目，将 `risk` 代码和文件 `pattern` 与发现匹配。
+- 两者都匹配 → 降级为信息（不计入 Health Score，显示在折叠的 "Suppressed" 部分下）。
+- `expires` 已过 → 忽略条目，发现重新浮现。在 Summary 中记录："N suppressed findings have expired and are now active again."
 
-## Reference Files
+## 参考文件
 
-Read on demand:
+按需阅读：
 
-| File | When to Read |
+| 文件 | 何时阅读 |
 |------|-------------|
-| `source-coverage.md` | At the start of every review, before writing findings |
-| `decay-risks.md` | Before any production-code review or architecture/debt assessment |
-| `test-decay-risks.md` | Before any test review and before the PR Review "Quick Test Check" step |
+| `source-coverage.md` | 每次审查开始时，写发现之前 |
+| `decay-risks.md` | 任何生产代码审查或架构/债务评估之前 |
+| `test-decay-risks.md` | 任何测试审查之前以及 PR Review "Quick Test Check" 步骤之前 |

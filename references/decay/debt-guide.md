@@ -1,114 +1,105 @@
-# Tech Debt Assessment Guide — Mode 3
+# 技术债务评估指南 — 模式 3
 
-**Purpose:** Identify, classify, and prioritize technical debt across the entire codebase.
-Every finding must follow the Iron Law: Symptom → Source → Consequence → Remedy.
-
----
-
-## Evidence Gathering
-
-If you have insufficient evidence to assess the codebase, ask the user ONE question —
-choose the single question most relevant to what you already know:
-
-1. "Which part of the codebase takes the longest to modify for a typical feature?"
-2. "Which module do developers avoid touching, and why?"
-3. "Which parts of the system have the fewest tests and the most bugs?"
-4. "Is there a module that only one person fully understands?"
-
-After one answer, proceed. Do not ask more than one question.
-If the user declines or says they don't know, proceed with available evidence and note
-which areas could not be assessed.
+**目的：** 识别、分类和优先排序整个代码库的技术债务。
+每条发现必须遵循铁律：Symptom → Source → Consequence → Remedy。
 
 ---
 
-## Analysis Process
+## 证据收集
 
-Work through these four steps in order.
+如果没有足够证据评估代码库，向用户提一个问题 —
+选择与你已知信息最相关的问题：
 
-### Step 1: Full Decay Risk Scan
+1. "代码库中哪一部分修改典型功能耗时最长？"
+2. "开发者最不愿意触碰哪个模块，为什么？"
+3. "系统哪些部分测试最少但 bug 最多？"
+4. "是否有一个模块只有一个人完全理解？"
 
-Scan for all six decay risks across the entire codebase. List every finding before scoring
-any of them. This prevents anchoring on early findings and missing systemic patterns.
+得到一个答案后继续。不要问超过一个问题。
+如果用户拒绝或说不知道，使用现有证据继续，并记录哪些区域无法评估。
 
-For each risk, look for:
+---
 
-**Cognitive Overload:** Are there widespread naming problems, deeply nested logic, or
-excessively long functions spread across many modules?
+## 分析流程
 
-**Change Propagation:** Which modules cause the most ripple effects when changed?
-Are there modules that everyone must modify when adding a new feature?
+按顺序完成以下四个步骤。
 
-**Knowledge Duplication:** How many times is the same concept implemented independently?
-Is the domain vocabulary consistent across the codebase?
+### 步骤 1：完整衰退风险扫描
 
-**Accidental Complexity:** Are there architectural layers or abstractions that add no value?
-Is the infrastructure overhead proportional to the problem being solved?
+扫描整个代码库的所有六种衰退风险。在对任何发现评分之前先列出所有发现。这避免锚定在早期发现上而遗漏系统性模式。
 
-**Dependency Disorder:** Are there dependency cycles? Does domain logic depend on infrastructure?
-Are there modules with no clear layering position?
+对于每种风险，寻找：
 
-**Domain Model Distortion:** Is business logic in the right layer?
-Do code names match business names? Are domain objects anemic?
+**Cognitive Overload：** 是否存在广泛的命名问题、深度嵌套逻辑，或跨多个模块的过长函数？
 
-### Step 2: Score Each Finding with Pain × Spread
+**Change Propagation：** 哪些模块在变更时引起最多的连锁反应？
+是否有模块在添加新功能时所有人都必须修改？
 
-After listing all findings, score each one:
+**Knowledge Duplication：** 同一概念被独立实现了多少次？
+领域词汇在代码库中是否一致？
 
-**Pain score (1–3):** How much does this slow down development today?
-- 3: Developers actively avoid touching this area; it causes bugs on most changes
-  *(e.g., "nobody wants to touch the billing module because it always breaks something")*
-- 2: This area is noticeably slower to work in than the rest of the codebase
-  *(e.g., "adding a field takes 2–3x longer here than elsewhere")*
-- 1: This is a quality issue but not currently causing active pain
-  *(e.g., "inconsistent naming, but we always know what we mean")*
+**Accidental Complexity：** 是否存在不增加价值的架构层或抽象？
+基础设施开销是否与所解决的问题相称？
 
-**Spread score (1–3):** How many files, modules, or developers does this affect?
-- 3: Affects 5+ modules or all developers on the team
-  *(e.g., "every new feature touches the God class in core/")*
-- 2: Affects 2–4 modules or a subset of the team
-  *(e.g., "the auth and notification modules are tightly coupled")*
-- 1: Isolated to one module or one developer's area
-  *(e.g., "legacy parser that only one person maintains")*
+**Dependency Disorder：** 是否存在依赖循环？领域逻辑是否依赖基础设施？
+是否有模块没有清晰的分层位置？
 
-**Priority = Pain × Spread** (max 9)
+**Domain Model Distortion：** 业务逻辑是否在正确的层？
+代码名称是否匹配业务名称？领域对象是否贫血？
 
-| Priority | Classification | Action |
+### 步骤 2：用 Pain × Spread 为每个发现评分
+
+列出所有发现后，为每个评分：
+
+**Pain 分数（1–3）：** 这在多大程度上拖慢了当前的开发？
+- 3：开发者主动避免触碰此区域；它在大多数变更中导致 bug
+  *（例如，"没人愿意碰计费模块，因为它总是会破坏某些东西"）*
+- 2：此区域的开发明显比代码库其他部分慢
+  *（例如，"在此处添加字段比其他地方慢 2–3 倍"）*
+- 1：这是质量问题但当前未造成实际痛苦
+  *（例如，"命名不一致，但我们总是知道什么意思"）*
+
+**Spread 分数（1–3）：** 这影响多少文件、模块或开发者？
+- 3：影响 5+ 个模块或团队所有开发者
+  *（例如，"每个新功能都触及 core/ 中的 God class"）*
+- 2：影响 2–4 个模块或部分团队成员
+  *（例如，"auth 和 notification 模块紧耦合"）*
+- 1：局限于一个模块或一个开发者的区域
+  *（例如，"只有一个人维护的遗留解析器"）*
+
+**Priority = Pain × Spread**（最大 9）
+
+| Priority | 分类 | 行动 |
 |----------|---------------|--------|
-| 7–9 | Critical debt | Address in next sprint |
-| 4–6 | Scheduled debt | Plan within quarter |
-| 1–3 | Monitored debt | Log and watch |
+| 7–9 | 关键债务 | 在下个迭代解决 |
+| 4–6 | 计划债务 | 季度内规划 |
+| 1–3 | 监控债务 | 记录并观察 |
 
-### Step 3: Classify Debt Intent
+### 步骤 3：分类债务意图
 
-After scoring, classify each finding as intentional or accidental:
+评分后，将每个发现分类为有意或偶然：
 
-**Intentional debt** — a conscious shortcut taken to meet a deadline, with the expectation
-of paying it back. The team knows about it. It may be legitimate (a strategic prototype,
-a known temporary workaround during a migration).
+**有意债务** — 为满足截止日期而有意采取的捷径，预期后续偿还。团队知道它的存在。它可能是合法的（战略原型、迁移期间的已知临时变通方案）。
 
-**Accidental debt** — degradation that accumulated without a deliberate decision: the team
-did not choose it and may not even know it exists. This is the kind Ward Cunningham's
-original definition warned against — not a tactical trade-off, but structural erosion.
+**偶然债务** — 在没有刻意决策的情况下累积的退化：团队没有选择它，甚至可能不知道它的存在。这正是 Ward Cunningham 最初定义所警告的 — 不是战术权衡，而是结构性侵蚀。
 
-Mark each finding with `[intentional]` or `[accidental]` in the Debt Summary Table.
-Intentional debt with no visible payback plan — no linked ticket, no code comment, no
-documented decision — should be treated as accidental for prioritization purposes.
-Focus remediation energy on accidental debt first; intentional debt at least has an owner.
+在 Debt Summary 表中用 `[intentional]` 或 `[accidental]` 标记每个发现。没有可见偿还计划的有意债务 — 没有关联工单、没有代码注释、没有记录的决策 — 出于优先级目的应视为偶然债务。
+首先将修复精力集中在偶然债务上；有意债务至少有所有者。
 
-### Step 4: Group by Decay Risk
+### 步骤 4：按衰退风险分组
 
-Report findings grouped by risk type, not by file or module.
-Grouping by risk reveals systemic patterns:
-- "Change Propagation is systemic" → architectural intervention needed
-- "Cognitive Overload is isolated" → localized refactoring sufficient
+按风险类型而非文件或模块分组报告发现。
+按风险分组揭示系统性模式：
+- "Change Propagation 是系统性的" → 需要架构干预
+- "Cognitive Overload 是孤立的" → 局部重构即可
 
 ---
 
-## Output
+## 输出
 
-Use the standard Report Template from `common.md`. Mode: Tech Debt Assessment.
+使用 `common.md` 中的标准报告模板。Mode：Tech Debt Assessment。
 
-After Findings, append a Debt Summary Table:
+在 Findings 之后，追加 Debt Summary 表：
 
 ```
 ## Debt Summary

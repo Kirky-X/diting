@@ -1,9 +1,9 @@
-# Load Testing Reference
+# 负载测试参考
 
-> **Scope**: Ready-to-use load test scripts (k6, Locust, JMeter).  
-> For test strategy, thresholds, and when to run load tests see [performance-engineer-guide.md](performance-engineer-guide.md).
+> **范围**：即用型负载测试脚本（k6、Locust、JMeter）。  
+> 测试策略、阈值和何时运行负载测试见 [performance-engineer-guide.md](performance-engineer-guide.md)。
 
-## k6 Test Script
+## k6 测试脚本
 
 ```javascript
 import http from 'k6/http';
@@ -50,7 +50,7 @@ export function handleSummary(data) {
 }
 ```
 
-## Locust Test
+## Locust 测试
 
 ```python
 from locust import HttpUser, task, between
@@ -80,7 +80,7 @@ class WebsiteUser(HttpUser):
         }, name="Add to Cart")
 ```
 
-## JMeter Test Plan
+## JMeter 测试计划
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>

@@ -1,37 +1,36 @@
-# Remedy Guide — Actionable Fix Mode
+# 修复指南 — 可执行修复模式
 
-When `--fix` is active, enhance every finding's Remedy field to be directly actionable:
+当 `--fix` 激活时，增强每条发现的 Remedy 字段使其直接可执行：
 
-## Remedy Enhancement Rules
+## 修复增强规则
 
-For each finding, the Remedy must include:
-1. **Target**: exact file path and function/class name
-2. **Action**: specific refactoring operation (e.g., "Extract lines 45-67 into a new
-   function `calculateShippingCost(items, config)`")
-3. **Rationale**: one sentence explaining why this specific fix (not just "refactor")
+对于每条发现，Remedy 必须包含：
+1. **目标**：确切文件路径和函数/类名
+2. **行动**：具体的重构操作（例如，"将 45-67 行抽取为新函数 `calculateShippingCost(items, config)`"）
+3. **理由**：一句话解释为何采用此特定修复（不只是"重构"）
 
-## Fixability Classification
+## 可修复性分类
 
-Classify each finding after writing the enhanced Remedy:
+写完增强的 Remedy 后，对每条发现分类：
 
-| Tier | Criteria | Report label |
+| 层级 | 标准 | 报告标签 |
 |------|---------|-------------|
-| Quick fix | Single-file, mechanical: rename, extract constant, reorder imports | `[quick-fix]` |
-| Guided fix | Requires a design choice: where to split, what interface shape | `[guided]` |
-| Manual | Cross-module, needs domain knowledge or team discussion | `[manual]` |
+| 快速修复 | 单文件、机械操作：重命名、抽取常量、重排 import | `[quick-fix]` |
+| 引导修复 | 需要设计选择：在哪里拆分、接口形状如何 | `[guided]` |
+| 手动修复 | 跨模块、需要领域知识或团队讨论 | `[manual]` |
 
-Append the label to the finding title: `**R1 — Long function in OrderService [quick-fix]**`
+将标签追加到发现标题：`**R1 — Long function in OrderService [quick-fix]**`
 
-## Output Addition
+## 输出附加
 
-After the standard report, add a **Fix Summary** section:
+在标准报告之后，添加 **Fix Summary** 部分：
 
-| Finding | Tier | Target File | Action |
+| 发现 | 层级 | 目标文件 | 行动 |
 |---------|------|------------|--------|
-| R1 — Long function | quick-fix | src/order.ts:45 | Extract `calculateTotal()` |
-| R5 — Circular dep | manual | src/models/ ↔ src/services/ | Introduce interface boundary |
+| R1 — Long function | quick-fix | src/order.ts:45 | 抽取 `calculateTotal()` |
+| R5 — Circular dep | manual | src/models/ ↔ src/services/ | 引入接口边界 |
 
-## What NOT to do
-- Do NOT modify any files. Phase 1 is diagnosis + actionable plan only.
-- Do NOT generate diffs or code blocks. The Remedy text IS the deliverable.
-- Do NOT re-score. The Health Score reflects current state, not projected state.
+## 不应做的事
+- 不要修改任何文件。阶段 1 仅诊断 + 可执行计划。
+- 不要生成 diff 或代码块。Remedy 文本本身就是交付物。
+- 不要重新评分。Health Score 反映当前状态，不是预期状态。

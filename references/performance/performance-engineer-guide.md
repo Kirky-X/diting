@@ -1,152 +1,152 @@
-# Performance Engineering Expert Guide
+# 性能工程专家指南
 
-> Comprehensive performance engineering reference integrating testing, optimization, and monitoring methodologies.
+> 集成测试、优化和监控方法的综合性能工程参考。
 >
 > 深度分析（前端/后端优化、监控配置）详见 [performance-deep-dive.md](performance-deep-dive.md)。
 
-## Role Definition
+## 角色定义
 
-A performance engineering specialist with 8+ years of experience in:
-- Performance testing and benchmarking
-- System optimization (frontend, backend, database)
-- Monitoring and observability
-- Capacity planning
+具备 8 年以上经验的性能工程专家：
+- 性能测试与基准测试
+- 系统优化（前端、后端、数据库）
+- 监控与可观测性
+- 容量规划
 
-## Core Expertise
+## 核心专长
 
-### Performance Testing
+### 性能测试
 
-| Test Type | Purpose | Tools |
+| 测试类型 | 目的 | 工具 |
 |-----------|---------|-------|
-| **Load Testing** | Verify system under expected load | k6, Locust, JMeter, Gatling |
-| **Stress Testing** | Find breaking points | k6, JMeter |
-| **Endurance Testing** | Verify stability over time | Custom scripts |
-| **Spike Testing** | Test sudden load increases | k6, Gatling |
-| **Scalability Testing** | Measure scaling capabilities | Custom frameworks |
-| **Benchmarking** | Compare performance metrics | hyperfine, JMH |
+| **负载测试** | 验证系统在预期负载下表现 | k6、Locust、JMeter、Gatling |
+| **压力测试** | 找到 breaking 点 | k6、JMeter |
+| **耐久测试** | 验证长期稳定性 | 自定义脚本 |
+| **峰值测试** | 测试突发负载增长 | k6、Gatling |
+| **可扩展性测试** | 衡量扩展能力 | 自定义框架 |
+| **基准测试** | 比较性能指标 | hyperfine、JMH |
 
-### Performance Optimization
+### 性能优化
 
-| Area | Focus |
+| 领域 | 关注点 |
 |------|-------|
-| **Frontend** | Core Web Vitals, bundle size, rendering |
-| **Backend** | Algorithms, caching, database |
-| **Network** | Compression, CDN, protocols |
-| **Memory** | Allocation patterns, GC tuning |
-| **CPU** | Hot paths, parallelization |
-| **I/O** | Async operations, batching |
+| **前端** | Core Web Vitals、包大小、渲染 |
+| **后端** | 算法、缓存、数据库 |
+| **网络** | 压缩、CDN、协议 |
+| **内存** | 分配模式、GC 调优 |
+| **CPU** | 热路径、并行化 |
+| **I/O** | 异步操作、批处理 |
 
-### Monitoring & Observability
+### 监控与可观测性
 
-| Category | Tools |
+| 类别 | 工具 |
 |----------|-------|
-| **APM** | Datadog, New Relic, AppDynamics |
-| **Metrics** | Prometheus, Grafana |
-| **Tracing** | Jaeger, Zipkin |
-| **Logging** | ELK Stack, Splunk |
-| **RUM** | Real User Monitoring |
+| **APM** | Datadog、New Relic、AppDynamics |
+| **指标** | Prometheus、Grafana |
+| **追踪** | Jaeger、Zipkin |
+| **日志** | ELK Stack、Splunk |
+| **RUM** | 真实用户监控 |
 
-## Workflow
+## 工作流
 
-### 1. Assessment Phase
+### 1. 评估阶段
 
-1. Define performance requirements
-2. Establish baseline metrics
-3. Identify critical paths
-4. Map dependencies
-5. Set performance budgets
+1. 定义性能需求
+2. 建立基线指标
+3. 识别关键路径
+4. 映射依赖
+5. 设定性能预算
 
-**Key Questions**:
-- What are the performance requirements?
-- What is the current baseline?
-- What are the critical user journeys?
-- What dependencies exist?
+**关键问题**：
+- 性能需求是什么？
+- 当前基线是什么？
+- 关键用户旅程是什么？
+- 存在哪些依赖？
 
-### 2. Testing Phase
+### 2. 测试阶段
 
-1. Design test scenarios
-2. Create test data
-3. Execute load tests
-4. Monitor system behavior
-5. Collect metrics
+1. 设计测试场景
+2. 创建测试数据
+3. 执行负载测试
+4. 监控系统行为
+5. 收集指标
 
-### 3. Analysis Phase
+### 3. 分析阶段
 
-1. Analyze bottlenecks
-2. Profile code paths
-3. Review database queries
-4. Check infrastructure limits
-5. Identify optimization opportunities
+1. 分析瓶颈
+2. 性能分析代码路径
+3. 审查数据库查询
+4. 检查基础设施限制
+5. 识别优化机会
 
-### 4. Optimization Phase
+### 4. 优化阶段
 
-1. Implement optimizations
-2. Verify improvements
-3. Re-test to confirm
-4. Document changes
-5. Set up monitoring
+1. 实施优化
+2. 验证改进
+3. 重新测试确认
+4. 文档化变更
+5. 设置监控
 
-## Performance Budgets
+## 性能预算
 
-### Web Vitals Targets
+### Web Vitals 目标
 
-| Metric | Good | Needs Improvement | Poor |
+| 指标 | 良好 | 需改进 | 差 |
 |--------|------|-------------------|------|
-| **LCP** (Largest Contentful Paint) | ≤ 2.5s | 2.5s - 4.0s | > 4.0s |
-| **FID** (First Input Delay) | ≤ 100ms | 100ms - 300ms | > 300ms |
-| **CLS** (Cumulative Layout Shift) | ≤ 0.1 | 0.1 - 0.25 | > 0.25 |
-| **TTFB** (Time to First Byte) | ≤ 800ms | 800ms - 1800ms | > 1800ms |
+| **LCP**（最大内容绘制） | ≤ 2.5s | 2.5s - 4.0s | > 4.0s |
+| **FID**（首次输入延迟） | ≤ 100ms | 100ms - 300ms | > 300ms |
+| **CLS**（累积布局偏移） | ≤ 0.1 | 0.1 - 0.25 | > 0.25 |
+| **TTFB**（首字节时间） | ≤ 800ms | 800ms - 1800ms | > 1800ms |
 
-### Resource Budgets
+### 资源预算
 
-| Resource | Target |
+| 资源 | 目标 |
 |----------|--------|
-| Bundle Size | < 200KB gzipped |
+| 包大小 | < 200KB gzipped |
 | JavaScript | < 100KB |
 | CSS | < 30KB |
-| Images | < 500KB total |
-| Fonts | < 50KB |
+| 图片 | < 500KB 总计 |
+| 字体 | < 50KB |
 
-### System Metrics
+### 系统指标
 
-| Metric | Target | Note |
+| 指标 | 目标 | 说明 |
 |--------|--------|------|
-| P50 Response Time | < 100ms | Median — typical user experience |
-| P95 Response Time | < 500ms | 95th percentile — must be ≥ P50 |
-| P99 Response Time | < 1s | 99th percentile — must be ≥ P95 |
-| Error Rate | < 0.1% | 5xx + timeout |
-| CPU Utilization | < 70% | Sustained average |
-| Memory Utilization | < 80% | Leave headroom for GC spikes |
+| P50 响应时间 | < 100ms | 中位数 —— 典型用户体验 |
+| P95 响应时间 | < 500ms | 95 分位 —— 必须 ≥ P50 |
+| P99 响应时间 | < 1s | 99 分位 —— 必须 ≥ P95 |
+| 错误率 | < 0.1% | 5xx + 超时 |
+| CPU 利用率 | < 70% | 持续平均 |
+| 内存利用率 | < 80% | 为 GC 峰值留余量 |
 
-## Load Testing
+## 负载测试
 
-> Full test scripts (k6, Locust, JMeter) are maintained in [load-testing.md](load-testing.md) to avoid duplication.
+> 完整测试脚本（k6、Locust、JMeter）维护在 [load-testing.md](load-testing.md) 中以避免重复。
 
-**Quick reference — thresholds to set in your load test:**
+**快速参考 —— 负载测试中要设置的阈值：**
 
 ```
-p(95) < 500ms   ← maps to P95 target
-p(99) < 1000ms  ← maps to P99 target
+p(95) < 500ms   ← 映射到 P95 目标
+p(99) < 1000ms  ← 映射到 P99 目标
 error rate < 1%
 ```
 
-**Load stages pattern:**
+**负载阶段模式：**
 ```mermaid
 flowchart LR
-    R["Ramp up (2m)"] --> P["Plateau at target RPS (5m)"]
-    P --> Peak["Peak x2 (5m)"]
-    Peak --> RD["Ramp down (2m)"]
+    R["爬升 (2m)"] --> P["在目标 RPS 平稳 (5m)"]
+    P --> Peak["峰值 x2 (5m)"]
+    Peak --> RD["下降 (2m)"]
 ```
 
-See [load-testing.md](load-testing.md) for full k6, Locust, and JMeter scripts.
+完整 k6、Locust 和 JMeter 脚本见 [load-testing.md](load-testing.md)。
 
-## Profiling Tools
+## 性能分析工具
 
-### Frontend Profiling
+### 前端性能分析
 
 ```bash
 # Chrome DevTools
-# Performance tab → Record → Analyze
+# Performance 标签 → 录制 → 分析
 
 # Lighthouse CLI
 lighthouse https://example.com --view
@@ -155,7 +155,7 @@ lighthouse https://example.com --view
 webpagetest test https://example.com
 ```
 
-### Backend Profiling
+### 后端性能分析
 
 ```bash
 # Python
@@ -172,58 +172,58 @@ perf record -g ./target/release/myapp
 perf report
 ```
 
-## Collaboration
+## 协作
 
-### With Backend Developer
-- Profile code performance
-- Optimize database queries
-- Implement caching strategies
-- Review architecture decisions
+### 与后端开发者
+- 分析代码性能
+- 优化数据库查询
+- 实施缓存策略
+- 审查架构决策
 
-### With Frontend Developer
-- Optimize bundle size
-- Improve rendering performance
-- Implement lazy loading
-- Optimize Core Web Vitals
+### 与前端开发者
+- 优化包大小
+- 改善渲染性能
+- 实施懒加载
+- 优化 Core Web Vitals
 
-### With DevOps
-- Set up monitoring
-- Configure auto-scaling
-- Optimize infrastructure
-- Manage resources
+### 与 DevOps
+- 设置监控
+- 配置自动扩缩容
+- 优化基础设施
+- 管理资源
 
-### With QA Engineer
-- Define performance tests
-- Create test plans
-- Support testing
-- Validate optimizations
+### 与 QA 工程师
+- 定义性能测试
+- 创建测试计划
+- 支持测试
+- 验证优化
 
-## Key Metrics Summary
+## 关键指标汇总
 
-### User-Facing Metrics
+### 面向用户的指标
 
-| Metric | Target | Measurement |
+| 指标 | 目标 | 测量 |
 |--------|--------|-------------|
-| LCP | < 2.5s | Largest content paint time |
-| FID | < 100ms | First interaction delay |
-| CLS | < 0.1 | Layout shift score |
-| TTFB | < 800ms | Server response time |
+| LCP | < 2.5s | 最大内容绘制时间 |
+| FID | < 100ms | 首次交互延迟 |
+| CLS | < 0.1 | 布局偏移分数 |
+| TTFB | < 800ms | 服务器响应时间 |
 
-### System Metrics
+### 系统指标
 
-| Metric | Target | Measurement |
+| 指标 | 目标 | 测量 |
 |--------|--------|-------------|
-| Response Time P50 | < 100ms | Median — typical request |
-| Response Time P95 | < 500ms | 95th percentile (must be ≥ P50) |
-| Response Time P99 | < 1s | 99th percentile (must be ≥ P95) |
-| Throughput | Varies | Requests per second at target latency |
-| Error Rate | < 0.1% | Failed requests |
+| 响应时间 P50 | < 100ms | 中位数 —— 典型请求 |
+| 响应时间 P95 | < 500ms | 95 分位（必须 ≥ P50） |
+| 响应时间 P99 | < 1s | 99 分位（必须 ≥ P95） |
+| 吞吐量 | 可变 | 目标延迟下的每秒请求数 |
+| 错误率 | < 0.1% | 失败请求 |
 
-### Business Metrics
+### 业务指标
 
-| Metric | Description |
+| 指标 | 描述 |
 |--------|-------------|
-| Conversion Rate | Impact on business goals |
-| User Satisfaction | NPS and feedback |
-| Cost per Request | Infrastructure efficiency |
-| Time to Market | Development velocity |
+| 转化率 | 对业务目标的影响 |
+| 用户满意度 | NPS 和反馈 |
+| 每请求成本 | 基础设施效率 |
+| 上市时间 | 开发速度 |

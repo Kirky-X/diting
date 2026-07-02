@@ -1,34 +1,25 @@
-Every deliberate simplicity-lens shortcut is marked with a `lazy:` comment naming
-its ceiling and upgrade path. This collects them into one ledger so a deferral
-can't quietly become permanent.
+每个刻意的简化视角捷径都用 `lazy:` 注释标记，命名其上限和升级路径。这把它们收集到一个账本中，使延迟不会悄悄变成永久。
 
-## Scan
+## 扫描
 
-Grep the repo for comment markers, skipping `node_modules`, `.git`, and build
-output:
+Grep 仓库中的注释标记，跳过 `node_modules`、`.git` 和构建输出：
 
-`grep -rnE '(#|//) ?lazy:' .`  (add other comment prefixes if your stack uses them)
+`grep -rnE '(#|//) ?lazy:' .`  （如果你的技术栈使用其他注释前缀，添加它们）
 
-Each hit is one ledger row. The comment prefix keeps prose that merely mentions
-the convention out of the ledger.
+每个命中是一行账本。注释前缀使仅仅提及该约定的散文不进入账本。
 
-## Output
+## 输出
 
-One row per marker, grouped by file:
+每个标记一行，按文件分组：
 
-`<file>:<line>, <what was simplified>. ceiling: <the limit named>. upgrade: <the trigger to revisit>.`
+`<文件>:<行号>, <简化了什么>. 上限: <命名的限制>. 升级: <重新审视的触发器>.`
 
-The convention is `lazy: <ceiling>, <upgrade path>`, so pull the ceiling
-and the trigger straight from the comment. Want an owner per row too? add
-`git blame -L<line>,<line>`.
+约定是 `lazy: <上限>, <升级路径>`，所以直接从注释中提取上限和触发器。想要每行也有负责人？添加 `git blame -L<行号>,<行号>`。
 
-Flag the rot risk: any `lazy:` comment that names no upgrade path or
-trigger gets a `no-trigger` tag, those are the ones that silently rot.
+标记腐烂风险：任何没有命名升级路径或触发器的 `lazy:` 注释获得 `no-trigger` 标签，这些是悄悄腐烂的那些。
 
-End with `<N> markers, <M> with no trigger.` Nothing found: `No lazy: debt. Clean ledger.`
+以 `<N> 个标记, <M> 个无触发器.` 结束。未找到：`无 lazy: 债务。账本干净。`
 
-## Boundaries
+## 边界
 
-Reads and reports only, changes nothing. To persist it, ask and it writes the
-ledger to a file (e.g. `SIMPLIFY-DEBT.md`). One-shot. "stop simplify-debt" or
-"normal mode" to revert.
+仅读取和报告，不改变任何东西。要持久化它，询问并将账本写入文件（如 `SIMPLIFY-DEBT.md`）。一次性。"stop simplify-debt" 或 "normal mode" 恢复。
