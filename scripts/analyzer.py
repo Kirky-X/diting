@@ -438,26 +438,27 @@ class CodeAnalyzer:
                     })
 
         # Check for potential race conditions (check-then-act pattern)
+        # Bug 2 fix: 用 re.search 的 match.start() 计算真实匹配起始行，
+        # 而非逐行扫描 'exists()' / '== null' 关键词（会误归因到注释行）
         race_patterns = [
             (r'if\s+.*\.exists\(\).*:\s*\n\s*.*write', 'Check-then-act pattern — potential race condition'),
             (r'if\s+.*==\s*null.*:\s*\n\s*.*create', 'Check-then-create pattern — potential race condition'),
         ]
 
         for pattern, description in race_patterns:
-            if re.search(pattern, content, re.MULTILINE):
-                # Find the line with the check
-                for i, line in enumerate(lines, 1):
-                    if 'exists()' in line or '== null' in line or 'is None' in line:
-                        issues.append({
-                            'file': file_path,
-                            'line': i,
-                            'end_line': i,
-                            'severity': 'high',
-                            'category': 'correctness',
-                            'description': description,
-                            'recommendation': 'Use atomic operations or locks to prevent race conditions',
-                        })
-                        break  # Only report once per file
+            match = re.search(pattern, content, re.MULTILINE)
+            if match:
+                # 用 match.start() 计算真实匹配起始行号
+                line_number = content.count('\n', 0, match.start()) + 1
+                issues.append({
+                    'file': file_path,
+                    'line': line_number,
+                    'end_line': line_number,
+                    'severity': 'high',
+                    'category': 'correctness',
+                    'description': description,
+                    'recommendation': 'Use atomic operations or locks to prevent race conditions',
+                })
 
         # Check for division without zero check
         # D-P1-2: narrowed pattern to identifier/identifier form to reduce false positives
