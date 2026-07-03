@@ -2,9 +2,19 @@
   "name": "diting",
   "description": "统一代码质量审查套件，三个引擎：A 维度审查(15 维度,置信度+严重度) + B 衰减诊断(6 大衰变风险) + C 简化精炼(过度工程审查/最简方案梯/精炼 pass)。",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Kirky-X",
   "repo": "https://github.com/Kirky-X/diting",
   "homepage": "https://github.com/Kirky-X/diting",
-  "tag": ["code-review", "security", "performance", "quality", "architecture", "decay", "simplification", "tech-debt", "health-dashboard"]
+  "tag": [
+    "code-review",
+    "security",
+    "performance",
+    "quality",
+    "architecture",
+    "decay",
+    "simplification",
+    "tech-debt",
+    "health-dashboard"
+  ]
 }
