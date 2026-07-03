@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# install-skill.sh — 安装/卸载 skill 到项目级 agent 目录
+# install-skill.sh — 安装/卸载/更新 skill 到项目级 agent 目录
 #
 # 子命令:
 #   install <skill>     安装 skill 到目标项目的 agent 目录
+#   update [skill]      从 git 拉取最新版本并重新安装（不指定 skill 则更新所有）
 #   uninstall <skill>   卸载 skill
 #   list-skills         列出可安装的 skill
 #   list-agents         列出支持的 agent 类型及安装路径
@@ -88,6 +89,8 @@ Usage: install-skill.sh <command> [options]
 Commands:
   install <skill-name> [--target <dir>] [--agent <type>|--all-agents]
       安装 skill 到目标项目的 agent 目录（默认 --target .  默认 --agent claude）
+  update [skill-name] [--target <dir>] [--agent <type>|--all-agents]
+      从 git 拉取最新版本并重新安装。不指定 skill-name 则更新所有 skill
   uninstall <skill-name> [--target <dir>] [--agent <type>|--all-agents]
       卸载 skill
   list-skills
@@ -202,16 +205,15 @@ cmd_install() {
 
   local agent
   while IFS= read -r agent; do
-    local cfg folder subdir dest tmp
+    local cfg folder subdir dest
     cfg="$(agent_config "$agent")" || { err "内部错误: agent_config $agent"; exit 1; }
     folder="${cfg%%|*}"
     subdir="${cfg##*|}"
     dest="$TARGET_DIR/$folder/$subdir/$skill_name"
 
-    # 原子替换：先复制到临时目录，成功后再替换原目录，避免数据丢失
-    tmp="$dest.tmp"
-    rm -rf "$tmp"
-    mkdir -p "$tmp"
+    # 清理后重建，避免残留旧文件
+    rm -rf "$dest"
+    mkdir -p "$dest"
 
     # 复制源目录顶层条目，跳过排除项（避免复制 .venv / .git 等大目录）
     # 纯 bash 实现：dotglob 让 * 匹配隐藏文件，遍历时按名跳过 EXCLUDE_PATTERNS
@@ -228,7 +230,7 @@ cmd_install() {
         [[ "$ename" == "$p" ]] && { excluded=1; break; }
       done
       [[ $excluded -eq 1 ]] && continue
-      if ! cp -r "$item" "$tmp/" 2>/dev/null; then
+      if ! cp -r "$item" "$dest/" 2>/dev/null; then
         cp_failed=1
         break
       fi
@@ -237,49 +239,118 @@ cmd_install() {
     [[ $_ng -eq 0 ]] && shopt -u nullglob
 
     if [[ $cp_failed -ne 0 ]]; then
-      err "复制失败: $src -> $dest（原目录已保留）"
-      rm -rf "$tmp"
+      err "复制失败: $src -> $dest"
       failed=1
       printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$RED" "FAILED" "$RESET"
       continue
     fi
     # specmark/changes 为运行时产物（specmark skill 本身保留）
-    rm -rf "$tmp/specmark/changes" 2>/dev/null || true
-
-    # 复制成功后，原子替换原目录
-    # Bug 5 fix: 备份 dest 到 dest.old.$$，再 rename tmp 到 dest
-    # 若 rename 失败，回滚：把 dest.old.$$ rename 回 dest（数据不丢失）
-    local backup=""
-    if [[ -e "$dest" ]]; then
-      backup="$dest.old.$$"
-      rm -rf "$backup"
-      if ! mv "$dest" "$backup" 2>/dev/null; then
-        err "无法备份原目录: $dest -> $backup（安装中止，原目录已保留）"
-        rm -rf "$tmp"
-        failed=1
-        printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$RED" "FAILED" "$RESET"
-        continue
-      fi
-    fi
-
-    if ! mv "$tmp" "$dest"; then
-      err "原子安装失败: $tmp -> $dest（回滚原目录）"
-      if [[ -n "$backup" ]]; then
-        mv "$backup" "$dest" 2>/dev/null || true
-      fi
-      rm -rf "$tmp"
-      failed=1
-      printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$RED" "FAILED" "$RESET"
-      continue
-    fi
-
-    # 安装成功，清理备份
-    if [[ -n "$backup" ]]; then
-      rm -rf "$backup"
-    fi
+    rm -rf "$dest/specmark/changes" 2>/dev/null || true
 
     printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$GREEN" "OK" "$RESET"
   done <<< "$agents"
+
+  [[ $failed -ne 0 ]] && exit 1
+  return 0
+}
+
+# ---------- 子命令: update ----------
+cmd_update() {
+  local skill_name=""
+  TARGET_DIR="."
+  AGENT_FLAG=""
+
+  # 解析参数：第一个非 flag 参数是 skill-name（可选）
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --target)
+        shift
+        [[ $# -gt 0 ]] || { err "--target 需要参数"; exit 1; }
+        TARGET_DIR="$1"
+        ;;
+      --agent)
+        shift
+        [[ $# -gt 0 ]] || { err "--agent 需要参数"; exit 1; }
+        AGENT_FLAG="$1"
+        ;;
+      --all-agents)
+        AGENT_FLAG="all"
+        ;;
+      -h|--help)
+        usage; exit 0
+        ;;
+      -*)
+        err "未知参数: $1"; usage; exit 1
+        ;;
+      *)
+        [[ -z "$skill_name" ]] && skill_name="$1" || { err "多余参数: $1"; usage; exit 1; }
+        ;;
+    esac
+    shift
+  done
+
+  # Step 1: git pull
+  info "拉取最新版本..."
+  if [[ -d "$PROJECT_ROOT/.git" ]]; then
+    if ! git -C "$PROJECT_ROOT" pull --ff-only 2>/dev/null; then
+      warn "git pull 失败，尝试 git fetch + reset"
+      git -C "$PROJECT_ROOT" fetch origin 2>/dev/null || true
+      local current_branch
+      current_branch="$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null || echo "main")"
+      git -C "$PROJECT_ROOT" reset --hard "origin/$current_branch" 2>/dev/null || {
+        err "无法拉取最新版本，请手动 git pull"
+        exit 1
+      }
+    fi
+    info "已拉取最新版本"
+  else
+    warn "当前目录非 git 仓库，跳过拉取，直接重新安装"
+  fi
+
+  # Step 2: 收集要更新的 skill 列表
+  local skills=()
+  if [[ -n "$skill_name" ]]; then
+    skills=("$skill_name")
+  else
+    # 独立仓库模式：只有自己
+    if is_standalone_skill_repo; then
+      skills=("*")
+    else
+      # 多 skill 模式：扫描所有 skill
+      local d
+      for d in "$PROJECT_ROOT"/*/; do
+        [[ -d "$d" ]] || continue
+        local name
+        name="$(basename "$d")"
+        [[ "$name" == "temp" ]] && continue
+        [[ -f "$d/SKILL.md" ]] || continue
+        skills+=("$name")
+      done
+    fi
+  fi
+
+  if [[ ${#skills[@]} -eq 0 ]]; then
+    warn "未找到任何可更新的 skill"
+    return 0
+  fi
+
+  # Step 3: 逐个更新
+  printf '%s%-12s %-10s%s\n' "$BOLD" "SKILL" "STATUS" "$RESET"
+  printf '%.0s-' {1..40}; printf '\n'
+
+  local s failed=0
+  for s in "${skills[@]}"; do
+    if [[ "$s" == "*" ]]; then
+      # 独立仓库模式：skill 名 = 仓库 basename
+      s="$(basename "$PROJECT_ROOT")"
+    fi
+    if cmd_install "$s" --target "$TARGET_DIR" --agent "${AGENT_FLAG:-claude}" >/dev/null 2>&1; then
+      printf '%-12s %s%s%s\n' "$s" "$GREEN" "UPDATED" "$RESET"
+    else
+      printf '%-12s %s%s%s\n' "$s" "$RED" "FAILED" "$RESET"
+      failed=1
+    fi
+  done
 
   [[ $failed -ne 0 ]] && exit 1
   return 0
@@ -560,23 +631,17 @@ cmd_generate_commands() {
 
     mkdir -p "$cmddir"
 
-    local sub desc file created=0 _content
+    local sub desc file created=0
     for sub in "${unique_subs[@]}"; do
       desc="$(extract_subcommand_desc "$skillmd" "$sub")"
       file="$cmddir/$skill_name-$sub.md"
-      cat > "$file" <<'EOF'
+      cat > "$file" <<EOF
 ---
-description: __DESC__
+description: $desc
 ---
 
-使用 __SKILL_NAME__ skill 的 __SUB__ 子命令进行以下任务：__DESC__。
+使用 $skill_name skill 的 $sub 子命令进行以下任务：$desc。
 EOF
-      # 安全替换占位符：bash 参数展开不会解析替换值中的命令替换/变量
-      _content=$(<"$file")
-      _content="${_content//__SKILL_NAME__/$skill_name}"
-      _content="${_content//__SUB__/$sub}"
-      _content="${_content//__DESC__/$desc}"
-      printf '%s\n' "$_content" > "$file"
       created=$((created+1))
     done
 
@@ -594,6 +659,7 @@ main() {
   shift
   case "$cmd" in
     install)           cmd_install "$@" ;;
+    update)            cmd_update "$@" ;;
     uninstall)         cmd_uninstall "$@" ;;
     list-skills)       cmd_list_skills ;;
     list-agents)       cmd_list_agents ;;
