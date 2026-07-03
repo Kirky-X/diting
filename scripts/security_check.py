@@ -184,11 +184,31 @@ class SecurityPatternChecker:
         try:
             # FIX #6: errors='replace' so binary / latin-1 files don't raise
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-                lines = f.readlines()
+                content = f.read()
         except OSError as e:
             print(f"警告: 无法读取文件 {file_path}: {e}")
             return
 
+        lines = content.splitlines(keepends=True)
+
+        # Bug 3 fix: 对带 re.DOTALL 的 pattern 做全文件匹配（让 DOTALL 真正生效）
+        # 多行 pattern（如 broad_exception_catch 跨行 catch 块）必须对整个 content 匹配
+        for name, config in _UNSAFE_PATTERNS.items():
+            pattern = config["pattern"]
+            if pattern.flags & re.DOTALL:
+                match = pattern.search(content)
+                if match:
+                    line_number = content.count('\n', 0, match.start()) + 1
+                    self.issues.append(SecurityIssue(
+                        file_path=file_path,
+                        line_number=line_number,
+                        issue_type=name,
+                        description=config["description"],
+                        severity=config["level"],
+                        suggestion=config["fix"],
+                    ))
+
+        # 单行 pattern（不带 DOTALL）逐行匹配 —— fast path
         for line_num, line in enumerate(lines, 1):
             self._check_line(file_path, line_num, line)
 
@@ -197,12 +217,16 @@ class SecurityPatternChecker:
         return any(stripped.startswith(p) for p in _COMMENT_PREFIXES)
 
     def _check_line(self, file_path: str, line_num: int, line: str) -> None:
-        """检查单行代码（跳过注释行）"""
+        """检查单行代码（跳过注释行）——只处理单行 pattern"""
         if self._is_comment(line):
             return
 
         for name, config in _UNSAFE_PATTERNS.items():
-            if config["pattern"].search(line):
+            pattern = config["pattern"]
+            # Bug 3 fix: 跳过带 DOTALL 的 pattern（已在 check_file 中全文件匹配）
+            if pattern.flags & re.DOTALL:
+                continue
+            if pattern.search(line):
                 self.issues.append(SecurityIssue(
                     file_path=file_path,
                     line_number=line_num,
