@@ -408,6 +408,31 @@ class CodeAnalyzer:
 
         return issues
 
+    def _is_in_string_literal(self, code: str, pos: int) -> bool:
+        """Check if position pos in code is inside a string literal.
+
+        Bug 7 fix: state machine tracking single/double quoted strings,
+        handling escaped quotes (backslash escapes the next char).
+        """
+        in_string = False
+        quote_char: Optional[str] = None
+        i = 0
+        while i < pos:
+            ch = code[i]
+            if in_string:
+                if ch == '\\':
+                    i += 2  # skip escaped char
+                    continue
+                if ch == quote_char:
+                    in_string = False
+                    quote_char = None
+            else:
+                if ch in ('"', "'"):
+                    in_string = True
+                    quote_char = ch
+            i += 1
+        return in_string
+
     def _check_correctness(
         self, file_path: str, content: str, lines: List[str], language: str
     ) -> List[Dict[str, Any]]:
@@ -476,13 +501,22 @@ class CodeAnalyzer:
 
         # Check for division without zero check
         # D-P1-2: narrowed pattern to identifier/identifier form to reduce false positives
+        # Bug 7 fix: 用 _is_in_string_literal 状态机精确定位 / 是否在字符串内
+        # 替代旧的 `if '"' in line or "'" in line: continue` 整行跳过
         div_pattern = re.compile(r'\b[a-zA-Z_]\w*\s*/\s*[a-zA-Z_]\w*\b')
+        # Precompute line start offsets for absolute position in content
+        line_starts = [0]
+        for ln in lines[:-1]:
+            line_starts.append(line_starts[-1] + len(ln) + 1)  # +1 for \n
         for i, line in enumerate(lines, 1):
             if line.strip().startswith(('#', '//', '/*', '*')):
                 continue
-            if div_pattern.search(line):
-                # D-P1-2: skip lines containing string literals to avoid matching / inside strings
-                if '"' in line or "'" in line:
+            for match in div_pattern.finditer(line):
+                # Find position of / in match, then absolute position in content
+                slash_offset_in_match = match.group().index('/')
+                slash_pos_in_content = line_starts[i - 1] + match.start() + slash_offset_in_match
+                # Bug 7 fix: 只跳过 / 在字符串内的匹配，不整行跳过
+                if self._is_in_string_literal(content, slash_pos_in_content):
                     continue
                 # Check if there's a zero check nearby (current line or ±2 lines context)
                 context = ' '.join(lines[max(0, i - 3):min(len(lines), i + 1)])
