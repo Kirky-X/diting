@@ -247,8 +247,36 @@ cmd_install() {
     rm -rf "$tmp/specmark/changes" 2>/dev/null || true
 
     # 复制成功后，原子替换原目录
-    rm -rf "$dest"
-    mv "$tmp" "$dest"
+    # Bug 5 fix: 备份 dest 到 dest.old.$$，再 rename tmp 到 dest
+    # 若 rename 失败，回滚：把 dest.old.$$ rename 回 dest（数据不丢失）
+    local backup=""
+    if [[ -e "$dest" ]]; then
+      backup="$dest.old.$$"
+      rm -rf "$backup"
+      if ! mv "$dest" "$backup" 2>/dev/null; then
+        err "无法备份原目录: $dest -> $backup（安装中止，原目录已保留）"
+        rm -rf "$tmp"
+        failed=1
+        printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$RED" "FAILED" "$RESET"
+        continue
+      fi
+    fi
+
+    if ! mv "$tmp" "$dest"; then
+      err "原子安装失败: $tmp -> $dest（回滚原目录）"
+      if [[ -n "$backup" ]]; then
+        mv "$backup" "$dest" 2>/dev/null || true
+      fi
+      rm -rf "$tmp"
+      failed=1
+      printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$RED" "FAILED" "$RESET"
+      continue
+    fi
+
+    # 安装成功，清理备份
+    if [[ -n "$backup" ]]; then
+      rm -rf "$backup"
+    fi
 
     printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$GREEN" "OK" "$RESET"
   done <<< "$agents"
