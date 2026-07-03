@@ -1,6 +1,0 @@
-[
-  {"id": 1, "prompt": "review this PR diff for auth.py, no dimension specified", "expected": "Full Review：触发融合报告，Engine A主分+verdict，Engine B衰变风险小节，Engine C可删代码小节，三者不混淆"},
-  {"id": 2, "prompt": "帮我审计一下这个代码库的架构，是不是符合clean architecture", "expected": "路由到Engine B architecture-guide.md，先读common.md（Iron Law/config/report模板），输出含Module Dependency Graph"},
-  {"id": 3, "prompt": "这个函数能不能写得更简单点，别过度设计", "expected": "路由到Simplicity Lens（写代码场景），走ladder.md的阶梯逻辑，而非overengineering-review.md（后者是评审已有diff，不是写新代码）"},
-  {"id": 4, "prompt": "只检查一下这段代码有没有安全问题", "expected": "路由到Engine A security dimension，只读commands/security.md等，不误触发B/C两个引擎"}
-]
