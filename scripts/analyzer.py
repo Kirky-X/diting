@@ -369,13 +369,21 @@ class CodeAnalyzer:
                 })
 
         # Check for outline:none without alternative focus style
-        outline_none_pattern = re.compile(r'outline\s*:\s*none\s*;(?![^}]*:focus)')
-        for i, line in enumerate(lines, 1):
-            if outline_none_pattern.search(line):
+        # Bug 6 fix: 提取 CSS {...} 块后对块整体匹配，支持多行 outline:none
+        # \boutline\s*: 单词边界排除 outline-offset 等同名前缀属性
+        css_block_pattern = re.compile(r'\{([^{}]*)\}', re.DOTALL)
+        outline_none_pattern = re.compile(r'\boutline\s*:\s*none')
+        for block_match in css_block_pattern.finditer(content):
+            block = block_match.group(1)
+            outline_match = outline_none_pattern.search(block)
+            if outline_match:
+                # 用 match 在 content 中的绝对位置计算行号（start(1) 是块内容起始）
+                absolute_pos = block_match.start(1) + outline_match.start()
+                line_number = content.count('\n', 0, absolute_pos) + 1
                 issues.append({
                     'file': file_path,
-                    'line': i,
-                    'end_line': i,
+                    'line': line_number,
+                    'end_line': line_number,
                     'severity': 'high',
                     'category': 'accessibility',
                     'description': 'outline:none without visible focus alternative',
