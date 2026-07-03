@@ -41,7 +41,7 @@ class TestConfidenceScoring(unittest.TestCase):
     """D-P1-4: 置信度评分不应所有 issue 都是 95。"""
 
     def test_confidence_varies_by_severity(self):
-        """不同严重度的 issue 应有不同的置信度。"""
+        """Bug 1 fix: critical/low 不扣分，medium/high 扣分（low 不再被过滤）。"""
         import parallel_review
         critical_issue = {
             'severity': 'critical', 'has_code_evidence': True,
@@ -51,21 +51,29 @@ class TestConfidenceScoring(unittest.TestCase):
             'severity': 'low', 'has_code_evidence': True,
             'matches_pattern': True, 'has_fix_suggestion': True,
         }
+        medium_issue = {
+            'severity': 'medium', 'has_code_evidence': True,
+            'matches_pattern': True, 'has_fix_suggestion': True,
+        }
         critical_score = parallel_review.calculate_confidence(critical_issue)
         low_score = parallel_review.calculate_confidence(low_issue)
-        self.assertGreater(critical_score, low_score,
-                           "critical issue should have higher confidence than low")
+        medium_score = parallel_review.calculate_confidence(medium_issue)
+        # Bug 1 fix: critical 和 low 都不扣分（low 不再被阈值过滤），medium 扣 10
+        self.assertGreaterEqual(critical_score, low_score,
+                                "critical issue should have >= confidence than low (Bug 1 fix)")
+        self.assertGreater(low_score, medium_score,
+                           "low issue should have higher confidence than medium (Bug 1 fix)")
 
-    def test_low_severity_filtered_by_threshold(self):
-        """low 严重度的 issue 应被阈值 80 过滤。"""
+    def test_low_severity_not_filtered_by_threshold(self):
+        """Bug 1 fix: low 严重度的 issue 不应被阈值 80 过滤（architecture/simplification 维度依赖）。"""
         import parallel_review
         low_issue = {
             'severity': 'low', 'has_code_evidence': True,
             'matches_pattern': True, 'has_fix_suggestion': True,
         }
         score = parallel_review.calculate_confidence(low_issue)
-        self.assertLess(score, 80,
-                        f"low issue score {score} should be below threshold 80")
+        self.assertGreaterEqual(score, 80,
+                                f"low issue score {score} should be >= threshold 80 (Bug 1 fix)")
 
 
 class TestUtf8Output(unittest.TestCase):

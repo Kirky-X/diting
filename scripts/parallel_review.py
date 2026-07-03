@@ -175,10 +175,12 @@ def get_review_agents() -> Dict[str, Dict[str, Any]]:
 def calculate_confidence(issue: Dict[str, Any]) -> int:
     """Calculate confidence score for an issue (0-100).
 
-    D-P1-4: confidence now varies by severity — critical/high patterns are
-    higher-confidence (more specific signatures), low/info are lower (often
-    stylistic). Previously every issue scored 95, making the threshold filter
-    a no-op.
+    Bug 1 fix: low severity 不再扣分（原 -20 导致 architecture/simplification
+    维度 issues 恒低于阈值 80 被过滤）。新公式：
+      - critical: 不扣分（最强证据）
+      - high: -5（强证据，轻微扣分）
+      - medium: -10
+      - low/info: 不扣分（修复 architecture/simplification 维度失明）
     """
     base_score = 50
     if issue.get('has_code_evidence'):
@@ -187,14 +189,16 @@ def calculate_confidence(issue: Dict[str, Any]) -> int:
         base_score += 15
     if issue.get('has_fix_suggestion'):
         base_score += 10
-    # D-P1-4: severity-aware adjustment to break the uniform 95-score plateau
+    # severity-aware adjustment
     severity = issue.get('severity', 'info').lower()
-    if severity in ('critical', 'high'):
-        pass  # high-confidence patterns, keep score
+    if severity == 'critical':
+        pass  # 不扣分，保持高置信度
+    elif severity == 'high':
+        base_score -= 5   # high 通常 confidence 更高因为证据更强
     elif severity == 'medium':
         base_score -= 10
-    else:  # low, info — often stylistic, lower confidence
-        base_score -= 20
+    else:  # low, info — 不扣分（修复 architecture/simplification 维度被过滤）
+        pass
     # Penalties
     if issue.get('is_pre_existing'):
         base_score -= 30
