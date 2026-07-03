@@ -184,11 +184,11 @@ class CodeAnalyzer:
 
         METHOD_RE = re.compile(r'^\s*(def |function |public |private |protected |static )')
 
-        method_start: Optional[int] = None
-        method_indent: int = 0
-        method_name: str = ''
+        # Bug 4 fix: 用 method_stack 追踪嵌套方法
+        # 每个栈元素: (start_line, indent, name)
+        method_stack: List[tuple] = []
 
-        def _report(start: int, end: int, name: str) -> None:
+        def _report(start: int, end: int, name: str, outer: Optional[str]) -> None:
             length = end - start
             if length > self.method_length_threshold:
                 issues.append({
@@ -199,6 +199,8 @@ class CodeAnalyzer:
                     'category': 'quality',
                     'description': f"Long method '{name}' ({length} lines, threshold {self.method_length_threshold})",
                     'recommendation': 'Extract smaller methods with single responsibility',
+                    'method': name,
+                    'outer_method': outer,
                 })
 
         for i, line in enumerate(lines, 1):
@@ -209,28 +211,32 @@ class CodeAnalyzer:
             current_indent = len(line) - len(line.lstrip())
 
             if METHOD_RE.match(line):
-                # Close previous method if it was still open
-                if method_start is not None and current_indent <= method_indent:
-                    _report(method_start, i - 1, method_name)
-                    method_start = None
+                # Bug 4 fix: 关闭所有 indent >= current_indent 的方法（外层方法结束）
+                while method_stack and current_indent <= method_stack[-1][1]:
+                    start, indent, name = method_stack.pop()
+                    outer = method_stack[0][2] if method_stack else None
+                    _report(start, i - 1, name, outer)
 
-                method_start = i
-                method_indent = current_indent
-                # Extract name: everything between first space and '('
+                # 进入新方法
                 try:
                     method_name = stripped.split('(')[0].split()[-1]
                 except IndexError:
                     method_name = stripped[:20]
 
-            elif method_start is not None:
-                # End of method when we return to or above the method's indent level
-                if current_indent <= method_indent and stripped and not stripped.startswith('#'):
-                    _report(method_start, i - 1, method_name)
-                    method_start = None
+                method_stack.append((i, current_indent, method_name))
+
+            elif method_stack:
+                # 检查是否退出当前方法（indent 回到或低于方法定义层级）
+                if current_indent <= method_stack[-1][1] and stripped and not stripped.startswith('#'):
+                    start, indent, name = method_stack.pop()
+                    outer = method_stack[0][2] if method_stack else None
+                    _report(start, i - 1, name, outer)
 
         # FIX #2: flush any method still open at end of file
-        if method_start is not None:
-            _report(method_start, len(lines), method_name)
+        while method_stack:
+            start, indent, name = method_stack.pop()
+            outer = method_stack[0][2] if method_stack else None
+            _report(start, len(lines), name, outer)
 
         return issues
 
