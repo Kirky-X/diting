@@ -8,11 +8,11 @@ license: MIT
 
 本 skill 融合了三个原本独立的工具包。每个引擎保留自己的分析方法（它们解决不同的问题，强制统一格式会丢失信息），但共享一个入口、一个模式表，以及 — 默认全量审查场景下 — 一份合并报告。
 
-| 引擎                            | 回答的问题                                              | 输出风格                                                                                                                                              | 来源                                                                                                           |
-| ------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **A. 维度审查 (Dimensional)**   | "代码是否正确、安全、快速、设计良好？"                  | 严重度+置信度评分问题列表，100 分制评分，Approved/Changes/Rejected 裁决                                                                               | `references/commands/*`, `references/{security,performance,quality,architecture,correctness,simplification}/*` |
-| **B. 腐化诊断 (Decay)**         | "为什么这段代码维护痛苦？哪条书本原则能解释？"          | Symptom → Source → Consequence → Remedy 发现项，Health Score，模块依赖图                                                                              | `references/decay/*`                                                                                           |
-| **C. 简化与精炼 (Simplicity)**  | "代码是否超出问题所需？是否足够清晰？"                  | Ladder（写代码前，最小优先）· 删除清单（`tag: what to cut`，仅报告）· 精炼 pass（事后清晰度编辑，保留行为）                                            | `references/simplicity/*`                                                                                      |
+| 引擎                           | 回答的问题                                     | 输出风格                                                                                                    | 来源                                                                                                           |
+| ------------------------------ | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **A. 维度审查 (Dimensional)**  | "代码是否正确、安全、快速、设计良好？"         | 严重度+置信度评分问题列表，100 分制评分，Approved/Changes/Rejected 裁决                                     | `references/commands/*`, `references/{security,performance,quality,architecture,correctness,simplification}/*` |
+| **B. 腐化诊断 (Decay)**        | "为什么这段代码维护痛苦？哪条书本原则能解释？" | Symptom → Source → Consequence → Remedy 发现项，Health Score，模块依赖图                                    | `references/decay/*`                                                                                           |
+| **C. 简化与精炼 (Simplicity)** | "代码是否超出问题所需？是否足够清晰？"         | Ladder（写代码前，最小优先）· 删除清单（`tag: what to cut`，仅报告）· 精炼 pass（事后清晰度编辑，保留行为） | `references/simplicity/*`                                                                                      |
 
 只读取某个模式所需的 reference 文件 — 不要预加载全部三个引擎。
 
@@ -20,35 +20,35 @@ license: MIT
 
 ## 步骤 1 — 路由请求
 
-| 用户说…                                                                        | 模式                                 | 引擎   | 参考                                                                                                                                            |
-| ------------------------------------------------------------------------------ | ------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `review`（无参数）                                                             | **Full Review**（融合）              | A+B+C  | 见下文 "Full Review"                                                                                                                             |
-| `review security`                                                              | Security                             | A      | [commands/security.md](references/commands/security.md)                                                                                         |
-| `review performance`                                                           | Performance                          | A      | [commands/performance.md](references/commands/performance.md)                                                                                   |
-| `review quality`                                                               | Quality                              | A      | [commands/quality.md](references/commands/quality.md)                                                                                           |
-| `review architecture`                                                          | Architecture                         | A      | [commands/architecture.md](references/commands/architecture.md)                                                                                 |
-| `review simplification`                                                        | Simplification                       | A      | [commands/simplification.md](references/commands/simplification.md)                                                                             |
-| `review api`                                                                   | API                                  | A      | [commands/api.md](references/commands/api.md)                                                                                                   |
-| `review database`                                                              | Database                             | A      | [commands/database.md](references/commands/database.md)                                                                                         |
-| `review testing`                                                               | Testing                              | A      | [commands/testing.md](references/commands/testing.md)                                                                                           |
-| `review documentation`                                                         | Documentation                        | A      | [commands/documentation.md](references/commands/documentation.md)                                                                               |
-| `review i18n`                                                                  | i18n                                 | A      | [commands/i18n.md](references/commands/i18n.md)                                                                                                 |
-| `review accessibility`                                                         | Accessibility                        | A      | [commands/accessibility.md](references/commands/accessibility.md)                                                                               |
-| `review correctness`                                                           | Correctness                          | A      | [commands/correctness.md](references/commands/correctness.md)                                                                                   |
-| `review agent`                                                                 | Agent（12-factor 审计）              | A      | [commands/agent.md](references/commands/agent.md)                                                                                               |
-| `review diff`                                                                  | Diff Review                          | A      | [commands/diff-review.md](references/commands/diff-review.md)                                                                                   |
-| `review pre-commit`                                                            | Pre-commit                           | A      | [commands/pre-commit.md](references/commands/pre-commit.md)                                                                                     |
-| `review batch`                                                                 | Batch Review                         | A      | [commands/batch-review.md](references/commands/batch-review.md)                                                                                 |
-| "audit this codebase"、"does this follow clean architecture"、"codebase tour"   | Architecture Audit                   | B      | [decay/architecture-guide.md](references/decay/architecture-guide.md)（+ [onboarding-guide.md](references/decay/onboarding-guide.md) 用于 tour） |
-| "tech debt"、"what should we fix first"、"refactoring roadmap"                  | Tech Debt Assessment                 | B      | [decay/debt-guide.md](references/decay/debt-guide.md)                                                                                           |
-| "our tests keep breaking"、"too many mocks"、test-suite review                  | Test Quality Review                  | B      | [decay/test-guide.md](references/decay/test-guide.md)                                                                                           |
-| "how healthy is this codebase"、"run all the checks"                            | Health Dashboard                     | B      | [decay/health-guide.md](references/decay/health-guide.md)                                                                                       |
-| "fix everything"、"sweep the codebase"、"auto-fix all issues"                   | Full Sweep & Auto-Fix ⚠️ 写代码       | B      | [decay/sweep-guide.md](references/decay/sweep-guide.md)                                                                                         |
-| "review for over-engineering"、"what can we delete"、"is this over-engineered"  | Over-engineering Review（diff）      | C      | [simplicity/overengineering-review.md](references/simplicity/overengineering-review.md)                                                         |
-| "audit for over-engineering"、"find bloat"、repo-wide                           | Over-engineering Audit               | C      | [simplicity/overengineering-audit.md](references/simplicity/overengineering-audit.md)                                                           |
-| "what did we mark to do later"、"list the shortcuts"                            | Debt Ledger（`lazy:` 注释）          | C      | [simplicity/debt-ledger.md](references/simplicity/debt-ledger.md)                                                                               |
-| "clean this up"、"make this more readable/consistent"、"refine/polish this"     | Refinement Pass                      | C      | [simplicity/refinement-pass.md](references/simplicity/refinement-pass.md)                                                                       |
-| "be lazy"、"minimal solution"、"yagni"、写/编辑代码                             | Simplicity Lens（ambient）           | C      | [simplicity/ladder.md](references/simplicity/ladder.md)                                                                                         |
+| 用户说…                                                                        | 模式                            | 引擎  | 参考                                                                                                                                             |
+| ------------------------------------------------------------------------------ | ------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `review`（无参数）                                                             | **Full Review**（融合）         | A+B+C | 见下文 "Full Review"                                                                                                                             |
+| `review security`                                                              | Security                        | A     | [commands/security.md](references/commands/security.md)                                                                                          |
+| `review performance`                                                           | Performance                     | A     | [commands/performance.md](references/commands/performance.md)                                                                                    |
+| `review quality`                                                               | Quality                         | A     | [commands/quality.md](references/commands/quality.md)                                                                                            |
+| `review architecture`                                                          | Architecture                    | A     | [commands/architecture.md](references/commands/architecture.md)                                                                                  |
+| `review simplification`                                                        | Simplification                  | A     | [commands/simplification.md](references/commands/simplification.md)                                                                              |
+| `review api`                                                                   | API                             | A     | [commands/api.md](references/commands/api.md)                                                                                                    |
+| `review database`                                                              | Database                        | A     | [commands/database.md](references/commands/database.md)                                                                                          |
+| `review testing`                                                               | Testing                         | A     | [commands/testing.md](references/commands/testing.md)                                                                                            |
+| `review documentation`                                                         | Documentation                   | A     | [commands/documentation.md](references/commands/documentation.md)                                                                                |
+| `review i18n`                                                                  | i18n                            | A     | [commands/i18n.md](references/commands/i18n.md)                                                                                                  |
+| `review accessibility`                                                         | Accessibility                   | A     | [commands/accessibility.md](references/commands/accessibility.md)                                                                                |
+| `review correctness`                                                           | Correctness                     | A     | [commands/correctness.md](references/commands/correctness.md)                                                                                    |
+| `review agent`                                                                 | Agent（12-factor 审计）         | A     | [commands/agent.md](references/commands/agent.md)                                                                                                |
+| `review diff`                                                                  | Diff Review                     | A     | [commands/diff-review.md](references/commands/diff-review.md)                                                                                    |
+| `review pre-commit`                                                            | Pre-commit                      | A     | [commands/pre-commit.md](references/commands/pre-commit.md)                                                                                      |
+| `review batch`                                                                 | Batch Review                    | A     | [commands/batch-review.md](references/commands/batch-review.md)                                                                                  |
+| "audit this codebase"、"does this follow clean architecture"、"codebase tour"  | Architecture Audit              | B     | [decay/architecture-guide.md](references/decay/architecture-guide.md)（+ [onboarding-guide.md](references/decay/onboarding-guide.md) 用于 tour） |
+| "tech debt"、"what should we fix first"、"refactoring roadmap"                 | Tech Debt Assessment            | B     | [decay/debt-guide.md](references/decay/debt-guide.md)                                                                                            |
+| "our tests keep breaking"、"too many mocks"、test-suite review                 | Test Quality Review             | B     | [decay/test-guide.md](references/decay/test-guide.md)                                                                                            |
+| "how healthy is this codebase"、"run all the checks"                           | Health Dashboard                | B     | [decay/health-guide.md](references/decay/health-guide.md)                                                                                        |
+| "fix everything"、"sweep the codebase"、"auto-fix all issues"                  | Full Sweep & Auto-Fix ⚠️ 写代码 | B     | [decay/sweep-guide.md](references/decay/sweep-guide.md)                                                                                          |
+| "review for over-engineering"、"what can we delete"、"is this over-engineered" | Over-engineering Review（diff） | C     | [simplicity/overengineering-review.md](references/simplicity/overengineering-review.md)                                                          |
+| "audit for over-engineering"、"find bloat"、repo-wide                          | Over-engineering Audit          | C     | [simplicity/overengineering-audit.md](references/simplicity/overengineering-audit.md)                                                            |
+| "what did we mark to do later"、"list the shortcuts"                           | Debt Ledger（`lazy:` 注释）     | C     | [simplicity/debt-ledger.md](references/simplicity/debt-ledger.md)                                                                                |
+| "clean this up"、"make this more readable/consistent"、"refine/polish this"    | Refinement Pass                 | C     | [simplicity/refinement-pass.md](references/simplicity/refinement-pass.md)                                                                        |
+| "be lazy"、"minimal solution"、"yagni"、写/编辑代码                            | Simplicity Lens（ambient）      | C     | [simplicity/ladder.md](references/simplicity/ladder.md)                                                                                          |
 
 **Fallback 与范围确认**：未知模式 / 无参数 → Full Review。模糊请求（"check this"）→ 询问：单文件 · PR diff · 全代码库。缺失目标路径 → 询问，绝不臆造。全代码库或批量扫描前，与用户确认目标路径 + 维度清单。
 
@@ -74,6 +74,15 @@ license: MIT
 3. **确实模糊的路由** — "Simplify this" 或 "Architecture" 请求无法清晰映射到某个模式（见上方歧义消解）。
 
 其他所有模式（Full Review、单维度审查、Ladder、Refinement Pass）只触碰用户本轮正在问的代码 — Full Sweep 之外不会有未经提示的全代码库编辑。
+
+## 步骤 1.5 — GitNexus 爆炸半径预检（可选，索引存在时）
+
+仓库根若有 `.gitnexus/` 索引（即用户已运行过 `npx gitnexus analyze`），在**审查前**用 `mcp__gitnexus__*` 工具做两件事，把扫描发现项与执行流和爆炸半径挂钩。索引不存在就跳过本节 — 不要臆造索引。
+
+1. **定位执行流** — 对审查范围的业务概念，调用 `mcp__gitnexus__query({query: "<概念>"})`，得到相关 process（执行流）及其符号和文件位置。这把"行级 finding"升级为"流程级上下文"。
+2. **评爆炸半径** — 对将要改/将要批评的关键符号（如审批、支付、认证路径上的函数），调用 `mcp__gitnexus__impact({target: "<符号>", direction: "upstream"})`，先看 `d=1`（WILL BREAK）直接调用者。提交前再用 `mcp__gitnexus__detect_changes({scope: "staged"})` 把 git diff 映射到受影响流程。
+
+脚本侧（`parallel_review.py` / `analyzer.py` / `security_check.py`）通过共享的 `scripts/gitnexus_helpers.py` 在报告中自动产出这份 worklist —— 它检测索引、从 critical/high 发现项里抽取符号、生成待执行的 `mcp__gitnexus__impact` / `mcp__gitnexus__query` 调用清单。**脚本本身无法调用 MCP**（它们是子进程，MCP 只对 agent 层可用），所以清单是给 agent 执行的，不是脚本自己跑。完整工作流见仓库内嵌的 `.claude/skills/gitnexus/`（6 个子 skill：cli / exploring / debugging / impact-analysis / refactoring / guide）。
 
 ## 步骤 2 — 收集上下文（所有引擎）
 
@@ -132,9 +141,17 @@ references/
 
 scripts/
 ├── analyzer.py           — 静态分析助手（Engine A）
-├── security_check.py     — 基于模式的安全扫描（Engine A）
-└── parallel_review.py    — fan-out 多维度审查（Engine A）；它按维度加载的
-                             reference 路径在此次合并后仍然有效
+├── security_check.py     — 基于模式的安全扫描（Engine A；安全模式单一源）
+├── parallel_review.py    — fan-out 多维度审查（Engine A）；它按维度加载的
+│                             reference 路径在此次合并后仍然有效；CPU-bound
+│                             分析走 multiprocessing.Pool，--format sarif 出 SARIF
+├── sarif_report.py       — 把三扫描器结果聚合为 SARIF 2.1.0（含结构校验）
+└── gitnexus_helpers.py   — 检测 .gitnexus/ 索引、抽取爆炸半径 target，产出
+                             待执行的 mcp__gitnexus__* 调用清单（MCP 由 agent 层跑）
+
+.claude/skills/gitnexus/  — 内嵌的 6 个 GitNexus 子 skill（cli / exploring /
+                             debugging / impact-analysis / refactoring / guide）；
+                             定义 mcp__gitnexus__* 工具的完整工作流，步骤 1.5 引用
 ```
 
 ## 备注

@@ -12,6 +12,92 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 
+# Curated nullable-source patterns for null-safety detection.
+#
+# Design note: a previous version used r'\b\w+\.\w+\s*\(' which matches EVERY method
+# call (`obj.method(`) — a near-100% false-positive rate when framed as "potential
+# NoneType access". The patterns below narrow detection to chained attribute/method
+# access (`.X(...).Y`) on sources that commonly evaluate to None / undefined / null,
+# so normal method calls are no longer flagged.
+#
+# The previous per-line skip `if 'if ' in line or '?' in line or '?.' in line: continue`
+# is also gone: it skipped ANY line containing a ternary `?` or an unrelated `if`
+# keyword, silently hiding real null-derefs on those lines (false negatives). We now
+# only skip a JS/TS line when the dev already used optional chaining (`?.`) on it.
+_ARG = r"(?:[^()]|\([^()]*\))*"  # one level of nested parentheses inside argument lists
+
+
+def _build_null_chain_patterns() -> Dict[str, List[Tuple["re.Pattern", str, str]]]:
+    """Build per-language curated nullable-source chained-access patterns."""
+    return {
+        "python": [
+            (
+                re.compile(
+                    rf"\bre\.(?:match|search|fullmatch)\s*\({_ARG}\)\s*\.\s*\w+"
+                ),
+                "match",
+                "Potential NoneType access — re.match/search/fullmatch() returns None on no match; guard before chaining (.group())",
+            ),
+            (
+                re.compile(rf"\.get\s*\({_ARG}\)\s*\.\s*\w+"),
+                "get",
+                "Potential NoneType access — dict.get() returns None for missing keys; guard before chaining",
+            ),
+            (
+                re.compile(rf"\.find\s*\({_ARG}\)\s*\.\s*\w+"),
+                "find",
+                "Potential NoneType access — .find() may return None; guard before chaining",
+            ),
+        ],
+        "java": [
+            (
+                re.compile(r"\b\w+\.get\s*\([^()]*\)\s*\.\s*\w+"),
+                "get",
+                "Potential NullPointerException — Map.get() returns null for missing keys",
+            ),
+        ],
+        "javascript": [
+            (
+                re.compile(rf"\.match\s*\({_ARG}\)\s*\.\s*\w+"),
+                "match",
+                "Potential null access — String.match() returns null on no match; use optional chaining (?.)",
+            ),
+            (
+                re.compile(rf"\.find\s*\({_ARG}\)\s*\.\s*\w+"),
+                "find",
+                "Potential undefined access — Array.find() returns undefined if no match; use optional chaining (?.)",
+            ),
+            (
+                re.compile(r"\.getElementById\s*\([^()]*\)\s*\.\s*\w+"),
+                "getElementById",
+                "Potential null access — getElementById() returns null if element missing; use optional chaining (?.)",
+            ),
+        ],
+        "typescript": [
+            (
+                re.compile(rf"\.match\s*\({_ARG}\)\s*\.\s*\w+"),
+                "match",
+                "Potential null access — String.match() returns null on no match; use optional chaining (?.)",
+            ),
+            (
+                re.compile(rf"\.find\s*\({_ARG}\)\s*\.\s*\w+"),
+                "find",
+                "Potential undefined access — Array.find() returns undefined if no match; use optional chaining (?.)",
+            ),
+            (
+                re.compile(r"\.getElementById\s*\([^()]*\)\s*\.\s*\w+"),
+                "getElementById",
+                "Potential null access — getElementById() returns null if element missing; use optional chaining (?.)",
+            ),
+        ],
+    }
+
+
+_NULL_CHAIN_PATTERNS: Dict[str, List[Tuple["re.Pattern", str, str]]] = (
+    _build_null_chain_patterns()
+)
+
+
 @dataclass
 class AnalysisResult:
     file_path: str
@@ -25,24 +111,24 @@ class CodeAnalyzer:
     """Multi-language code analyzer."""
 
     LANGUAGE_EXTENSIONS = {
-        '.py': 'python',
-        '.js': 'javascript',
-        '.ts': 'typescript',
-        '.jsx': 'javascript',
-        '.tsx': 'typescript',
-        '.java': 'java',
-        '.go': 'go',
-        '.rs': 'rust',
-        '.rb': 'ruby',
-        '.php': 'php',
-        '.c': 'c',
-        '.cpp': 'cpp',
-        '.h': 'c',
-        '.hpp': 'cpp',
-        '.cs': 'csharp',
-        '.swift': 'swift',
-        '.kt': 'kotlin',
-        '.scala': 'scala',
+        ".py": "python",
+        ".js": "javascript",
+        ".ts": "typescript",
+        ".jsx": "javascript",
+        ".tsx": "typescript",
+        ".java": "java",
+        ".go": "go",
+        ".rs": "rust",
+        ".rb": "ruby",
+        ".php": "php",
+        ".c": "c",
+        ".cpp": "cpp",
+        ".h": "c",
+        ".hpp": "cpp",
+        ".cs": "csharp",
+        ".swift": "swift",
+        ".kt": "kotlin",
+        ".scala": "scala",
     }
 
     def __init__(self):
@@ -58,10 +144,10 @@ class CodeAnalyzer:
 
         # FIX #4: always use errors='replace' so non-UTF-8 bytes
         # don't silently drop content or raise on binary files.
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
 
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         metrics = self._calculate_metrics(content, lines, language)
         issues = self._detect_issues(file_path, content, lines, language)
@@ -78,31 +164,33 @@ class CodeAnalyzer:
     def _detect_language(self, file_path: str) -> str:
         """Detect programming language from file extension."""
         _, ext = os.path.splitext(file_path)
-        return self.LANGUAGE_EXTENSIONS.get(ext.lower(), 'unknown')
+        return self.LANGUAGE_EXTENSIONS.get(ext.lower(), "unknown")
 
     def _calculate_metrics(
         self, content: str, lines: List[str], language: str
     ) -> Dict[str, Any]:
         """Calculate code metrics."""
         metrics = {
-            'lines_of_code': len([l for l in lines if l.strip()]),
-            'total_lines': len(lines),
-            'blank_lines': len([l for l in lines if not l.strip()]),
-            'comment_lines': self._count_comments(lines, language),
-            'cyclomatic_complexity': 0,
-            'cognitive_complexity': 0,
-            'maintainability_index': 0,
-            'halstead_volume': 0,
+            "lines_of_code": len([l for l in lines if l.strip()]),
+            "total_lines": len(lines),
+            "blank_lines": len([l for l in lines if not l.strip()]),
+            "comment_lines": self._count_comments(lines, language),
+            "cyclomatic_complexity": 0,
+            "cognitive_complexity": 0,
+            "maintainability_index": 0,
+            "halstead_volume": 0,
         }
 
-        if language == 'python':
+        if language == "python":
             try:
                 tree = ast.parse(content)
-                metrics['cyclomatic_complexity'] = self._calculate_cyclomatic_complexity(tree)
-                metrics['function_count'] = sum(
+                metrics["cyclomatic_complexity"] = (
+                    self._calculate_cyclomatic_complexity(tree)
+                )
+                metrics["function_count"] = sum(
                     1 for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)
                 )
-                metrics['class_count'] = sum(
+                metrics["class_count"] = sum(
                     1 for n in ast.walk(tree) if isinstance(n, ast.ClassDef)
                 )
             except SyntaxError:
@@ -118,22 +206,31 @@ class CodeAnalyzer:
         for line in lines:
             stripped = line.strip()
 
-            if language in ['python', 'ruby']:
-                if stripped.startswith('#'):
+            if language in ["python", "ruby"]:
+                if stripped.startswith("#"):
                     count += 1
-            elif language in ['javascript', 'typescript', 'java', 'c', 'cpp', 'csharp', 'go', 'rust']:
+            elif language in [
+                "javascript",
+                "typescript",
+                "java",
+                "c",
+                "cpp",
+                "csharp",
+                "go",
+                "rust",
+            ]:
                 if in_block_comment:
                     count += 1
-                    if '*/' in stripped:
+                    if "*/" in stripped:
                         in_block_comment = False
-                elif stripped.startswith('/*'):
+                elif stripped.startswith("/*"):
                     count += 1
-                    if '*/' not in stripped[2:]:
+                    if "*/" not in stripped[2:]:
                         in_block_comment = True
-                elif stripped.startswith('//'):
+                elif stripped.startswith("//"):
                     count += 1
-            elif language == 'php':
-                if stripped.startswith('#') or stripped.startswith('//'):
+            elif language == "php":
+                if stripped.startswith("#") or stripped.startswith("//"):
                     count += 1
 
         return count
@@ -178,11 +275,15 @@ class CodeAnalyzer:
         issues.extend(self._check_correctness(file_path, content, lines, language))
         return issues
 
-    def _check_long_methods(self, file_path: str, lines: List[str]) -> List[Dict[str, Any]]:
+    def _check_long_methods(
+        self, file_path: str, lines: List[str]
+    ) -> List[Dict[str, Any]]:
         """Check for long methods / functions."""
         issues = []
 
-        METHOD_RE = re.compile(r'^\s*(def |function |public |private |protected |static )')
+        METHOD_RE = re.compile(
+            r"^\s*(def |function |public |private |protected |static )"
+        )
 
         # Bug 4 fix: 用 method_stack 追踪嵌套方法
         # 每个栈元素: (start_line, indent, name)
@@ -191,17 +292,19 @@ class CodeAnalyzer:
         def _report(start: int, end: int, name: str, outer: Optional[str]) -> None:
             length = end - start
             if length > self.method_length_threshold:
-                issues.append({
-                    'file': file_path,
-                    'line': start,
-                    'end_line': end,
-                    'severity': 'medium',
-                    'category': 'quality',
-                    'description': f"Long method '{name}' ({length} lines, threshold {self.method_length_threshold})",
-                    'recommendation': 'Extract smaller methods with single responsibility',
-                    'method': name,
-                    'outer_method': outer,
-                })
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": start,
+                        "end_line": end,
+                        "severity": "medium",
+                        "category": "quality",
+                        "description": f"Long method '{name}' ({length} lines, threshold {self.method_length_threshold})",
+                        "recommendation": "Extract smaller methods with single responsibility",
+                        "method": name,
+                        "outer_method": outer,
+                    }
+                )
 
         for i, line in enumerate(lines, 1):
             stripped = line.strip()
@@ -219,7 +322,7 @@ class CodeAnalyzer:
 
                 # 进入新方法
                 try:
-                    method_name = stripped.split('(')[0].split()[-1]
+                    method_name = stripped.split("(")[0].split()[-1]
                 except IndexError:
                     method_name = stripped[:20]
 
@@ -227,7 +330,11 @@ class CodeAnalyzer:
 
             elif method_stack:
                 # 检查是否退出当前方法（indent 回到或低于方法定义层级）
-                if current_indent <= method_stack[-1][1] and stripped and not stripped.startswith('#'):
+                if (
+                    current_indent <= method_stack[-1][1]
+                    and stripped
+                    and not stripped.startswith("#")
+                ):
                     start, indent, name = method_stack.pop()
                     outer = method_stack[0][2] if method_stack else None
                     _report(start, i - 1, name, outer)
@@ -240,7 +347,9 @@ class CodeAnalyzer:
 
         return issues
 
-    def _check_deep_nesting(self, file_path: str, lines: List[str]) -> List[Dict[str, Any]]:
+    def _check_deep_nesting(
+        self, file_path: str, lines: List[str]
+    ) -> List[Dict[str, Any]]:
         """Check for deeply nested code."""
         issues = []
 
@@ -252,56 +361,66 @@ class CodeAnalyzer:
             nesting_level = indent // 4
 
             if nesting_level > self.nesting_threshold:
-                issues.append({
-                    'file': file_path,
-                    'line': i,
-                    'end_line': i,
-                    'severity': 'medium',
-                    'category': 'quality',
-                    'description': f'Deep nesting detected (level {nesting_level}, threshold {self.nesting_threshold})',
-                    'recommendation': 'Use guard clauses or extract methods to reduce nesting',
-                })
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": i,
+                        "end_line": i,
+                        "severity": "medium",
+                        "category": "quality",
+                        "description": f"Deep nesting detected (level {nesting_level}, threshold {self.nesting_threshold})",
+                        "recommendation": "Use guard clauses or extract methods to reduce nesting",
+                    }
+                )
 
         return issues
 
-    def _check_long_lines(self, file_path: str, lines: List[str]) -> List[Dict[str, Any]]:
+    def _check_long_lines(
+        self, file_path: str, lines: List[str]
+    ) -> List[Dict[str, Any]]:
         """Check for overly long lines."""
         issues = []
         max_line_length = 120
 
         for i, line in enumerate(lines, 1):
             # Strip trailing newline for accurate length measurement
-            length = len(line.rstrip('\n'))
+            length = len(line.rstrip("\n"))
             if length > max_line_length:
-                issues.append({
-                    'file': file_path,
-                    'line': i,
-                    'end_line': i,
-                    'severity': 'low',
-                    'category': 'style',
-                    'description': f'Line exceeds {max_line_length} characters ({length} chars)',
-                    'recommendation': 'Break long lines for better readability',
-                })
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": i,
+                        "end_line": i,
+                        "severity": "low",
+                        "category": "style",
+                        "description": f"Line exceeds {max_line_length} characters ({length} chars)",
+                        "recommendation": "Break long lines for better readability",
+                    }
+                )
 
         return issues
 
-    def _check_todo_comments(self, file_path: str, lines: List[str]) -> List[Dict[str, Any]]:
+    def _check_todo_comments(
+        self, file_path: str, lines: List[str]
+    ) -> List[Dict[str, Any]]:
         """Check for TODO/FIXME/HACK comments."""
         issues = []
-        todo_pattern = re.compile(r'(#|//)\s*(TODO|FIXME|XXX|HACK)', re.IGNORECASE)
+        todo_pattern = re.compile(r"(#|//)\s*(TODO|FIXME|XXX|HACK)", re.IGNORECASE)
 
         for i, line in enumerate(lines, 1):
             match = todo_pattern.search(line)
             if match:
-                issues.append({
-                    'file': file_path,
-                    'line': i,
-                    'end_line': i,
-                    'severity': 'info',
-                    'category': 'maintenance',
-                    'description': f'{match.group(2).upper()} comment found',
-                    'recommendation': 'Address or create a tracking issue with reference number',
-                })
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": i,
+                        "end_line": i,
+                        "severity": "info",
+                        "category": "maintenance",
+                        "description": f"{match.group(2).upper()} comment found",
+                        "recommendation": "Address or create a tracking issue with reference number",
+                    }
+                )
 
         return issues
 
@@ -315,13 +434,29 @@ class CodeAnalyzer:
         # exclusions in the set were dead code. Align exclusions to what the
         # regex can actually produce. Common well-understood constants:
         SAFE_NUMBERS = {
-            '10', '16', '24', '32', '64', '100', '128', '200', '255',
-            '256', '400', '404', '500', '1000', '1024', '3600', '8080',
-            '86400', '65535',
+            "10",
+            "16",
+            "24",
+            "32",
+            "64",
+            "100",
+            "128",
+            "200",
+            "255",
+            "256",
+            "400",
+            "404",
+            "500",
+            "1000",
+            "1024",
+            "3600",
+            "8080",
+            "86400",
+            "65535",
         }
 
-        magic_pattern = re.compile(r'\b(\d{2,})\b')
-        comment_prefix = re.compile(r'^\s*(#|//|/\*|\*)')
+        magic_pattern = re.compile(r"\b(\d{2,})\b")
+        comment_prefix = re.compile(r"^\s*(#|//|/\*|\*)")
 
         for i, line in enumerate(lines, 1):
             if comment_prefix.match(line):
@@ -330,15 +465,17 @@ class CodeAnalyzer:
             for match in magic_pattern.finditer(line):
                 number = match.group(1)
                 if number not in SAFE_NUMBERS:
-                    issues.append({
-                        'file': file_path,
-                        'line': i,
-                        'end_line': i,
-                        'severity': 'info',
-                        'category': 'quality',
-                        'description': f'Magic number {number} — consider a named constant',
-                        'recommendation': f'Replace {number} with a descriptive constant',
-                    })
+                    issues.append(
+                        {
+                            "file": file_path,
+                            "line": i,
+                            "end_line": i,
+                            "severity": "info",
+                            "category": "quality",
+                            "description": f"Magic number {number} — consider a named constant",
+                            "recommendation": f"Replace {number} with a descriptive constant",
+                        }
+                    )
 
         return issues
 
@@ -349,62 +486,73 @@ class CodeAnalyzer:
         issues = []
 
         # Only check frontend file types
-        frontend_extensions = {'.html', '.jsx', '.tsx', '.vue', '.svelte'}
+        frontend_extensions = {".html", ".jsx", ".tsx", ".vue", ".svelte"}
         _, ext = os.path.splitext(file_path)
         if ext.lower() not in frontend_extensions:
             return issues
 
         # Check for missing alt attributes on images
-        img_pattern = re.compile(r'<img(?![^>]*alt=)[^>]*>', re.IGNORECASE)
+        img_pattern = re.compile(r"<img(?![^>]*alt=)[^>]*>", re.IGNORECASE)
         for i, line in enumerate(lines, 1):
             for match in img_pattern.finditer(line):
-                issues.append({
-                    'file': file_path,
-                    'line': i,
-                    'end_line': i,
-                    'severity': 'high',
-                    'category': 'accessibility',
-                    'description': 'Image missing alt attribute',
-                    'recommendation': 'Add descriptive alt text for screen readers',
-                })
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": i,
+                        "end_line": i,
+                        "severity": "high",
+                        "category": "accessibility",
+                        "description": "Image missing alt attribute",
+                        "recommendation": "Add descriptive alt text for screen readers",
+                    }
+                )
 
         # Check for outline:none without alternative focus style
         # Bug 6 fix: 提取 CSS {...} 块后对块整体匹配，支持多行 outline:none
         # \boutline\s*: 单词边界排除 outline-offset 等同名前缀属性
-        css_block_pattern = re.compile(r'\{([^{}]*)\}', re.DOTALL)
-        outline_none_pattern = re.compile(r'\boutline\s*:\s*none')
+        css_block_pattern = re.compile(r"\{([^{}]*)\}", re.DOTALL)
+        outline_none_pattern = re.compile(r"\boutline\s*:\s*none")
         for block_match in css_block_pattern.finditer(content):
             block = block_match.group(1)
             outline_match = outline_none_pattern.search(block)
             if outline_match:
                 # 用 match 在 content 中的绝对位置计算行号（start(1) 是块内容起始）
                 absolute_pos = block_match.start(1) + outline_match.start()
-                line_number = content.count('\n', 0, absolute_pos) + 1
-                issues.append({
-                    'file': file_path,
-                    'line': line_number,
-                    'end_line': line_number,
-                    'severity': 'high',
-                    'category': 'accessibility',
-                    'description': 'outline:none without visible focus alternative',
-                    'recommendation': 'Provide alternative focus indicator (box-shadow, border)',
-                })
+                line_number = content.count("\n", 0, absolute_pos) + 1
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": line_number,
+                        "end_line": line_number,
+                        "severity": "high",
+                        "category": "accessibility",
+                        "description": "outline:none without visible focus alternative",
+                        "recommendation": "Provide alternative focus indicator (box-shadow, border)",
+                    }
+                )
 
         # Check for input without label
-        input_pattern = re.compile(r'<input[^>]*type=["\']?(text|email|password|tel|number|search)["\']?[^>]*>', re.IGNORECASE)
+        input_pattern = re.compile(
+            r'<input[^>]*type=["\']?(text|email|password|tel|number|search)["\']?[^>]*>',
+            re.IGNORECASE,
+        )
         for i, line in enumerate(lines, 1):
             if input_pattern.search(line):
                 # Check if line contains aria-label, aria-labelledby, or id for label association
-                if not re.search(r'(aria-label|aria-labelledby|id\s*=)', line, re.IGNORECASE):
-                    issues.append({
-                        'file': file_path,
-                        'line': i,
-                        'end_line': i,
-                        'severity': 'high',
-                        'category': 'accessibility',
-                        'description': 'Input may lack accessible label',
-                        'recommendation': 'Associate label with input (for/id, aria-label, or aria-labelledby)',
-                    })
+                if not re.search(
+                    r"(aria-label|aria-labelledby|id\s*=)", line, re.IGNORECASE
+                ):
+                    issues.append(
+                        {
+                            "file": file_path,
+                            "line": i,
+                            "end_line": i,
+                            "severity": "high",
+                            "category": "accessibility",
+                            "description": "Input may lack accessible label",
+                            "recommendation": "Associate label with input (for/id, aria-label, or aria-labelledby)",
+                        }
+                    )
 
         return issues
 
@@ -420,7 +568,7 @@ class CodeAnalyzer:
         while i < pos:
             ch = code[i]
             if in_string:
-                if ch == '\\':
+                if ch == "\\":
                     i += 2  # skip escaped char
                     continue
                 if ch == quote_char:
@@ -439,125 +587,134 @@ class CodeAnalyzer:
         """Check for correctness issues (null safety, race conditions, edge cases)."""
         issues = []
 
-        # Check for potential null pointer access patterns
-        null_patterns = {
-            'python': [
-                (r'\b\w+\.\w+\s*\(', 'Potential NoneType attribute access — check for None first'),
-            ],
-            'javascript': [
-                (r'\b\w+\.\w+\s*\(', 'Potential undefined access — consider optional chaining (?.)'),
-            ],
-            'typescript': [
-                (r'\b\w+\.\w+\s*\(', 'Potential null/undefined access — consider optional chaining (?.)'),
-            ],
-            'java': [
-                (r'\b\w+\.get\(\w+\)\.\w+', 'Potential NullPointerException — check Optional or null'),
-            ],
-        }
-
-        patterns = null_patterns.get(language, [])
-        for pattern, description in patterns:
+        # Null-safety: chained access on nullable sources.
+        # See _NULL_CHAIN_PATTERNS (module level) for the rationale — the previous
+        # r'\b\w+\.\w+\s*\(' matched every method call (~100% false-positive rate),
+        # and the `'?' in line` skip hid real issues on ternary lines.
+        for rx, method_label, description in _NULL_CHAIN_PATTERNS.get(language, []):
             for i, line in enumerate(lines, 1):
-                # Skip comment lines
-                if line.strip().startswith(('#', '//', '/*', '*')):
+                if line.strip().startswith(("#", "//", "/*", "*")):
                     continue
-                if re.search(pattern, line):
-                    # Reduce false positives by checking for existing null checks
-                    # D-P1-1: '?. ' (with space) should be '?.' (no space) for JS optional chaining
-                    if 'if ' in line or '?' in line or '?.' in line:
-                        continue
-                    issues.append({
-                        'file': file_path,
-                        'line': i,
-                        'end_line': i,
-                        'severity': 'medium',
-                        'category': 'correctness',
-                        'description': description,
-                        'recommendation': 'Add null/undefined check before access',
-                    })
+                if rx.search(line) is None:
+                    continue
+                # JS/TS: skip only when the dev already guarded this line with
+                # optional chaining. Removed the old `'?' in line` / `'if ' in line`
+                # whole-line skip, which silently dropped real null-derefs.
+                if language in ("javascript", "typescript") and "?." in line:
+                    continue
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": i,
+                        "end_line": i,
+                        "severity": "medium",
+                        "category": "correctness",
+                        "description": description,
+                        "recommendation": (
+                            f"Add an explicit None/undefined check or use optional"
+                            f" chaining before using the .{method_label}() result"
+                        ),
+                    }
+                )
 
         # Check for potential race conditions (check-then-act pattern)
         # Bug 2 fix: 用 re.search 的 match.start() 计算真实匹配起始行，
         # 而非逐行扫描 'exists()' / '== null' 关键词（会误归因到注释行）
         race_patterns = [
-            (r'if\s+.*\.exists\(\).*:\s*\n\s*.*write', 'Check-then-act pattern — potential race condition'),
-            (r'if\s+.*==\s*null.*:\s*\n\s*.*create', 'Check-then-create pattern — potential race condition'),
+            (
+                r"if\s+.*\.exists\(\).*:\s*\n\s*.*write",
+                "Check-then-act pattern — potential race condition",
+            ),
+            (
+                r"if\s+.*==\s*null.*:\s*\n\s*.*create",
+                "Check-then-create pattern — potential race condition",
+            ),
         ]
 
         for pattern, description in race_patterns:
             match = re.search(pattern, content, re.MULTILINE)
             if match:
                 # 用 match.start() 计算真实匹配起始行号
-                line_number = content.count('\n', 0, match.start()) + 1
-                issues.append({
-                    'file': file_path,
-                    'line': line_number,
-                    'end_line': line_number,
-                    'severity': 'high',
-                    'category': 'correctness',
-                    'description': description,
-                    'recommendation': 'Use atomic operations or locks to prevent race conditions',
-                })
+                line_number = content.count("\n", 0, match.start()) + 1
+                issues.append(
+                    {
+                        "file": file_path,
+                        "line": line_number,
+                        "end_line": line_number,
+                        "severity": "high",
+                        "category": "correctness",
+                        "description": description,
+                        "recommendation": "Use atomic operations or locks to prevent race conditions",
+                    }
+                )
 
         # Check for division without zero check
         # D-P1-2: narrowed pattern to identifier/identifier form to reduce false positives
         # Bug 7 fix: 用 _is_in_string_literal 状态机精确定位 / 是否在字符串内
         # 替代旧的 `if '"' in line or "'" in line: continue` 整行跳过
-        div_pattern = re.compile(r'\b[a-zA-Z_]\w*\s*/\s*[a-zA-Z_]\w*\b')
+        div_pattern = re.compile(r"\b[a-zA-Z_]\w*\s*/\s*[a-zA-Z_]\w*\b")
         # Precompute line start offsets for absolute position in content
         line_starts = [0]
         for ln in lines[:-1]:
             line_starts.append(line_starts[-1] + len(ln) + 1)  # +1 for \n
         for i, line in enumerate(lines, 1):
-            if line.strip().startswith(('#', '//', '/*', '*')):
+            if line.strip().startswith(("#", "//", "/*", "*")):
                 continue
             for match in div_pattern.finditer(line):
                 # Find position of / in match, then absolute position in content
-                slash_offset_in_match = match.group().index('/')
-                slash_pos_in_content = line_starts[i - 1] + match.start() + slash_offset_in_match
+                slash_offset_in_match = match.group().index("/")
+                slash_pos_in_content = (
+                    line_starts[i - 1] + match.start() + slash_offset_in_match
+                )
                 # Bug 7 fix: 只跳过 / 在字符串内的匹配，不整行跳过
                 if self._is_in_string_literal(content, slash_pos_in_content):
                     continue
                 # Check if there's a zero check nearby (current line or ±2 lines context)
-                context = ' '.join(lines[max(0, i - 3):min(len(lines), i + 1)])
-                if 'if ' not in context and '== 0' not in context and '!= 0' not in context:
-                    issues.append({
-                        'file': file_path,
-                        'line': i,
-                        'end_line': i,
-                        'severity': 'medium',
-                        'category': 'correctness',
-                        'description': 'Division without zero check',
-                        'recommendation': 'Verify divisor is not zero before division',
-                    })
+                context = " ".join(lines[max(0, i - 3) : min(len(lines), i + 1)])
+                if (
+                    "if " not in context
+                    and "== 0" not in context
+                    and "!= 0" not in context
+                ):
+                    issues.append(
+                        {
+                            "file": file_path,
+                            "line": i,
+                            "end_line": i,
+                            "severity": "medium",
+                            "category": "correctness",
+                            "description": "Division without zero check",
+                            "recommendation": "Verify divisor is not zero before division",
+                        }
+                    )
 
         return issues
 
     def _analyze_structure(self, content: str, language: str) -> Dict[str, Any]:
         """Analyze code structure."""
         structure: Dict[str, Any] = {
-            'imports': [],
-            'classes': [],
-            'functions': [],
-            'variables': [],
+            "imports": [],
+            "classes": [],
+            "functions": [],
+            "variables": [],
         }
 
-        if language == 'python':
+        if language == "python":
             try:
                 tree = ast.parse(content)
 
                 for node in ast.walk(tree):
                     if isinstance(node, ast.Import):
                         for alias in node.names:
-                            structure['imports'].append(alias.name)
+                            structure["imports"].append(alias.name)
                     elif isinstance(node, ast.ImportFrom):
-                        module = node.module or ''
+                        module = node.module or ""
                         for alias in node.names:
-                            structure['imports'].append(f"{module}.{alias.name}")
+                            structure["imports"].append(f"{module}.{alias.name}")
                     elif isinstance(node, ast.ClassDef):
-                        structure['classes'].append(node.name)
+                        structure["classes"].append(node.name)
                     elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        structure['functions'].append(node.name)
+                        structure["functions"].append(node.name)
             except SyntaxError:
                 pass
 
@@ -584,7 +741,7 @@ def analyze_directory(directory: str) -> List[AnalysisResult]:
     return results
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
     import json
 
@@ -596,22 +753,52 @@ if __name__ == '__main__':
 
     if os.path.isfile(path):
         result = analyze_file(path)
-        print(json.dumps({
-            'file_path': result.file_path,
-            'language': result.language,
-            'metrics': result.metrics,
-            'issues': result.issues,
-            'structure': result.structure,
-        }, indent=2))
+        print(
+            json.dumps(
+                {
+                    "file_path": result.file_path,
+                    "language": result.language,
+                    "metrics": result.metrics,
+                    "issues": result.issues,
+                    "structure": result.structure,
+                },
+                indent=2,
+            )
+        )
     elif os.path.isdir(path):
         results = analyze_directory(path)
-        print(json.dumps([{
-            'file_path': r.file_path,
-            'language': r.language,
-            'metrics': r.metrics,
-            'issues': r.issues,
-            'structure': r.structure,
-        } for r in results], indent=2))
+        print(
+            json.dumps(
+                [
+                    {
+                        "file_path": r.file_path,
+                        "language": r.language,
+                        "metrics": r.metrics,
+                        "issues": r.issues,
+                        "structure": r.structure,
+                    }
+                    for r in results
+                ],
+                indent=2,
+            )
+        )
     else:
         print(f"Path not found: {path}")
         sys.exit(1)
+
+    # P1: GitNexus bridge — emit a blast-radius worklist to stderr when an index
+    # is present. The agent layer runs the listed `mcp__gitnexus__*` calls (MCP is
+    # not reachable from this subprocess). See SKILL.md 步骤 1.5.
+    try:
+        import gitnexus_helpers
+
+        all_issues = (
+            result.issues
+            if os.path.isfile(path)
+            else [i for r in results for i in r.issues]
+        )
+        section = gitnexus_helpers.section_for_findings(all_issues, start=path)
+        if section:
+            print("\n" + section, file=sys.stderr)
+    except ImportError:
+        pass

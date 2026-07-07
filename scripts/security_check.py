@@ -48,7 +48,7 @@ _UNSAFE_PATTERNS = {
     # FIX #5: case-insensitive flag (re.IGNORECASE) so UPPERCASE names are caught
     "hardcoded_credential": {
         "pattern": re.compile(
-            r'(?i)(password|passwd|secret|api_key|apikey|access_token|auth_token|private_key)'
+            r"(?i)(password|passwd|secret|api_key|apikey|access_token|auth_token|private_key)"
             r'\s*=\s*["\'][^"\']{4,}["\']',
         ),
         "level": SecurityLevel.HIGH,
@@ -67,7 +67,7 @@ _UNSAFE_PATTERNS = {
     },
     "unsafe_deserialization": {
         "pattern": re.compile(
-            r'\b(ObjectInputStream|readObject|XmlDecoder|YAML\.load\s*\(|pickle\.loads\s*\()\b',
+            r"\b(ObjectInputStream|readObject|XmlDecoder|YAML\.load\s*\(|pickle\.loads\s*\()\b",
         ),
         "level": SecurityLevel.HIGH,
         "description": "不安全的反序列化 — 可能导致RCE",
@@ -75,7 +75,7 @@ _UNSAFE_PATTERNS = {
     },
     "xss_dom_write": {
         "pattern": re.compile(
-            r'\b(innerHTML|outerHTML|document\.write)\s*[=\(]',
+            r"\b(innerHTML|outerHTML|document\.write)\s*[=\(]",
         ),
         "level": SecurityLevel.HIGH,
         "description": "直接写入DOM属性 — 潜在XSS漏洞",
@@ -83,7 +83,7 @@ _UNSAFE_PATTERNS = {
     },
     "path_traversal": {
         "pattern": re.compile(
-            r'(FileInputStream|FileReader|Paths\.get|new File|open\s*\()\s*\([^)]*\+\s*(request|param|input|user)',
+            r"(FileInputStream|FileReader|Paths\.get|new File|open\s*\()\s*\([^)]*\+\s*(request|param|input|user)",
             re.IGNORECASE,
         ),
         "level": SecurityLevel.HIGH,
@@ -92,15 +92,23 @@ _UNSAFE_PATTERNS = {
     },
     "command_injection": {
         "pattern": re.compile(
-            r'(subprocess\.(call|run|Popen)|os\.system|Runtime\.exec)\s*\([^,)]*\+',
+            r"(subprocess\.(call|run|Popen)|os\.system|Runtime\.exec)\s*\([^,)]*\+",
         ),
         "level": SecurityLevel.HIGH,
         "description": "潜在的命令注入 — 用户输入拼接到系统命令",
         "fix": "使用参数数组而非字符串；Python中禁用 shell=True",
     },
+    "eval_usage": {
+        # Consolidated single source for eval() detection (previously duplicated in
+        # parallel_review.py as _EVAL_RE). eval() on untrusted input → direct RCE.
+        "pattern": re.compile(r"\beval\s*\("),
+        "level": SecurityLevel.HIGH,
+        "description": "eval() 使用 — 潜在代码注入向量",
+        "fix": "避免 eval；使用安全替代（ast.literal_eval、JSON.parse、shutil.which 等）",
+    },
     "ssrf_risk": {
         "pattern": re.compile(
-            r'(requests\.get|requests\.post|urllib\.request|fetch|axios\.(get|post))\s*\([^)]*\b(url|href|redirect|endpoint)\b',
+            r"(requests\.get|requests\.post|urllib\.request|fetch|axios\.(get|post))\s*\([^)]*\b(url|href|redirect|endpoint)\b",
             re.IGNORECASE,
         ),
         "level": SecurityLevel.MEDIUM,
@@ -109,7 +117,7 @@ _UNSAFE_PATTERNS = {
     },
     "weak_crypto_algorithm": {
         "pattern": re.compile(
-            r'\b(DES|TripleDES|Blowfish|RC4|ECB)\b',
+            r"\b(DES|TripleDES|Blowfish|RC4|ECB)\b",
         ),
         "level": SecurityLevel.MEDIUM,
         "description": "使用不安全的加密算法",
@@ -119,7 +127,7 @@ _UNSAFE_PATTERNS = {
         "pattern": re.compile(
             # D-P1-3: removed trailing \b — after ')' (non-word char) \b never matches,
             # causing Math.random() / random.random() / new Random() to be silently missed
-            r'\b(Math\.random\s*\(\s*\)|random\.random\s*\(\s*\)|new Random\s*\(\s*\))',
+            r"\b(Math\.random\s*\(\s*\)|random\.random\s*\(\s*\)|new Random\s*\(\s*\))",
         ),
         "level": SecurityLevel.MEDIUM,
         "description": "使用非密码学安全的随机数生成器",
@@ -128,7 +136,7 @@ _UNSAFE_PATTERNS = {
     # FIX #7: use re.DOTALL to match multiline catch blocks
     "broad_exception_catch": {
         "pattern": re.compile(
-            r'catch\s*\(\s*(Exception|Throwable)\b.*?\)\s*\{',
+            r"catch\s*\(\s*(Exception|Throwable)\b.*?\)\s*\{",
             re.DOTALL,
         ),
         "level": SecurityLevel.LOW,
@@ -137,7 +145,7 @@ _UNSAFE_PATTERNS = {
     },
     "open_redirect": {
         "pattern": re.compile(
-            r'(sendRedirect|HttpResponseRedirect|redirect\s*\()\s*\([^)]*\b(request|param|url|redirect)\b',
+            r"(sendRedirect|HttpResponseRedirect|redirect\s*\()\s*\([^)]*\b(request|param|url|redirect)\b",
             re.IGNORECASE,
         ),
         "level": SecurityLevel.MEDIUM,
@@ -148,29 +156,37 @@ _UNSAFE_PATTERNS = {
 
 _GOOD_PATTERNS = {
     "parameterized_query": {
-        "pattern": re.compile(r'\b(PreparedStatement|QueryDSL|JpaRepository|cursor\.execute\s*\([^)]*%s)\b'),
+        "pattern": re.compile(
+            r"\b(PreparedStatement|QueryDSL|JpaRepository|cursor\.execute\s*\([^)]*%s)\b"
+        ),
         "description": "使用参数化查询 ✅",
     },
     "secure_random": {
-        "pattern": re.compile(r'\b(SecureRandom|secrets\.|crypto\.getRandomValues)\b'),
+        "pattern": re.compile(r"\b(SecureRandom|secrets\.|crypto\.getRandomValues)\b"),
         "description": "使用安全随机数 ✅",
     },
     "strong_password_hash": {
-        "pattern": re.compile(r'\b(BCrypt|Argon2|scrypt|PasswordEncoder|pbkdf2)\b', re.IGNORECASE),
+        "pattern": re.compile(
+            r"\b(BCrypt|Argon2|scrypt|PasswordEncoder|pbkdf2)\b", re.IGNORECASE
+        ),
         "description": "使用强密码哈希 ✅",
     },
     "https_cookie": {
-        "pattern": re.compile(r'(secure\s*=\s*true|setSecure\s*\(\s*true\s*\))', re.IGNORECASE),
+        "pattern": re.compile(
+            r"(secure\s*=\s*true|setSecure\s*\(\s*true\s*\))", re.IGNORECASE
+        ),
         "description": "Cookie设置Secure属性 ✅",
     },
     "httponly_cookie": {
-        "pattern": re.compile(r'(httpOnly\s*=\s*true|setHttpOnly\s*\(\s*true\s*\))', re.IGNORECASE),
+        "pattern": re.compile(
+            r"(httpOnly\s*=\s*true|setHttpOnly\s*\(\s*true\s*\))", re.IGNORECASE
+        ),
         "description": "Cookie设置HttpOnly属性 ✅",
     },
 }
 
 # Lines starting with these prefixes are comments — skip unsafe pattern checks
-_COMMENT_PREFIXES = ('#', '//', '/*', '*', '"""', "'''")
+_COMMENT_PREFIXES = ("#", "//", "/*", "*", '"""', "'''")
 
 
 class SecurityPatternChecker:
@@ -183,7 +199,7 @@ class SecurityPatternChecker:
         """检查单个文件"""
         try:
             # FIX #6: errors='replace' so binary / latin-1 files don't raise
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
         except OSError as e:
             print(f"警告: 无法读取文件 {file_path}: {e}")
@@ -198,15 +214,17 @@ class SecurityPatternChecker:
             if pattern.flags & re.DOTALL:
                 match = pattern.search(content)
                 if match:
-                    line_number = content.count('\n', 0, match.start()) + 1
-                    self.issues.append(SecurityIssue(
-                        file_path=file_path,
-                        line_number=line_number,
-                        issue_type=name,
-                        description=config["description"],
-                        severity=config["level"],
-                        suggestion=config["fix"],
-                    ))
+                    line_number = content.count("\n", 0, match.start()) + 1
+                    self.issues.append(
+                        SecurityIssue(
+                            file_path=file_path,
+                            line_number=line_number,
+                            issue_type=name,
+                            description=config["description"],
+                            severity=config["level"],
+                            suggestion=config["fix"],
+                        )
+                    )
 
         # 单行 pattern（不带 DOTALL）逐行匹配 —— fast path
         for line_num, line in enumerate(lines, 1):
@@ -227,19 +245,34 @@ class SecurityPatternChecker:
             if pattern.flags & re.DOTALL:
                 continue
             if pattern.search(line):
-                self.issues.append(SecurityIssue(
-                    file_path=file_path,
-                    line_number=line_num,
-                    issue_type=name,
-                    description=config["description"],
-                    severity=config["level"],
-                    suggestion=config["fix"],
-                ))
+                self.issues.append(
+                    SecurityIssue(
+                        file_path=file_path,
+                        line_number=line_num,
+                        issue_type=name,
+                        description=config["description"],
+                        severity=config["level"],
+                        suggestion=config["fix"],
+                    )
+                )
 
-    def check_directory(self, directory: str, extensions: Optional[List[str]] = None) -> None:
+    def check_directory(
+        self, directory: str, extensions: Optional[List[str]] = None
+    ) -> None:
         """递归检查目录"""
         if extensions is None:
-            extensions = ['.java', '.py', '.js', '.ts', '.go', '.rb', '.php', '.cs', '.kt', '.rs']
+            extensions = [
+                ".java",
+                ".py",
+                ".js",
+                ".ts",
+                ".go",
+                ".rb",
+                ".php",
+                ".cs",
+                ".kt",
+                ".rs",
+            ]
 
         for root, _, files in os.walk(directory):
             for file in files:
@@ -262,7 +295,9 @@ class SecurityPatternChecker:
         ]
 
         for issue in self.issues:
-            icon = {'high': '🔴', 'medium': '🟡', 'low': '🔵'}.get(issue.severity.value, '⚪')
+            icon = {"high": "🔴", "medium": "🟡", "low": "🔵"}.get(
+                issue.severity.value, "⚪"
+            )
             report.append(f"{icon} {issue.file_path}:{issue.line_number}")
             report.append(f"   类型: {issue.issue_type}")
             report.append(f"   严重性: {issue.severity.value.upper()}")
@@ -315,6 +350,30 @@ def main() -> None:
 
     checker.print_summary()
     print(checker.generate_report())
+
+    # P1: GitNexus bridge — emit a blast-radius worklist to stderr when an index
+    # is present. The agent layer runs the listed `mcp__gitnexus__*` calls (MCP is
+    # not reachable from this subprocess). See SKILL.md 步骤 1.5.
+    try:
+        import gitnexus_helpers
+
+        findings = [
+            {
+                "file": si.file_path,
+                "line": si.line_number,
+                "severity": si.severity.value,
+                "category": "security",
+                "issue_type": si.issue_type,
+            }
+            for si in checker.issues
+        ]
+        section = gitnexus_helpers.section_for_findings(findings, start=target)
+        if section:
+            import sys as _sys
+
+            print("\n" + section, file=_sys.stderr)
+    except ImportError:
+        pass
 
     sys.exit(1 if checker.issues else 0)
 
