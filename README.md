@@ -1,7 +1,8 @@
 # Diting (谛听) —— 代码质量审查套件
 
-[![GitHub Release](https://img.shields.io/github/v/release/Kirky-X/diting?style=flat-square)](https://github.com/Kirky-X/diting/releases)
-[![GitHub License](https://img.shields.io/github/license/Kirky-X/diting?style=flat-square)](LICENSE)
+[English](README_EN.md)
+
+[![GitHub Release](https://img.shields.io/github/v/release/Kirky-X/diting?style=flat-square)](https://github.com/Kirky-X/diting/releases) [![GitHub License](https://img.shields.io/github/license/Kirky-X/diting?style=flat-square)](LICENSE)
 
 Diting 是一个面向 AI agent 的统一代码质量审查 skill,融合三个独立引擎,各自保留独立的分析方法(因为它们解决不同问题,强行统一格式会丢失信息),但共享一个入口、一个模式表,以及默认 Full Review 情况下的合并报告。
 

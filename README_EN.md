@@ -1,7 +1,8 @@
 # Diting (谛听) — Code Quality Review Suite
 
-[![GitHub Release](https://img.shields.io/github/v/release/Kirky-X/diting?style=flat-square)](https://github.com/Kirky-X/diting/releases)
-[![GitHub License](https://img.shields.io/github/license/Kirky-X/diting?style=flat-square)](LICENSE)
+[中文](README.md)
+
+[![GitHub Release](https://img.shields.io/github/v/release/Kirky-X/diting?style=flat-square)](https://github.com/Kirky-X/diting/releases) [![GitHub License](https://img.shields.io/github/license/Kirky-X/diting?style=flat-square)](LICENSE)
 
 Diting is a unified code-quality review skill for AI agents. It fuses three independent engines, each keeping its own analytical method (they solve different problems, and forcing one format on all of them would lose information), but sharing one entry point, one mode table, and — for the default Full Review case — one combined report.
 
