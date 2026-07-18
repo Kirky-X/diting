@@ -1,88 +1,88 @@
-# 系统架构审查指南
+# System Architecture Review Guide
 
-> **范围**：通用架构质量属性 —— 适用于任何系统（单体、模块化单体、微服务）。  
-> 微服务专属合规规则见 [microservices-compliance.md](microservices-compliance.md)。
+> **Scope**: General architecture quality attributes — applicable to any system (monolith, modular monolith, microservices).
+> Microservices-specific compliance rules are in [microservices-compliance.md](microservices-compliance.md).
 
-## 架构质量属性
+## Architecture Quality Attributes
 
-### 1. 可修改性
+### 1. Modifiability
 
-**原则**
+**Principles**
 
-- 模块间低耦合
-- 模块内高内聚
-- 清晰的关注点分离
-- 定义良好的接口
+- Low coupling between modules
+- High cohesion within modules
+- Clear separation of concerns
+- Well-defined interfaces
 
-**指标**
-| 指标 | 目标 | 描述 |
+**Metrics**
+| Metric | Target | Description |
 |--------|--------|-------------|
-| 耦合因子 | < 0.3 | 模块间依赖 |
-| 内聚度 | > 0.7 | 相关功能分组 |
-| 接口稳定性 | > 0.9 | API 变更频率 |
+| Coupling factor | < 0.3 | Inter-module dependencies |
+| Cohesion degree | > 0.7 | Related functionality grouping |
+| Interface stability | > 0.9 | API change frequency |
 
-**反模式**
+**Anti-Patterns**
 
-- God Object（一个类包揽一切）
-- Spaghetti Code（无清晰结构）
-- Copy-Paste 编程
-- 硬编码依赖
+- God Object (one class does everything)
+- Spaghetti Code (no clear structure)
+- Copy-Paste Programming
+- Hardcoded dependencies
 
-### 2. 可扩展性
+### 2. Scalability
 
-**水平扩展模式**
+**Horizontal Scaling Pattern**
 
 ```
 Load Balancer -> [Server 1, Server 2, Server 3] -> Shared State
 ```
 
-**垂直扩展考量**
+**Vertical Scaling Considerations**
 
-- CPU 优化
-- 内存管理
-- I/O 效率
+- CPU optimization
+- Memory management
+- I/O efficiency
 
-**扩展指标**
-| 指标 | 描述 |
+**Scaling Metrics**
+| Metric | Description |
 |--------|-------------|
-| 吞吐量 | 每秒请求数 |
-| 延迟 | 响应时间百分位 |
-| 资源利用率 | CPU、内存、I/O |
+| Throughput | Requests per second |
+| Latency | Response time percentiles |
+| Resource utilization | CPU, memory, I/O |
 
-### 3. 可靠性
+### 3. Reliability
 
-**模式**
+**Patterns**
 
-- 断路器
-- 指数退避重试
-- 舱壁隔离
-- 超时模式
+- Circuit breaker
+- Exponential backoff retry
+- Bulkhead isolation
+- Timeout pattern
 
-**指标**
-| 指标 | 目标 |
+**Metrics**
+| Metric | Target |
 |--------|--------|
-| 可用性 | > 99.9% |
-| MTTR | < 1 小时 |
-| MTBF | > 1000 小时 |
+| Availability | > 99.9% |
+| MTTR | < 1 hour |
+| MTBF | > 1000 hours |
 
-### 4. 安全
+### 4. Security
 
-**架构原则**
+**Architecture Principles**
 
-- 纵深防御
-- 最小权限
-- 默认安全
-- 失败安全
+- Defense in depth
+- Least privilege
+- Secure by default
+- Fail secure
 
-**安全层级**
+**Security Layers**
 
 ```
 Network -> Application -> Service -> Data
 ```
 
-## 分层架构
+## Layered Architecture
 
-### 标准层
+### Standard Layers
 
 ```mermaid
 flowchart TD
@@ -93,15 +93,15 @@ flowchart TD
     P --> A --> D --> I
 ```
 
-### 层依赖
+### Layer Dependencies
 
-**规则**
+**Rules**
 
-- 上层依赖下层
-- 下层不应依赖上层
-- 领域层应独立
+- Upper layers depend on lower layers
+- Lower layers should not depend on upper layers
+- Domain layer should be independent
 
-**违反检测**
+**Violation Detection**
 
 ```python
 def check_layer_violation(source_layer, target_layer):
@@ -109,9 +109,9 @@ def check_layer_violation(source_layer, target_layer):
     return layer_order.get(source_layer, 0) < layer_order.get(target_layer, 0)
 ```
 
-## 六边形架构（端口与适配器）
+## Hexagonal Architecture (Ports and Adapters)
 
-### 结构
+### Structure
 
 ```mermaid
 flowchart TD
@@ -129,23 +129,23 @@ flowchart TD
     end
 ```
 
-### 端口（接口）
+### Ports (Interfaces)
 
-- 入站：定义外部参与者如何与应用交互
-- 出站：定义应用如何与外部系统交互
+- Inbound: Define how external actors interact with the application
+- Outbound: Define how the application interacts with external systems
 
-### 适配器（实现）
+### Adapters (Implementations)
 
-- 主适配器：REST 控制器、CLI 处理器、消息消费者
-- 次适配器：数据库仓储、API 客户端、文件系统
+- Primary adapters: REST controllers, CLI handlers, message consumers
+- Secondary adapters: Database repositories, API clients, file systems
 
 ## Clean Architecture
 
-### 依赖规则
+### Dependency Rule
 
-> 源代码依赖只能向内指向更高层策略。
+> Source code dependencies can only point inward toward higher-level policies.
 
-### 层
+### Layers
 
 ```mermaid
 flowchart TD
@@ -160,137 +160,137 @@ flowchart TD
     end
 ```
 
-## 事件驱动架构
+## Event-Driven Architecture
 
-### 模式
+### Patterns
 
-**事件溯源**
+**Event Sourcing**
 
 ```
 Command -> Validate -> Create Event -> Store Event -> Update State
 ```
 
-**CQRS（命令查询职责分离）**
+**CQRS (Command Query Responsibility Segregation)**
 
 ```
 Write Model: Commands -> Events -> Write Database
 Read Model: Events -> Projections -> Read Database
 ```
 
-**消息模式**
+**Messaging Patterns**
 
-- 点对点
-- 发布-订阅
-- 请求-应答
+- Point-to-point
+- Publish-subscribe
+- Request-reply
 
-### 事件类型
+### Event Types
 
-| 类型              | 用途                      | 示例      |
+| Type              | Purpose                      | Example      |
 | ----------------- | ---------------------------- | ------------ |
-| 领域事件      | 领域中发生的事情 | OrderCreated |
-| 集成事件 | 跨限界上下文        | OrderShipped |
-| 命令           | 请求做某事      | CreateOrder  |
+| Domain Events     | What happened in the domain  | OrderCreated |
+| Integration Events | Cross bounded context        | OrderShipped |
+| Commands          | Request to do something      | CreateOrder  |
 
-## 架构决策记录（ADR）
+## Architecture Decision Records (ADR)
 
-### 模板
+### Template
 
 ```
-# ADR-001: [标题]
-## 状态: [Proposed | Accepted | Deprecated | Superseded]
-## 上下文: 我们要解决的问题是什么？
-## 决策: 我们提议的变更是什么？
-## 后果: 正面和负面影响？
-## 考虑的替代方案: 评估过哪些其他选项？
+# ADR-001: [Title]
+## Status: [Proposed | Accepted | Deprecated | Superseded]
+## Context: What is the problem we are trying to solve?
+## Decision: What is the change we are proposing?
+## Consequences: Positive and negative impacts?
+## Alternatives Considered: What other options were evaluated?
 ```
 
-## 架构审查清单
+## Architecture Review Checklist
 
-### 结构
+### Structure
 
-- [ ] 清晰的层分离
-- [ ] 定义良好的模块边界
-- [ ] 一致的命名约定
-- [ ] 适当的抽象层级
+- [ ] Clear layer separation
+- [ ] Well-defined module boundaries
+- [ ] Consistent naming conventions
+- [ ] Appropriate abstraction level
 
-### 依赖
+### Dependencies
 
-- [ ] 无循环依赖
-- [ ] 使用依赖注入
-- [ ] 基于接口的依赖
-- [ ] 外部依赖隔离
+- [ ] No circular dependencies
+- [ ] Dependency injection used
+- [ ] Interface-based dependencies
+- [ ] External dependency isolation
 
-### 可扩展性
+### Scalability
 
-- [ ] 尽可能无状态设计
-- [ ] 支持水平扩展
-- [ ] 定义缓存策略
-- [ ] 考虑数据库分片
+- [ ] Stateless design where possible
+- [ ] Supports horizontal scaling
+- [ ] Caching strategy defined
+- [ ] Database sharding considered
 
-### 可靠性
+### Reliability
 
-- [ ] 边界处错误处理
-- [ ] 优雅降级
-- [ ] 外部调用使用断路器
-- [ ] 实现重试机制
+- [ ] Error handling at boundaries
+- [ ] Graceful degradation
+- [ ] Circuit breaker for external calls
+- [ ] Retry mechanism implemented
 
-### 安全
+### Security
 
-- [ ] 边界处认证
-- [ ] 授权检查到位
-- [ ] 敏感数据加密
-- [ ] 启用安全日志
+- [ ] Authentication at boundaries
+- [ ] Authorization checks in place
+- [ ] Sensitive data encrypted
+- [ ] Security logging enabled
 
-### 性能
+### Performance
 
-- [ ] 识别关键路径
-- [ ] 定义性能预算
-- [ ] 实现资源池化
-- [ ] 适当处异步处理
+- [ ] Critical path identified
+- [ ] Performance budget defined
+- [ ] Resource pooling implemented
+- [ ] Async processing where appropriate
 
-## 架构风格 vs 架构模式
+## Architecture Style vs Architecture Pattern
 
-审查中常混淆两者 —— 需区分：
+Reviews often confuse the two — need to distinguish:
 
-- **风格** —— 系统级组织约束（分层、微服务、事件驱动）。回答_"整个系统如何组织？"_
-- **模式** —— 针对特定子问题的结构化解决方案（CQRS、Saga、Sidecar、BFF）。回答_"在风格内如何解决这一个具体问题？"_
+- **Style** — System-level organizational constraints (layered, microservices, event-driven). Answers _"How is the entire system organized?"_
+- **Pattern** — Structured solution to a specific sub-problem (CQRS, Saga, Sidecar, BFF). Answers _"How do we solve this one specific problem within the style?"_
 
-一个系统选择**一种风格**，然后在其上叠加**多个模式**。
+A system chooses **one style**, then layers **multiple patterns** on top.
 
-## 架构选型决策矩阵
+## Architecture Selection Decision Matrix
 
-| 信号 / 约束                                             | 起步选择                                         | 何时演进为                                             |
+| Signal / Constraint                                             | Starting Choice                                         | Evolve To When                                             |
 | --------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
-| 1–3 名开发、单一领域、CRUD                                   | **分层**（Presentation/Business/Data）           | 模块相互渗透后改为模块化单体        |
-| 多团队、清晰的限界上下文                          | **模块化单体 + DDD 聚合**              | 仅在独立部署/扩展验证后才改微服务 |
-| 需独立扩展某一能力                      | **微服务**（仅抽取该能力）   | — 不要反射性地抽取其他一切                 |
-| 读重写轻，或读写模型差异很大 | **CQRS** + 读模型                             | 需审计/重放时加事件溯源             |
-| 大量状态转换、复杂业务规则                  | **DDD**（聚合、值对象、领域事件） | 时间维度审计重要时加事件溯源               |
-| 多个不兼容入站通道（web/mobile/CLI/job）         | **六边形**（端口与适配器）                   | —                                                          |
-| 追求依赖方向纯净（策略居中）             | **Clean Architecture**                             | —                                                          |
-| 异步、响应式、流式负载                             | **事件驱动**（Pub/Sub + 队列）                | 长事务加 Saga                       |
-| 横切基础设施（auth/proxy/telemetry）脱离应用          | **Sidecar / Service Mesh**                         | —                                                          |
-| 多个前端需要定制 API                         | **BFF**（Backend for Frontend）                     | —                                                          |
+| 1–3 developers, single domain, CRUD                            | **Layered** (Presentation/Business/Data)           | Modular monolith when modules bleed into each other        |
+| Multiple teams, clear bounded contexts                         | **Modular Monolith + DDD Aggregates**              | Microservices only after independent deploy/scale validated |
+| Need to independently scale one capability                      | **Microservices** (extract only that capability)   | — Do not reflexively extract everything else               |
+| Read-heavy write-light, or very different read/write models    | **CQRS** + read model                             | Add event sourcing when audit/replay needed               |
+| Many state transitions, complex business rules                 | **DDD** (aggregates, value objects, domain events) | Add event sourcing when temporal audit is important        |
+| Multiple incompatible inbound channels (web/mobile/CLI/job)    | **Hexagonal** (Ports and Adapters)                 | —                                                          |
+| Pursue pure dependency direction (policy at center)            | **Clean Architecture**                             | —                                                          |
+| Async, reactive, streaming workloads                           | **Event-Driven** (Pub/Sub + queues)                | Saga for long-running transactions                         |
+| Cross-cutting infra (auth/proxy/telemetry) detached from app  | **Sidecar / Service Mesh**                         | —                                                          |
+| Multiple frontends needing customized APIs                     | **BFF** (Backend for Frontend)                     | —                                                          |
 
-## 反信号（选错时）
+## Anti-Signals (When You Chose Wrong)
 
-| 错误选择                              | 典型坏味                              |
+| Wrong Choice                              | Typical Code Smell                              |
 | ----------------------------------------- | -------------------------------------------- |
-| 2 人团队用微服务            | 分布式单体；运维开销 ≫ 收益 |
-| 无重放/审计需求却用事件溯源  | 复杂度税无回报                |
-| 无读写不对称却用 CQRS         | 两个模型需保持一致，零收益   |
-| 贫血 CRUD 套 Clean Architecture     | 仪式盖过空领域逻辑                |
-| 领域四处横切却用分层 | "聪明 UI、其他地方都笨"的腐烂         |
-| 只有一个适配器却用六边形                | 一处穿越的抽象层 —— YAGNI  |
+| 2-person team using microservices         | Distributed monolith; ops overhead ≫ benefit |
+| Event sourcing without replay/audit needs | Complexity tax with no payoff                |
+| CQRS without read/write asymmetry         | Two models to keep consistent, zero benefit  |
+| Anemic CRUD with Clean Architecture       | Ceremony over empty domain logic             |
+| Domain scattered everywhere with layered  | "Smart UI, dumb everywhere else" rot         |
+| Hexagonal with only one adapter           | One-trick-abstraction-layer — YAGNI          |
 
-## 决策顺序（自上而下应用）
+## Decision Order (Apply Top-Down)
 
-1. **领域复杂度？** 否 → 分层。是 → DDD / 六边形核心。
-2. **团队拓扑与部署独立性？** 多团队、独立发布 →
-   微服务 —— 且仅对需要的限界上下文。否则
-   模块化单体。
-3. **读写不对称？** 是 → CQRS。
-4. **异步工作流？** 是 → 事件驱动 + 多步事务用 Saga。
-5. **前端多样性？** 是 → 每个前端一个 BFF。
+1. **Domain complexity?** No → Layered. Yes → DDD / Hexagonal core.
+2. **Team topology and deployment independence?** Multiple teams, independent releases →
+   Microservices — and only for bounded contexts that need it. Otherwise
+   modular monolith.
+3. **Read/write asymmetry?** Yes → CQRS.
+4. **Async workflows?** Yes → Event-driven + Saga for multi-step transactions.
+5. **Frontend diversity?** Yes → BFF per frontend.
 
-> PR 范围审查使用的精简单页版见 [commands/architecture.md](../commands/architecture.md)。
+> A concise single-page version for PR scope review is in [commands/architecture.md](../commands/architecture.md).

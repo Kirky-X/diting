@@ -176,12 +176,12 @@ def get_review_agents() -> Dict[str, Dict[str, Any]]:
 def calculate_confidence(issue: Dict[str, Any]) -> int:
     """Calculate confidence score for an issue (0-100).
 
-    Bug 1 fix: low severity 不再扣分（原 -20 导致 architecture/simplification
-    维度 issues 恒低于阈值 80 被过滤）。新公式：
-      - critical: 不扣分（最强证据）
-      - high: -5（强证据，轻微扣分）
+    Bug 1 fix: low severity no longer deducts points (previously -20 caused architecture/simplification
+    dimension issues to always fall below threshold 80 and get filtered). New formula:
+      - critical: no deduction (strongest evidence)
+      - high: -5 (strong evidence, slight deduction)
       - medium: -10
-      - low/info: 不扣分（修复 architecture/simplification 维度失明）
+      - low/info: no deduction (fixes architecture/simplification dimension blindness)
     """
     base_score = 50
     if issue.get("has_code_evidence"):
@@ -193,12 +193,12 @@ def calculate_confidence(issue: Dict[str, Any]) -> int:
     # severity-aware adjustment
     severity = issue.get("severity", "info").lower()
     if severity == "critical":
-        pass  # 不扣分，保持高置信度
+        pass  # no deduction, maintain high confidence
     elif severity == "high":
-        base_score -= 5  # high 通常 confidence 更高因为证据更强
+        base_score -= 5  # high typically has higher confidence due to stronger evidence
     elif severity == "medium":
         base_score -= 10
-    else:  # low, info — 不扣分（修复 architecture/simplification 维度被过滤）
+    else:  # low, info — no deduction (fixes architecture/simplification dimension filtering)
         pass
     # Penalties
     if issue.get("is_pre_existing"):
@@ -785,7 +785,7 @@ def _report_markdown(
         icon = icons.get(sev, "")
         lines.append(f"### {icon} {sev.title()} ({len(sev_issues)})\n")
         for issue in sev_issues:
-            prefix = f"CRIT" if sev == "critical" else sev[:4].upper()
+            prefix = "CRIT" if sev == "critical" else sev[:4].upper()
             issue_id = f"{prefix}-{counter:03d}"
             counter += 1
             file_ref = f"`{issue['file']}:{issue['line']}`"
@@ -794,14 +794,14 @@ def _report_markdown(
             lines.append(f"**[{issue_id}]** {file_ref} — {desc}  ")
             lines.append(f"Confidence: {issue.get('confidence', '?')} | {rec}\n")
 
-    # GitNexus blast-radius pre-check (P1): if a `.gitnexus/` index is present,
-    # emit a structured worklist of `mcp__gitnexus__impact` / `mcp__gitnexus__query`
-    # calls for critical/high findings. The agent executes them (MCP isn't reachable
-    # from this subprocess). No-op when no index is present.
+    # CodeNexus blast-radius pre-check (P1): if a `codenexus.lbug` index is present,
+    # emit a structured worklist of `codenexus impact` / `codenexus query`
+    # commands for critical/high findings. The agent executes them (the CLI isn't
+    # reachable from this subprocess). No-op when no index is present.
     try:
-        import gitnexus_helpers
+        import codenexus_helpers
 
-        section = gitnexus_helpers.section_for_findings(all_issues)
+        section = codenexus_helpers.section_for_findings(all_issues)
         if section:
             lines.append("")
             lines.append(section)

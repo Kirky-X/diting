@@ -1,41 +1,41 @@
-# 边界情况处理指南
+# Edge Case Handling Guide
 
-边界情况处理模式 —— 系统化识别与处理边界条件
+Edge case handling patterns — Systematic identification and handling of boundary conditions
 
-## 概述
+## Overview
 
-边界情况是系统中最容易被忽视的区域，但往往导致最严重的问题。本文档提供系统化的边界情况识别与处理模式。
+Edge cases are among the most easily overlooked areas in a system, yet they often cause the most severe problems. This document provides systematic patterns for identifying and handling edge cases.
 
 ---
 
-## 1. 集合边界情况
+## 1. Collection Edge Cases
 
-### 空集合
+### Empty Collections
 
-| 场景 | 错误处理 | 正确处理 |
-|------|----------|----------|
-| 迭代空集合 | 无问题 | 直接迭代，循环体不会执行 |
-| 取第一个元素 | `items[0]` 抛异常 | `items[0] if items else default` |
-| 求和/平均 | `sum([])` = 0，`mean([])` 抛异常 | 提前检查或返回默认值 |
-| 最大/最小值 | `max([])` 抛异常 | `max(items, default=0)` |
+| Scenario | Incorrect Handling | Correct Handling |
+|----------|-------------------|------------------|
+| Iterating empty collection | No issue | Direct iteration, loop body will not execute |
+| Getting first element | `items[0]` throws exception | `items[0] if items else default` |
+| Sum/Average | `sum([])` = 0, `mean([])` throws exception | Check beforehand or return default value |
+| Max/Min | `max([])` throws exception | `max(items, default=0)` |
 
-### 单元素集合
+### Single-Element Collections
 
 ```python
-# 可能期望列表但得到单个元素
-result = api.get_items()  # 可能返回 [item] 或 item
+# May expect a list but get a single element
+result = api.get_items()  # May return [item] or item
 
-# 防御性处理
+# Defensive handling
 items = result if isinstance(result, list) else [result]
 ```
 
-### 嵌套集合
+### Nested Collections
 
 ```python
-# 深层访问的风险
+# Risk of deep access
 value = data.get('a', {}).get('b', {}).get('c')
 
-# 更安全的替代方案
+# Safer alternative
 from functools import reduce
 def safe_get(d, *keys, default=None):
     return reduce(lambda d, k: d.get(k, {}) if isinstance(d, dict) else default, keys, d) or default
@@ -43,51 +43,51 @@ def safe_get(d, *keys, default=None):
 
 ---
 
-## 2. 数值边界情况
+## 2. Numeric Edge Cases
 
-### 零值
+### Zero Values
 
-| 操作 | 风险 | 处理 |
-|------|------|------|
-| 除法 | 除零异常 | 检查或使用 try-except |
-| 对数 | `log(0)` 未定义 | `log(max(x, epsilon))` |
-| 取模 | `x % 0` 异常 | 先检查除数 |
-| 幂运算 | `0 ** -1` 异常 | 边界检查 |
+| Operation | Risk | Handling |
+|-----------|------|----------|
+| Division | Division by zero exception | Check or use try-except |
+| Logarithm | `log(0)` undefined | `log(max(x, epsilon))` |
+| Modulo | `x % 0` exception | Check divisor first |
+| Exponentiation | `0 ** -1` exception | Boundary check |
 
-### 负值
+### Negative Values
 
 ```python
-# 负数平方根
+# Negative square root
 import math
 result = math.sqrt(max(0, value))
 
-# 负数取模
--7 % 3  # Python 中结果为 2，但其他语言可能不同
+# Negative modulo
+-7 % 3  # Result is 2 in Python, but may differ in other languages
 ```
 
-### 溢出
+### Overflow
 
 ```python
-# 整数溢出（Python 中不是问题，但其他语言需注意）
+# Integer overflow (not an issue in Python, but be careful in other languages)
 # C/Java: INT_MAX + 1 = INT_MIN
 
-# 浮点数溢出
+# Floating-point overflow
 import math
 if not math.isfinite(result):
-    raise OverflowError("计算结果溢出")
+    raise OverflowError("Computation result overflowed")
 ```
 
-### 浮点精度
+### Floating-Point Precision
 
 ```python
-# 不要用 == 比较浮点数
-0.1 + 0.2 == 0.3  # False！
+# Don't use == to compare floats
+0.1 + 0.2 == 0.3  # False!
 
-# 使用 epsilon 比较
+# Use epsilon comparison
 def approx_equal(a, b, epsilon=1e-9):
     return abs(a - b) < epsilon
 
-# 货币计算使用 Decimal
+# Use Decimal for currency calculations
 from decimal import Decimal
 price = Decimal('19.99')
 tax = price * Decimal('0.08')
@@ -95,123 +95,123 @@ tax = price * Decimal('0.08')
 
 ---
 
-## 3. 字符串边界情况
+## 3. String Edge Cases
 
-### 空字符串
+### Empty Strings
 
 ```python
-# trim 后为空
+# Empty after trim
 username = input.strip()
 if not username:
-    raise ValidationError("用户名不能为空")
+    raise ValidationError("Username cannot be empty")
 
-# 区分空字符串与 null
+# Distinguish empty string from null
 value = data.get('name')  # None vs "" vs "  "
 if value is None:
-    # 缺失
+    # Missing
 elif not value.strip():
-    # 仅空白
+    # Whitespace only
 ```
 
-### Unicode 边界情况
+### Unicode Edge Cases
 
 ```python
-# 字符串长度（字节 vs 字符 vs 码点）
-text = "你好"
-len(text)                    # 2（字符）
-len(text.encode('utf-8'))    # 6（字节）
+# String length (bytes vs characters vs code points)
+text = "hello"
+len(text)                    # 5 (characters)
+len(text.encode('utf-8'))    # 5 (bytes)
 
-# Unicode 规范化
+# Unicode normalization
 import unicodedata
-text = unicodedata.normalize('NFC', text)  # 统一表示
+text = unicodedata.normalize('NFC', text)  # Unified representation
 
-# 零宽字符
-invisible = text.strip('\u200b\ufeff')  # 移除零宽字符
+# Zero-width characters
+invisible = text.strip('\u200b\ufeff')  # Remove zero-width characters
 ```
 
-### 编码问题
+### Encoding Issues
 
 ```python
-# 始终显式声明编码
+# Always explicitly declare encoding
 with open(path, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# 处理编码错误
+# Handle encoding errors
 with open(path, 'r', encoding='utf-8', errors='replace') as f:
     content = f.read()
 ```
 
 ---
 
-## 4. 时间边界情况
+## 4. Time Edge Cases
 
-### 时区边界
+### Timezone Boundaries
 
 ```python
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-# 始终以 UTC 存储
+# Always store in UTC
 dt = datetime.now(timezone.utc)
 
-# 显示时转换
+# Convert on display
 local = dt.astimezone(ZoneInfo('Asia/Shanghai'))
 ```
 
-### 夏令时
+### Daylight Saving Time
 
 ```python
-# 避免在 DST 边界做时间计算
-# 使用 UTC 或无时区日期
+# Avoid time calculations at DST boundaries
+# Use UTC or timezone-naive dates
 from datetime import date
-d = date(2024, 3, 10)  # 无时区问题
+d = date(2024, 3, 10)  # No timezone issues
 ```
 
-### 闰年/闰秒
+### Leap Years/Leap Seconds
 
 ```python
 import calendar
 
-# 闰年检查
+# Leap year check
 calendar.isleap(2024)  # True
 
-# 二月天数
+# Days in February
 days_in_feb = calendar.monthrange(2024, 2)[1]  # 29
 ```
 
 ---
 
-## 5. 边界值清单
+## 5. Boundary Value Checklist
 
-### 输入验证
-
-```
-Null 值（null、None、undefined）
-空字符串（""、"   "）
-空集合（[]、{}、set()）
-零值（0、0.0、0j）
-负值（-1、-0.001）
-最大值（INT_MAX、FLT_MAX）
-最小值（INT_MIN、FLT_MIN）
-边界值（恰好等于阈值）
-特殊字符（<、>、&、"、'）
-Unicode 字符（emoji、CJK、零宽）
-```
-
-### 索引边界
+### Input Validation
 
 ```
-第一个元素（索引 0）
-最后一个元素（索引 len-1）
-越界（索引 len、索引 -len-1）
-负索引（索引 -1）
-空切片（arr[0:0]）
-全切片（arr[:]）
+Null values (null, None, undefined)
+Empty strings ("" and "   ")
+Empty collections ([] and {} and set())
+Zero values (0 and 0.0 and 0j)
+Negative values (-1 and -0.001)
+Maximum values (INT_MAX and FLT_MAX)
+Minimum values (INT_MIN and FLT_MIN)
+Boundary values (exactly equal to threshold)
+Special characters (< and > and & and " and ')
+Unicode characters (emoji and CJK and zero-width)
+```
+
+### Index Boundaries
+
+```
+First element (index 0)
+Last element (index len-1)
+Out of bounds (index len and index -len-1)
+Negative index (index -1)
+Empty slice (arr[0:0])
+Full slice (arr[:])
 ```
 
 ---
 
-## 6. 边界情况测试模板
+## 6. Edge Case Testing Template
 
 ```python
 import pytest
@@ -230,7 +230,7 @@ def test_edge_cases(input, expected):
 
 ---
 
-## 参考
+## References
 
-- [concurrency.md](concurrency.md) —— 并发边界情况
-- [../commands/correctness.md](../commands/correctness.md) —— 正确性审查命令
+- [concurrency.md](concurrency.md) — Concurrency edge cases
+- [../commands/correctness.md](../commands/correctness.md) — Correctness review commands

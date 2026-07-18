@@ -1,8 +1,8 @@
-# 安全认证与配置示例
+# Security Authentication & Configuration Examples
 
-> 认证+配置类安全案例：观察者模式、策略模式、配置管理、配置策略。详见主索引 [examples.md](examples.md)。
+> Authentication + configuration security cases: Observer Pattern, Strategy Pattern, configuration management, configuration strategies. See the main index [examples.md](examples.md).
 
-## 1. 完整观察者模式实现
+## 1. Complete Observer Pattern Implementation
 
 ```java
 // 安全事件类型
@@ -96,7 +96,7 @@ public class BruteForceDetector implements SecurityObserver {
 }
 ```
 
-## 2. 策略模式实现
+## 2. Strategy Pattern Implementation
 
 ```java
 // 加密策略接口
@@ -165,7 +165,7 @@ public class EncryptionContext {
 }
 ```
 
-## 3. 安全配置管理
+## 3. Secure Configuration Management
 
 ```java
 public class SecureConfigurationManager {
@@ -224,7 +224,7 @@ public class SecureConfigurationManager {
 }
 ```
 
-## 4. 安全配置策略
+## 4. Security Configuration Strategy
 
 ```java
 // 配置策略工厂

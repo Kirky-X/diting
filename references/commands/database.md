@@ -1,28 +1,28 @@
-# 数据库审查
+# Database Review
 
-数据库 schema、索引和查询优化审查。
+Database schema, index, and query optimization review.
 
-## 检查清单
+## Checklist
 
-### Schema 设计
-- 适当的规范化程度
-- 主键和外键定义
-- 数据类型选择
-- 默认值和约束
+### Schema Design
+- Appropriate normalization level
+- Primary key and foreign key definitions
+- Data type selection
+- Default values and constraints
 
-### 索引
-- 为常见查询建立合适的索引
-- 避免过多索引
-- 复合索引顺序
-- 索引选择性
+### Indexing
+- Appropriate indexes for common queries
+- Avoid excessive indexes
+- Composite index ordering
+- Index selectivity
 
-### 查询优化
-- 避免 SELECT *
-- 合理使用 JOIN
-- 分页优化（OFFSET vs Cursor）
-- 批量操作替代循环
+### Query Optimization
+- Avoid SELECT *
+- Proper use of JOIN
+- Pagination optimization (OFFSET vs Cursor)
+- Batch operations instead of loops
 
-### 迁移
-- 迁移脚本可回滚
-- 大表迁移策略
-- 数据一致性
+### Migration
+- Migration scripts are reversible
+- Large table migration strategy
+- Data consistency

@@ -1,186 +1,186 @@
-# 审查反模式
+# Review Anti-Patterns
 
-避免这些常见的审查陷阱 —— 它们浪费时间并损害团队信任
-
----
-
-## 八大反模式
-
-### 1. 🛑 橡皮图章式审查
-
-**描述**：未阅读代码即批准
-
-**症状**：
-- 不论内容如何批准所有 PR
-- 不检查就评论 "LGTM"
-- 假设其他人会审查
-
-**后果**：
-- 虚假信心，让 bug 混过
-- 审查流程形同虚设
-- 责任分散
-
-**替代做法**：阅读每一行，或明确说明审查范围与限制
+Avoid these common review pitfalls — they waste time and damage team trust
 
 ---
 
-### 2. 🚲 钻牛角尖
+## Eight Major Anti-Patterns
 
-**描述**：在琐细细节上争论不休，却忽视重要问题
+### 1. 🛑 Rubber-Stamp Review
 
-**症状**：
-- 花 30 分钟辩论变量名
-- 无休止的格式讨论
-- 忽视竞态条件或安全问题
+**Description**: Approving without reading the code
 
-**后果**：
-- 关键问题被忽略
-- PR 周期延长
-- 审查者疲劳
+**Symptoms**:
+- Approving all PRs regardless of content
+- Commenting "LGTM" without checking
+- Assuming someone else will review
 
-**替代做法**：按优先级排序：安全 > 正确性 > 性能 > 风格
+**Consequences**:
+- False confidence, letting bugs slip through
+- Review process becomes meaningless
+- Diffusion of responsibility
 
----
-
-### 3. 🎨 因风格阻塞
-
-**描述**：因 linter/formatter 应处理的格式问题拒绝批准
-
-**症状**：
-- "这个缩进错了" 阻塞合并
-- 要求手工修复 linter 可自动修复的问题
-- 把个人偏好当作团队标准
-
-**后果**：
-- 浪费人力
-- 降低审查效率
-- 打击贡献者
-
-**替代做法**：配置自动化工具，仅审查逻辑
+**Alternative**: Read every line, or explicitly state the review scope and limitations
 
 ---
 
-### 4. 🚧 看门人式审查
+### 2. 🚲 Bike-Shedding
 
-**描述**：要求个人偏好，而非接受正确但不同的方案
+**Description**: Arguing over trivial details while ignoring important issues
 
-**症状**：
-- "我会用另一种方式实现"
-- 拒绝批准直到按你的方式重写
-- 过度工程化要求
+**Symptoms**:
+- Spending 30 minutes debating variable names
+- Endless formatting discussions
+- Ignoring race conditions or security issues
 
-**后果**：
-- 信任受损
-- 贡献者失去所有权
-- 知识共享受阻
+**Consequences**:
+- Critical issues get overlooked
+- PR cycle time extends
+- Reviewer fatigue
 
-**替代做法**：除非有明确的标准违反，否则接受多种正确方案
-
----
-
-### 5. 🚗 路过式审查
-
-**描述**：留下模糊评论后消失
-
-**症状**：
-- "这看起来不对"
-- 不跟进讨论
-- 贡献者无法获得澄清
-
-**后果**：
-- 没有闭环
-- 贡献者困惑
-- PR 阻塞
-
-**替代做法**：跟进直到解决，或明确移交给其他审查者
+**Alternative**: Prioritize: security > correctness > performance > style
 
 ---
 
-### 6. 📈 范围蔓延式审查
+### 3. 🎨 Blocking on Style
 
-**描述**：要求与当前 PR 无关的重构
+**Description**: Rejecting approval over formatting issues that linter/formatter should handle
 
-**症状**：
-- "顺便把这个模块重构一下"
-- "既然你在这里，也修一下..."
-- 要求超出 PR 范围的改进
+**Symptoms**:
+- "This indentation is wrong" blocking merge
+- Requiring manual fixes for issues linter can auto-fix
+- Treating personal preferences as team standards
 
-**后果**：
-- PR 永无止境
-- 变更集膨胀
-- 回归风险增加
+**Consequences**:
+- Wasted effort
+- Reduced review efficiency
+- Discourages contributors
 
-**替代做法**：记录为后续 PR 或 Issue，不阻塞当前 PR
-
----
-
-### 7. 🕰️ 过期审查
-
-**描述**：让 PR 搁置数天不审查
-
-**症状**：
-- PR 等待超过 24 小时
-- 审查者已分配但不响应
-- 需要频繁提醒
-
-**后果**：
-- 阻塞交付
-- 上下文切换成本
-- 团队摩擦
-
-**替代做法**：24 小时内审查，或明确移交给他人
+**Alternative**: Configure automation tools, only review logic
 
 ---
 
-### 8. 💬 情绪化语言
+### 4. 🚧 Gatekeeping Review
 
-**描述**：使用攻击性或轻蔑性语言
+**Description**: Requiring personal preferences rather than accepting correct but different approaches
 
-**症状**：
-- "这太糟糕了"
-- "显然是错的"
-- "你怎么能写这种代码"
+**Symptoms**:
+- "I would implement it differently"
+- Refusing approval until rewritten your way
+- Over-engineering requirements
 
-**后果**：
-- 团队关系恶化
-- 心理安全降低
-- 人们害怕提交代码
+**Consequences**:
+- Damaged trust
+- Contributors lose ownership
+- Knowledge sharing hindered
 
-**替代做法**：评论代码，而非评论人；假设善意
+**Alternative**: Accept multiple correct approaches unless there is a clear standards violation
 
 ---
 
-## 快速参考表
+### 5. 🚗 Drive-By Review
 
-| 反模式 | 一句话 | 是否阻塞？ | 替代做法 |
+**Description**: Leaving vague comments and disappearing
+
+**Symptoms**:
+- "This doesn't look right"
+- Not following up on discussion
+- Contributor cannot get clarification
+
+**Consequences**:
+- No closure
+- Contributor confusion
+- PR blocked
+
+**Alternative**: Follow up until resolved, or explicitly hand off to another reviewer
+
+---
+
+### 6. 📈 Scope Creep Review
+
+**Description**: Requesting refactoring unrelated to the current PR
+
+**Symptoms**:
+- "While you're at it, refactor this module too"
+- "Since you're here, also fix..."
+- Requesting improvements beyond PR scope
+
+**Consequences**:
+- PR never ends
+- Change set inflates
+- Regression risk increases
+
+**Alternative**: File as follow-up PR or Issue, do not block current PR
+
+---
+
+### 7. 🕰️ Stale Review
+
+**Description**: Letting PRs sit unreviewed for days
+
+**Symptoms**:
+- PR waiting over 24 hours
+- Reviewer assigned but unresponsive
+- Frequent reminders needed
+
+**Consequences**:
+- Delivery blocked
+- Context-switching cost
+- Team friction
+
+**Alternative**: Review within 24 hours, or explicitly hand off to others
+
+---
+
+### 8. 💬 Emotional Language
+
+**Description**: Using aggressive or dismissive language
+
+**Symptoms**:
+- "This is terrible"
+- "Obviously wrong"
+- "How could you write this code"
+
+**Consequences**:
+- Team relationships deteriorate
+- Psychological safety decreases
+- People become afraid to submit code
+
+**Alternative**: Comment on code, not the person; assume good intent
+
+---
+
+## Quick Reference Table
+
+| Anti-Pattern | One-Liner | Blocking? | Alternative |
 |--------|-----------|--------|----------|
-| 橡皮图章式 | 未读即批准 | — | 阅读每行或说明范围 |
-| 钻牛角尖 | 争论细节、漏关键 | — | 按重要性排序 |
-| 因风格阻塞 | 格式问题阻塞合并 | ✅ | 用 linter 自动化 |
-| 看门人式 | 要求个人偏好 | ✅ | 接受多种正确方案 |
-| 路过式 | 评论后消失 | ✅ | 跟进或移交 |
-| 范围蔓延 | 要求无关重构 | ✅ | 创建后续 Issue |
-| 过期审查 | 超过 24 小时 | ✅ | 设 SLA 或移交 |
-| 情绪化语言 | 攻击性语言 | — | 评论代码不评论人 |
+| Rubber-Stamp | Approve without reading | — | Read every line or state scope |
+| Bike-Shedding | Argue details, miss critical | — | Prioritize by importance |
+| Blocking on Style | Formatting blocks merge | ✅ | Automate with linter |
+| Gatekeeping | Require personal preference | ✅ | Accept multiple correct approaches |
+| Drive-By | Comment then disappear | ✅ | Follow up or hand off |
+| Scope Creep | Request unrelated refactoring | ✅ | Create follow-up Issue |
+| Stale Review | Over 24 hours | ✅ | Set SLA or hand off |
+| Emotional Language | Aggressive language | — | Comment on code not person |
 
 ---
 
-## 提交审查前自检
+## Pre-Submission Self-Check
 
 ```
-□ 我是否阅读了每一行变更？
-□ 我的问题是否按优先级排序？
-□ 对格式问题，是否建议用 linter 而非手工修复？
-□ 我是否接受了正确但不同的方案？
-□ 我是否会跟进直到解决？
-□ 我的要求是否在 PR 范围内？
-□ 我是否会在 24 小时内响应？
-□ 我的语言是否客观专业？
+□ Did I read every line of changes?
+□ Are my comments prioritized by importance?
+□ For formatting issues, did I suggest using linter instead of manual fixes?
+□ Did I accept correct but different approaches?
+□ Will I follow up until resolved?
+□ Are my requests within PR scope?
+□ Will I respond within 24 hours?
+□ Is my language objective and professional?
 ```
 
 ---
 
-## 参考
+## References
 
-- [templates/feedback-examples.md](templates/feedback-examples.md) —— 反馈示例
-- [workflow/three-pass-review.md](workflow/three-pass-review.md) —— 三遍审查工作流
+- [templates/feedback-examples.md](templates/feedback-examples.md) — Feedback examples
+- [workflow/three-pass-review.md](workflow/three-pass-review.md) — Three-pass review workflow

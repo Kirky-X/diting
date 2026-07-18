@@ -1,195 +1,195 @@
-# 性能审查命令
+# Performance Review Command
 
-性能审查模式 —— 延迟、吞吐、资源效率分析
+Performance Review Mode — latency, throughput, resource efficiency analysis
 
-## 用法
+## Usage
 
 ```bash
 review performance [target-path]
 ```
 
-## 性能目标
+## Performance Targets
 
-### Web API（后端）
+### Web API (Backend)
 
-| 指标 | 目标 | 告警 |
+| Metric | Target | Alert |
 |---|---|---|
-| P50 响应时间 | < 100ms | > 200ms |
-| P95 响应时间 | < 500ms | > 1s |
-| P99 响应时间 | < 1s | > 3s |
-| 错误率 | < 0.1% | > 1% |
-| CPU 利用率 | < 70% | > 85% |
-| 内存利用率 | < 75% | > 90% |
+| P50 response time | < 100ms | > 200ms |
+| P95 response time | < 500ms | > 1s |
+| P99 response time | < 1s | > 3s |
+| Error rate | < 0.1% | > 1% |
+| CPU utilization | < 70% | > 85% |
+| Memory utilization | < 75% | > 90% |
 
-> ⚠️ 注意：P99 总是 ≥ P95 ≥ P50。P99 目标不能低于 P95。
+> ⚠️ Note: P99 is always ≥ P95 ≥ P50. P99 target cannot be lower than P95.
 
-### Web Vitals（前端）
+### Web Vitals (Frontend)
 
-| 指标 | 良好 | 需改进 | 较差 |
+| Metric | Good | Needs Improvement | Poor |
 |---|---|---|---|
 | LCP | ≤ 2.5s | 2.5–4s | > 4s |
 | FID / INP | ≤ 100ms | 100–300ms | > 300ms |
 | CLS | ≤ 0.1 | 0.1–0.25 | > 0.25 |
 | TTFB | ≤ 800ms | 800ms–1.8s | > 1.8s |
 
-### 资源预算（前端）
+### Resource Budget (Frontend)
 
-| 资源 | 目标 |
+| Resource | Target |
 |---|---|
-| JS 包（gzip 后） | < 200KB |
-| 初始 JS | < 100KB |
+| JS bundle (gzipped) | < 200KB |
+| Initial JS | < 100KB |
 | CSS | < 30KB |
-| 图片（每页总计） | < 1MB |
+| Images (per page total) | < 1MB |
 
 ---
 
-## 检查内容
+## Checklist
 
-### 算法和数据结构
-
-```
-□ 热点路径无 O(n²) 或更差（大集合上的嵌套循环）
-□ 合适的数据结构：Map/Set 查找（O(1)）vs Array（O(n)）
-□ 无重复工作：memoize 或缓存昂贵计算
-□ 无界集合分页
-□ 排序延迟到必要时
-```
-
-**需扫描的危险信号：**
-- 嵌套 `for` 循环都迭代同一集合
-- `.filter().map()` 链可以合并
-- 循环内 `.find()` 而非预构建 Map
-- 重叠子问题无 memoization 的递归
-
-### 数据库
+### Algorithms and Data Structures
 
 ```
-□ N+1 查询问题：循环内无 DB 调用
-□ WHERE、JOIN ON、ORDER BY 子句的所有列有索引
-□ 避免 SELECT * —— 只取需要的列
-□ 慢查询（> 100ms）已 EXPLAIN ANALYZE
-□ 配置连接池（非每请求新建连接）
-□ 事务范围合适（不长于需要地持有锁）
-□ 大表用 LIMIT/OFFSET 或游标分页
-□ 读多查询用读副本
+□ No O(n²) or worse on hot paths (nested loops on large collections)
+□ Appropriate data structures: Map/Set lookup (O(1)) vs Array (O(n))
+□ No duplicate work: memoize or cache expensive computations
+□ Bounded collection pagination
+□ Sorting deferred until needed
 ```
 
-### 缓存
+**Red Flags to Scan For:**
+- Nested `for` loops both iterating the same collection
+- `.filter().map()` chains that could be merged
+- `.find()` inside a loop instead of pre-building a Map
+- Recursion on overlapping subproblems without memoization
+
+### Database
 
 ```
-□ 读多写少的数据缓存（用户画像、配置、商品目录）
-□ 缓存 TTL 适合数据新鲜度要求
-□ 缓存失效策略明确（写时驱逐 vs 仅 TTL）
-□ 缓存穿透防护（缺失 key 不反复打 DB）
-□ 缓存雪崩/惊群处理（锁或概率提前过期）
-□ 多实例部署用分布式缓存
+□ N+1 query issues: no DB calls inside loops
+□ All columns in WHERE, JOIN ON, ORDER BY clauses have indexes
+□ Avoid SELECT * — fetch only needed columns
+□ Slow queries (> 100ms) analyzed with EXPLAIN ANALYZE
+□ Connection pooling configured (not per-request connections)
+□ Transaction scope appropriate (not holding locks longer than necessary)
+□ Large tables use LIMIT/OFFSET or cursor-based pagination
+□ Read-heavy queries use read replicas
 ```
 
-### 异步和并发
+### Caching
 
 ```
-□ 异步上下文中无阻塞 I/O（不在 async handler 中调同步 DB）
-□ CPU 密集工作从事件循环/主线程卸载
-□ 即发即忘任务入队（Celery、BullMQ 等）不内联等待
-□ 可并行工作并行化（Promise.all、asyncio.gather、goroutine）
-□ 线程/连接池大小适合负载
+□ Read-heavy, write-light data cached (user profiles, configs, product catalogs)
+□ Cache TTL appropriate for data freshness requirements
+□ Cache invalidation strategy explicit (evict on write vs TTL only)
+□ Cache stampede protection (missing keys don't repeatedly hit DB)
+□ Cache avalanche/thundering herd handling (locks or probabilistic early expiration)
+□ Distributed cache for multi-instance deployments
 ```
 
-### 内存
+### Async and Concurrency
 
 ```
-□ 无大对象内存堆积（大文件流式处理而非加载）
-□ 组件卸载时事件监听器解绑
-□ 循环引用不阻止 GC
-□ 大临时数组不超出其作用域持有
+□ No blocking I/O in async contexts (no sync DB calls in async handlers)
+□ CPU-intensive work offloaded from event loop/main thread
+□ Fire-and-forget tasks enqueued (Celery, BullMQ, etc.), not inline-waited
+□ Parallelizable work parallelized (Promise.all, asyncio.gather, goroutines)
+□ Thread/connection pool sizes appropriate for load
 ```
 
-### 前端
+### Memory
 
 ```
-□ 代码分割（懒加载路由和重组件）
-□ 图片：WebP/AVIF 格式、响应式 srcset、loading="lazy"
-□ 字体：font-display: swap、预加载关键字体
-□ 第三方脚本 deferred 或 async
-□ React：useMemo/useCallback 用于昂贵计算/稳定引用
-□ 列表 > 100 项虚拟滚动
-□ scroll、resize、input 事件处理 debounce/throttle
+□ No large object memory accumulation (stream large files instead of loading)
+□ Event listeners unbound on component unmount
+□ Circular references don't prevent GC
+□ Large temporary arrays not held beyond their scope
 ```
 
-### 资源优化
+### Frontend
 
 ```
-□ 图片用现代格式（WebP、AVIF）
-□ 图片尺寸合适（不加载 4K 缩略图）
-□ 图片尺寸指定以防 CLS（width/height 属性）
-□ 折叠下方图片懒加载（loading="lazy"）
-□ 响应式图片用 srcset 适配不同屏幕
-□ 视频用 poster 图作为初始帧
-□ 关键内容字体预加载
-□ SVG 优化（SVGO）并压缩
+□ Code splitting implemented (lazy-load routes and heavy components)
+□ Images: WebP/AVIF format, responsive srcset, loading="lazy"
+□ Fonts: font-display: swap, preload critical fonts
+□ Third-party scripts deferred or async
+□ React: useMemo/useCallback for expensive computations/stable references
+□ Lists > 100 items use virtual scrolling
+□ scroll, resize, input event handlers debounced/throttled
 ```
 
-### 代码分割和懒加载
+### Resource Optimization
 
 ```
-□ 路由级代码分割实现
-□ 重组件懒加载（React.lazy、dynamic import）
-□ 第三方库需要时动态加载
-□ 预加载导航的关键 chunk
-□ 预取可能下一页的资源
-□ CSS 代码分割启用
-□ Tree-shaking 工作（无未使用导出）
+□ Images use modern formats (WebP, AVIF)
+□ Image sizes appropriate (don't load 4K thumbnails)
+□ Image dimensions specified to prevent CLS (width/height attributes)
+□ Below-the-fold images lazy-loaded (loading="lazy")
+□ Responsive images use srcset for different screens
+□ Videos use poster images as initial frame
+□ Critical content fonts preloaded
+□ SVGs optimized (SVGO) and compressed
 ```
 
-### CDN 和缓存
+### Code Splitting and Lazy Loading
 
 ```
-□ 静态资源从 CDN 提供
-□ Cache-Control 头设置合适
-□ 不可变资源有长 max-age
-□ 资源 URL 版本化/缓存破坏
-□ Service Worker 离线缓存（如适用）
-□ API 响应用合适缓存头
-□ ETag 配置条件请求
+□ Route-level code splitting implemented
+□ Heavy components lazy-loaded (React.lazy, dynamic import)
+□ Third-party libraries dynamically loaded when needed
+□ Critical chunks preloaded for navigation
+□ Resources for likely next pages prefetched
+□ CSS code splitting enabled
+□ Tree-shaking working (no unused exports)
 ```
 
-### 包优化
+### CDN and Caching
 
 ```
-□ 包大小已分析并记录
-□ 无重复依赖
-□ 大依赖有更轻替代方案考虑
-□ Polyfill 不重复
-□ 生产调试生成 source map
-□ 启用压缩（gzip、brotli）
+□ Static assets served from CDN
+□ Cache-Control headers set appropriately
+□ Immutable assets have long max-age
+□ Asset URL versioning/cache busting
+□ Service Worker offline caching (if applicable)
+□ API responses have appropriate cache headers
+□ ETag configured for conditional requests
+```
+
+### Bundle Optimization
+
+```
+□ Bundle size analyzed and documented
+□ No duplicate dependencies
+□ Consider lighter alternatives for heavy dependencies
+□ Polyfills not duplicated
+□ Source maps generated for production debugging
+□ Compression enabled (gzip, brotli)
 ```
 
 ---
 
-## 常见性能反模式
+## Common Performance Anti-patterns
 
-| 反模式 | 检测 | 修复 |
+| Anti-pattern | Detection | Fix |
 |---|---|---|
-| N+1 查询 | 循环内 DB 调用 | 预加载/批量获取 |
-| 缺失索引 | 过滤列无索引的慢查询 | 加复合索引 |
-| 循环内同步 HTTP | for 循环中 `requests.get()` | `asyncio.gather()` 或线程池 |
-| 无界查询 | `SELECT * FROM table` 无 LIMIT | 加分页 |
-| 每次按键重渲染 | onChange 触发全列表重渲染 | Debounce + useMemo |
-| 大包 | 单 JS 文件 > 1MB | 代码分割 + 懒加载 |
-| 内存泄漏 | 事件监听器未移除 | useEffect return 中清理/析构 |
+| N+1 queries | DB calls inside loops | Preload/batch fetch |
+| Missing indexes | Slow queries on unindexed filter columns | Add composite index |
+| Synchronous HTTP in loops | `requests.get()` in for loops | `asyncio.gather()` or thread pool |
+| Unbounded queries | `SELECT * FROM table` without LIMIT | Add pagination |
+| Re-render on every keystroke | onChange triggers full list re-render | Debounce + useMemo |
+| Large bundle | Single JS file > 1MB | Code splitting + lazy loading |
+| Memory leak | Event listeners not removed | Cleanup/destructor in useEffect return |
 
 ---
 
-## 参考
+## References
 
-- [performance-engineer-guide.md](../performance/performance-engineer-guide.md) — 完整指南
-- [backend-optimization.md](../performance/backend-optimization.md) — 后端模式
-- [frontend-optimization.md](../performance/frontend-optimization.md) — 前端模式
-- [profiling-tools.md](../performance/profiling-tools.md) — 性能分析工具
-- [load-testing.md](../performance/load-testing.md) — 压测脚本
-- [monitoring.md](../performance/monitoring.md) — 指标和告警
+- [performance-engineer-guide.md](../performance/performance-engineer-guide.md) — full guide
+- [backend-optimization.md](../performance/backend-optimization.md) — backend patterns
+- [frontend-optimization.md](../performance/frontend-optimization.md) — frontend patterns
+- [profiling-tools.md](../performance/profiling-tools.md) — performance analysis tools
+- [load-testing.md](../performance/load-testing.md) — load testing scripts
+- [monitoring.md](../performance/monitoring.md) — metrics and alerting
 
-## 相关命令
+## Related Commands
 
 - [security.md](security.md)
 - [quality.md](quality.md)

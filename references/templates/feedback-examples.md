@@ -1,59 +1,59 @@
-# 反馈示例
+# Feedback Examples
 
-好与坏的反馈示例，帮助审查者提供有价值的评论
-
----
-
-## 反馈原则
-
-1. **具体** —— 指出确切行号，解释问题
-2. **解释原因** —— 描述风险或后果，而非仅规则
-3. **建议修复** —— 提供具体替代方案或代码片段
-4. **提问而非命令** —— 对主观事项使用提问
-5. **认可好的工作** —— 表扬好的方案
-6. **区分阻塞级别** —— 使用严重度标签
+Examples of good and bad feedback to help reviewers provide valuable comments
 
 ---
 
-## 安全示例
+## Feedback Principles
 
-### 糟糕反馈
+1. **Be specific** — point to the exact line, explain the issue
+2. **Explain the why** — describe the risk or consequence, not just the rule
+3. **Suggest a fix** — provide a concrete alternative or code snippet
+4. **Ask, don't command** — use questions for subjective matters
+5. **Acknowledge good work** — praise well-done solutions
+6. **Distinguish blocking level** — use severity labels
 
-> 这不安全。修一下。
+---
 
-### 良好反馈
+## Security Examples
 
-> `[CRITICAL]` `src/auth.py:45` —— SQL 注入漏洞
+### Bad Feedback
+
+> This isn't secure. Fix it.
+
+### Good Feedback
+
+> `[CRITICAL]` `src/auth.py:45` — SQL Injection Vulnerability
 >
-> **问题**：用户输入直接拼接到 SQL 查询字符串。攻击者可操纵查询读取、修改或删除任意数据。
+> **Problem**: User input is directly concatenated into a SQL query string. An attacker can manipulate the query to read, modify, or delete arbitrary data.
 >
 > ```python
-> # 有漏洞
+> # Vulnerable
 > query = "SELECT * FROM users WHERE name = '" + username + "'"
 > cursor.execute(query)
 > ```
 >
-> **修复**：
+> **Fix**:
 > ```python
-> # 安全 —— 使用参数化查询
+> # Safe — use parameterized query
 > cursor.execute("SELECT * FROM users WHERE name = %s", (username,))
 > ```
 >
-> **参考**：OWASP A03:2021 Injection、CWE-89
+> **Reference**: OWASP A03:2021 Injection, CWE-89
 
 ---
 
-## 性能示例
+## Performance Examples
 
-### 糟糕反馈
+### Bad Feedback
 
-> 这很慢。
+> This is slow.
 
-### 良好反馈
+### Good Feedback
 
-> `[MAJOR]` `src/processor.py:88-140` —— O(n²) 嵌套循环
+> `[MAJOR]` `src/processor.py:88-140` — O(n²) Nested Loop
 >
-> **问题**：对 `orders` 中每个元素（n），遍历所有 `products`（m）。实际数据量（10k 订单 × 5k 产品 = 50M 次迭代）会造成严重延迟。
+> **Problem**: For each element in `orders` (n), you iterate over all `products` (m). At realistic data volumes (10k orders × 5k products = 50M iterations), this will cause severe latency.
 >
 > ```python
 > # O(n × m)
@@ -63,9 +63,9 @@
 >             ...
 > ```
 >
-> **修复**：
+> **Fix**:
 > ```python
-> # O(n + m) —— 先索引产品
+> # O(n + m) — index products first
 > product_map = {p.id: p for p in all_products}
 > for order in orders:
 >     product = product_map.get(order.product_id)
@@ -74,29 +74,29 @@
 
 ---
 
-## 正确性示例
+## Correctness Examples
 
-### 糟糕反馈
+### Bad Feedback
 
-> 这可能有 bug。
+> This might have a bug.
 
-### 良好反馈
+### Good Feedback
 
-> `[MAJOR]` `src/batch.py:52` —— 潜在竞态条件
+> `[MAJOR]` `src/batch.py:52` — Potential Race Condition
 >
-> **问题**：检查-然后-执行模式不是原子的。在检查与执行之间，另一个进程可能已修改状态。
+> **Problem**: The check-then-act pattern is not atomic. Between the check and the act, another process may have modified the state.
 >
 > ```python
-> # 非原子操作
+> # Non-atomic operation
 > if not file.exists():
->     file.write(data)  # 可能已被另一个进程创建
+>     file.write(data)  # may have been created by another process
 > ```
 >
-> **修复**：
+> **Fix**:
 > ```python
-> # 使用原子操作
+> # Use atomic operation
 > try:
->     with open(path, 'xb') as f:  # 排他性创建
+>     with open(path, 'xb') as f:  # exclusive creation
 >         f.write(data)
 > except FileExistsError:
 >     handle_conflict()
@@ -104,17 +104,17 @@
 
 ---
 
-## 质量示例
+## Quality Examples
 
-### 糟糕反馈
+### Bad Feedback
 
-> 你为什么没加测试？
+> Why didn't you add tests?
 
-### 良好反馈
+### Good Feedback
 
-> `[MINOR]` `src/discount.py:15-30` —— `calculateDiscount()` 有多个分支路径
+> `[MINOR]` `src/discount.py:15-30` — `calculateDiscount()` has multiple branch paths
 >
-> 能否为零数量和负价格添加边界测试以防回归？
+> Could you add boundary tests for zero quantity and negative price to guard against regressions?
 >
 > ```python
 > def test_calculate_discount_zero_quantity():
@@ -127,42 +127,42 @@
 
 ---
 
-## 架构示例
+## Architecture Examples
 
-### 糟糕反馈
+### Bad Feedback
 
-> 我会用另一种方式做。
+> I would have done it differently.
 
-### 良好反馈
+### Good Feedback
 
-> `[NIT]` 这个实现是正确的。
+> `[NIT]` This implementation is correct.
 >
-> 另一种方式是把重试逻辑提取为共享的 `withRetry()` 包装器 —— 但这是可选的，可作为未来优化。
+> An alternative would be to extract the retry logic into a shared `withRetry()` wrapper — but this is optional, could be a future optimization.
 
 ---
 
-## 可访问性示例
+## Accessibility Examples
 
-### 糟糕反馈
+### Bad Feedback
 
-> 修一下可访问性。
+> Fix the accessibility.
 
-### 良好反馈
+### Good Feedback
 
-> `[MAJOR]` `src/components/Modal.tsx:23` —— 缺少焦点管理
+> `[MAJOR]` `src/components/Modal.tsx:23` — Missing Focus Management
 >
-> **问题**：模态框打开时焦点未移入，关闭时未恢复。键盘用户可能被困在模态框外或内。
+> **Problem**: Focus is not moved into the modal when opened or restored when closed. Keyboard users may get trapped outside or inside the modal.
 >
-> **修复**：
+> **Fix**:
 > ```tsx
-> // 打开时移入焦点
+> // Move focus in on open
 > useEffect(() => {
 >   if (isOpen) {
 >     firstFocusableRef.current?.focus();
 >   }
 > }, [isOpen]);
 >
-> // 关闭时恢复焦点
+> // Restore focus on close
 > const handleClose = () => {
 >   triggerElementRef.current?.focus();
 >   onClose();
@@ -171,30 +171,30 @@
 
 ---
 
-## 严重度标签快速参考
+## Severity Labels Quick Reference
 
-| 标签 | 含义 | 是否阻塞合并？ |
-|------|------|-----------|
-| `[CRITICAL]` | 安全漏洞、数据丢失、生产崩溃 | 是 |
-| `[MAJOR]` | bug、逻辑错误、严重性能问题 | 是 |
-| `[MINOR]` | 改进建议、降低维护成本 | 否 |
-| `[NIT]` | 风格偏好、命名建议、小清理 | 否 |
-
----
-
-## 应避免的行为
-
-| 反模式 | 示例 | 替代做法 |
-|--------|------|----------|
-| 模糊 | "这不对" | 解释具体问题与后果 |
-| 无方案 | "修一下" | 提供修复建议或代码 |
-| 主观命令 | "不要这样做" | "你觉得...怎么样？" |
-| 情绪化 | "这太糟糕了" | 评论代码不评论人 |
-| 过度泛化 | "加测试" | 指明需要测试的场景 |
+| Label | Meaning | Blocks Merge? |
+|-------|---------|---------------|
+| `[CRITICAL]` | Security vulnerability, data loss, production crash | Yes |
+| `[MAJOR]` | Bug, logic error, severe performance issue | Yes |
+| `[MINOR]` | Improvement suggestion, reduced maintenance cost | No |
+| `[NIT]` | Style preference, naming suggestion, minor cleanup | No |
 
 ---
 
-## 参考
+## Anti-Patterns to Avoid
 
-- [report.md](report.md) —— 报告模板
-- [../anti-patterns.md](../anti-patterns.md) —— 审查反模式
+| Anti-Pattern | Example | Better Approach |
+|--------------|---------|-----------------|
+| Vague | "This is wrong" | Explain the specific issue and consequence |
+| No proposal | "Fix it" | Provide a suggested fix or code |
+| Subjective command | "Don't do it this way" | "What do you think about...?" |
+| Emotional | "This is terrible" | Critique the code, not the person |
+| Over-generalization | "Add tests" | Specify which scenarios need testing |
+
+---
+
+## References
+
+- [report.md](report.md) — Report template
+- [../anti-patterns.md](../anti-patterns.md) — Review anti-patterns

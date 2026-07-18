@@ -1,12 +1,12 @@
-# 安全修复目录
+# Security Fixes Catalog
 
-> 安全修复详细目录：数据保护、加密、其他安全问题。修复策略详见 [security-fixes.md](security-fixes.md)。
+> Detailed catalog of security fixes: data protection, encryption, and other security issues. See [security-fixes.md](security-fixes.md) for fix strategies.
 
-## 数据保护问题
+## Data Protection Issues
 
-### 敏感数据泄露
+### Sensitive Data Leakage
 
-**解决方案：加密装饰器**
+**Solution: Encryption Decorator**
 ```java
 public class SensitiveDataProtector extends SecurityDecorator {
     private final EncryptionService encryptionService;
@@ -31,9 +31,9 @@ public class SensitiveDataProtector extends SecurityDecorator {
 }
 ```
 
-### 日志记录敏感信息
+### Logging Sensitive Information
 
-**解决方案：日志清理装饰器**
+**Solution: Log Sanitizer Decorator**
 ```java
 public class LogSanitizerDecorator extends SecurityDecorator {
     private static final Set<String> SENSITIVE_FIELDS = Set.of(
@@ -55,11 +55,11 @@ public class LogSanitizerDecorator extends SecurityDecorator {
 }
 ```
 
-## 加密相关问题
+## Encryption-Related Issues
 
-### 弱加密算法
+### Weak Encryption Algorithms
 
-**解决方案：策略模式 + 算法白名单**
+**Solution: Strategy Pattern + Algorithm Allowlist**
 ```java
 public class ApprovedEncryptionStrategies {
     public static final Map<String, EncryptionStrategy> APPROVED = Map.of(
@@ -82,9 +82,9 @@ public class ApprovedEncryptionStrategies {
 }
 ```
 
-### 密钥管理问题
+### Key Management Issues
 
-**解决方案：密钥管理服务**
+**Solution: Key Management Service**
 ```java
 public class KeyManagementService {
     private final KeyStore keyStore;
@@ -112,11 +112,11 @@ public class KeyManagementService {
 }
 ```
 
-## 其他安全问题
+## Other Security Issues
 
-### 路径遍历
+### Path Traversal
 
-**解决方案：路径规范化验证**
+**Solution: Path Canonicalization Validation**
 ```java
 public class PathTraversalProtection extends SecurityDecorator {
     private final String baseDirectory;
@@ -144,9 +144,9 @@ public class PathTraversalProtection extends SecurityDecorator {
 }
 ```
 
-### 限流绕过
+### Rate Limit Bypass
 
-**解决方案：分布式限流 + 观察者模式**
+**Solution: Distributed Rate Limiting + Observer Pattern**
 ```java
 public class RateLimitObserver implements SecurityObserver {
     private final RateLimiter rateLimiter;
@@ -165,9 +165,9 @@ public class RateLimitObserver implements SecurityObserver {
 }
 ```
 
-### 不安全的反序列化
+### Insecure Deserialization
 
-**解决方案：白名单验证 + 策略模式**
+**Solution: Allowlist Validation + Strategy Pattern**
 ```java
 public class SafeDeserializationStrategy implements DeserializationStrategy {
     private static final Set<Class<?>> ALLOWED_CLASSES = Set.of(

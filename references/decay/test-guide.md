@@ -1,13 +1,13 @@
-# 测试质量审查指南 — 模式 4
+# Test Quality Review Guide — Mode 4
 
-**目的：** 使用六种测试空间衰退风险诊断测试套件健康度。
-每条发现必须遵循铁律：Symptom → Source → Consequence → Remedy。
+**Purpose:** Diagnose test suite health using six test-space decay risks.
+Every finding must follow the Iron Law: Symptom → Source → Consequence → Remedy.
 
 ---
 
-## 开始之前：构建 Test Suite Map
+## Before You Start: Build the Test Suite Map
 
-在扫描任何风险之前，映射当前测试套件结构：
+Before scanning any risks, map the current test suite structure:
 
 ```
 Unit tests:        X files, ~N tests
@@ -17,132 +17,131 @@ Ratio:             Unit X%  :  Integration X%  :  E2E X%
 Coverage areas:    [modules with tests] vs [modules without tests]
 ```
 
-如果无法直接访问测试文件，向用户提**一个问题** — 选择
-最相关的：
-1. "哪个模块最难测试或覆盖最少？"
-2. "当你做变更时，不相关的测试多久会破坏一次？"
-3. "是否有一部分代码库你的团队避免触碰因为它没有测试？"
+If you cannot directly access test files, ask the user **one question** — pick
+the most relevant:
+1. "Which module is hardest to test or has the least coverage?"
+2. "When you make changes, how often do unrelated tests break?"
+3. "Is there a part of the codebase your team avoids touching because it has no tests?"
 
-得到一个答案后继续。不要问超过一个问题。
+Continue after getting one answer. Do not ask more than one question.
 
 ---
 
-## 分析流程
+## Analysis Flow
 
-按顺序完成以下五个步骤。
+Complete the following five steps in order.
 
-### 步骤 1：扫描 Test Obscurity
+### Step 1: Scan for Test Obscurity
 
-*首先扫描此项 — 最可见的风险，决定套件是否
-可维护。*
+*Scan this first — the most visible risk, determining whether the suite is
+maintainable.*
 
-寻找：
-- 随机阅读 5–10 个测试名称：每个能否在不打开测试体的情况下传达
-  主题 + 场景 + 预期
-  结果？
-- 是否有测试在失败时毫无线索哪个行为被破坏（多个断言、
-  无消息字符串）？
-- 是否有任何测试依赖外部状态（文件、数据库行、环境变量、共享可变
-  fixture）而从测试体内部不可见？
-- 是否有单个巨大的 setUp 或 beforeEach 被每个测试继承，无论
-  它实际需要什么？
+Look for:
+- Randomly read 5–10 test names: can each convey topic + scenario + expected
+  result without opening the test body?
+- Are there tests that give zero clue which behavior broke when they fail (multiple assertions,
+  no message strings)?
+- Are there tests that depend on external state (files, database rows, environment variables,
+  shared mutable fixtures) that is invisible from within the test body?
+- Is there a single massive setUp or beforeEach inherited by every test regardless of what
+  it actually needs?
 
-如果所有测试名称清晰且设置最小 → 无发现。
+If all test names are clear and setup is minimal → no finding.
 
-### 步骤 2a：扫描 Test Brittleness
+### Step 2a: Scan for Test Brittleness
 
-*脆弱的测试在不改变可观察行为的重构上破坏 — 它们测试
-实现，而非契约。*
+*Brittle tests break on refactoring that doesn't change observable behavior — they test
+implementation, not contract.*
 
-寻找：
-- 询问（或检查 git 历史）：最近的任何重构是否导致测试失败但无
-  行为变更？
-- 是否有测试方法名称包含"and"或断言 3 个或更多
-  不相关行为（Eager Test）？
-- 断言是否指定与
-  可观察行为无关的 mock 调用顺序或确切参数值？
-- 测试是否直接耦合到私有方法或内部状态？
+Look for:
+- Ask (or check git history): did any recent refactoring cause test failures without
+  behavior changes?
+- Are there test methods whose names contain "and" or that assert 3 or more
+  unrelated behaviors (Eager Test)?
+- Do assertions specify mock call order or exact parameter values unrelated to
+  observable behavior?
+- Are tests directly coupled to private methods or internal state?
 
-如果脆弱性是系统性的（文件中的大多数测试在重命名时破坏） → 🔴 Critical。
-如果是孤立的（1–2 个脆弱测试） → 🟢 Suggestion。
+If brittleness is systemic (most tests in a file break on renames) → 🔴 Critical.
+If isolated (1–2 brittle tests) → 🟢 Suggestion.
 
-### 步骤 2b：扫描 Mock Abuse
+### Step 2b: Scan for Mock Abuse
 
-*Mock Abuse 产生的测试无论真实行为是否正确都会通过。
-与脆弱性分开扫描此项 — 过度 mock 通常是脆弱性的原因，
-但它是一个值得单独发现的独立问题。*
+*Mock abuse produces tests that pass regardless of whether real behavior is correct.
+Scan this separately from brittleness — over-mocking is often a cause of brittleness,
+but it's a distinct issue worth a separate finding.*
 
-**为步骤 2a 和 2b 一起采样 3–5 个测试一次** — 阅读每个测试体并在
-同一轮中检查脆弱性信号和 mock 设置比，然后如果两个问题都存在则写单独
-发现。
+**Sample 3–5 tests once for both Steps 2a and 2b** — read each test body and check
+for both brittleness signals and mock setup ratios in the same pass, then write separate
+findings if both issues exist.
 
-寻找：
-- 在采样的测试中 mock 设置代码是否长于断言逻辑？
-- 主要断言是否是 `expect(mock).toHaveBeenCalledWith(...)` 而非
-  对输出、状态或可观察事件的断言？
-- 生产类中是否有仅从测试文件调用的方法
-  （测试诱导的设计损害）？
-- 是否有任何单个测试创建超过 3 个 mock 对象？
+Look for:
+- In sampled tests, is mock setup code longer than the assertion logic?
+- Is the primary assertion `expect(mock).toHaveBeenCalledWith(...)` rather than
+  assertions on output, state, or observable events?
+- Are there methods in production classes that are only called from test files
+  (test-induced design damage)?
+- Does any single test create more than 3 mock objects?
 
-如果 mock 设置与断言比超过 3:1 → 🟡 Warning。
-如果存在仅用于测试访问的生产方法 → 🔴 Critical（架构正被
-测试套件扭曲）。
+If mock-to-assertion ratio exceeds 3:1 → 🟡 Warning.
+If production methods exist solely for test access → 🔴 Critical (the architecture is being
+distorted by the test suite).
 
-### 步骤 3：扫描 Test Duplication
+### Step 3: Scan for Test Duplication
 
-寻找：
-- 是否有相同的设置块（相同方式初始化的相同变量）跨
-  5 个或更多测试文件重复而无共享 helper？
-- 是否有多个测试传递相同输入并断言相同输出
-  而无差异（Lazy Test）？
-- 是否有相同业务场景在单元、集成和 E2E 层级覆盖而
-  每个层级测试的内容无差异？
+Look for:
+- Are there identical setup blocks (same variables initialized the same way) repeated across
+  5 or more test files without a shared helper?
+- Are there multiple tests passing the same inputs and asserting the same outputs
+  with no differentiation (Lazy Test)?
+- Is the same business scenario covered at unit, integration, and E2E levels with
+  no difference in what each level tests?
 
-如果重复是系统性的（10 个或更多实例） → Critical。
-如果是局部的（3–5 个实例） → Warning。
+If duplication is systemic (10 or more instances) → Critical.
+If local (3–5 instances) → Warning.
 
-### 步骤 4：扫描 Coverage Illusion 和 Architecture Mismatch
+### Step 4: Scan for Coverage Illusion and Architecture Mismatch
 
-寻找 Coverage Illusion：
-- 选择最近修改的核心模块。其错误处理分支和
-  null/边界输入是否被测试覆盖？
-- 是否有遗留区域（旧函数、附近无测试文件）正在被积极
-  变更？
-- 测试是否断言副作用（DB 写入、发出的事件、状态转换）
-  或仅断言返回值？
+Look for Coverage Illusion:
+- Pick a recently modified core module. Are its error-handling branches and
+  null/boundary inputs covered by tests?
+- Are there legacy areas (old functions, no test files nearby) being actively
+  modified?
+- Do tests assert side effects (DB writes, emitted events, state transitions)
+  or only assert return values?
 
-**Characterization Test 检查：** 如果遗留代码在没有现有测试的情况下被修改，
-团队需要在做变更之前 — 而非之后 — 使用 Characterization Tests。
-寻找此模式并在缺失时标记。
+**Characterization Test check:** If legacy code is being modified without existing tests,
+the team needs Characterization Tests *before* — not after — making changes.
+Look for this pattern and flag when missing.
 
-Characterization Test 锁定当前行为（无论对错），以便未来变更
-不会静默回归它。模板：
+Characterization Tests lock down current behavior (whether right or wrong) so future changes
+don't silently regress it. Template:
 ```
 test("characterize: [module].[method] given [input], returns [current output]") {
-  // 用真实输入调用被测代码
-  // 断言它当前返回的任何内容 — 即使你怀疑输出是错误的
-  // 添加注释："这捕获当前行为，不一定是正确行为"
+  // Call the code under test with real input
+  // Assert whatever it currently returns — even if you suspect the output is wrong
+  // Add a comment: "This captures current behavior, not necessarily correct behavior"
 }
 ```
 Source: Feathers — Working Effectively with Legacy Code, Ch. 13: Characterization Tests
 
-寻找 Architecture Mismatch：
-- 与开头的套件图比较：比例是否接近 70% 单元 / 20% 集成 / 10% E2E？
-- 高风险模块是否以高于琐碎工具的密度测试？
+Look for Architecture Mismatch:
+- Compare against the suite map from the start: is the ratio close to 70% unit / 20% integration / 10% E2E?
+- Are high-risk modules tested at higher density than trivial utilities?
 
-**测试套件性能：** 慢的测试套件是一等可维护性风险 — 它
-破坏快速反馈循环并导致开发者跳过本地运行测试。
-- 如果完整套件运行时已知且 > 10 分钟 → 🟡 Warning
-- 如果完整套件运行时 > 30 分钟或未知 → 🔴 Critical（未知套件时间
-  意味着没人在定期运行它）
-- 如果可以是单元测试的测试是集成测试，那是 Performance Mismatch：
-  每个错误分类的测试增加几秒可避免的等待时间
+**Test suite performance:** A slow test suite is a first-class maintainability risk — it
+destroys fast feedback loops and leads developers to skip running tests locally.
+- If the full suite runtime is known and > 10 minutes → 🟡 Warning
+- If the full suite runtime is > 30 minutes or unknown → 🔴 Critical (unknown suite time
+  means nobody is running it regularly)
+- If tests that could be unit tests are integration tests, that's a Performance Mismatch:
+  each misclassified test adds seconds of avoidable wait time
 
 Source: Meszaros — xUnit Test Patterns, Slow Tests (p. 253)
 
-### 步骤 5：应用 Iron Law，输出报告
+### Step 5: Apply Iron Law, Output Report
 
-对每条发现应用 `common.md` 中的 Iron Law 格式。
+Apply the Iron Law format from `common.md` to each finding.
 
-使用标准报告模板。Mode：Test Quality Review。
-将 Test Suite Map 作为代码块紧接在 `## Findings` 标题之前，标记为 "Test Suite Map"。
+Use the standard report template. Mode: Test Quality Review.
+Include the Test Suite Map as a code block immediately before the `## Findings` heading, labeled "Test Suite Map".

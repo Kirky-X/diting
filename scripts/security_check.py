@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-安全设计模式检查脚本
-用于验证代码是否符合安全设计模式要求
+Security Design Pattern Check Script
+
+Used to verify code compliance with security design pattern requirements.
 
 Fixes applied:
   - hardcoded_password: now case-insensitive for variable names
@@ -42,8 +43,8 @@ _UNSAFE_PATTERNS = {
             r'(executeQuery|executeUpdate|execute)\s*\(\s*["\'].*["\']\s*\+',
         ),
         "level": SecurityLevel.HIGH,
-        "description": "潜在的SQL注入：字符串拼接传入数据库查询",
-        "fix": "使用参数化查询（PreparedStatement / parameterized queries）替代字符串拼接",
+        "description": "Potential SQL injection: string concatenation passed to database query",
+        "fix": "Use parameterized queries (PreparedStatement / parameterized queries) instead of string concatenation",
     },
     # FIX #5: case-insensitive flag (re.IGNORECASE) so UPPERCASE names are caught
     "hardcoded_credential": {
@@ -52,8 +53,8 @@ _UNSAFE_PATTERNS = {
             r'\s*=\s*["\'][^"\']{4,}["\']',
         ),
         "level": SecurityLevel.HIGH,
-        "description": "硬编码的敏感凭据",
-        "fix": "使用环境变量、配置中心或密钥管理服务（KMS / Vault）",
+        "description": "Hardcoded sensitive credentials",
+        "fix": "Use environment variables, config center, or key management service (KMS / Vault)",
     },
     "weak_password_hash": {
         "pattern": re.compile(
@@ -62,24 +63,24 @@ _UNSAFE_PATTERNS = {
             re.IGNORECASE,
         ),
         "level": SecurityLevel.HIGH,
-        "description": "用于密码哈希的不安全算法（MD5/SHA1）",
-        "fix": "使用 bcrypt、Argon2 或 scrypt 进行密码哈希",
+        "description": "Insecure algorithm used for password hashing (MD5/SHA1)",
+        "fix": "Use bcrypt, Argon2, or scrypt for password hashing",
     },
     "unsafe_deserialization": {
         "pattern": re.compile(
             r"\b(ObjectInputStream|readObject|XmlDecoder|YAML\.load\s*\(|pickle\.loads\s*\()\b",
         ),
         "level": SecurityLevel.HIGH,
-        "description": "不安全的反序列化 — 可能导致RCE",
-        "fix": "使用白名单验证类类型；Python中用 yaml.safe_load()；Java中用 Jackson 安全配置",
+        "description": "Unsafe deserialization — may lead to RCE",
+        "fix": "Use whitelist validation for class types; use yaml.safe_load() in Python; use Jackson safe configuration in Java",
     },
     "xss_dom_write": {
         "pattern": re.compile(
             r"\b(innerHTML|outerHTML|document\.write)\s*[=\(]",
         ),
         "level": SecurityLevel.HIGH,
-        "description": "直接写入DOM属性 — 潜在XSS漏洞",
-        "fix": "使用 textContent、DOMPurify.sanitize() 或框架的安全绑定机制",
+        "description": "Direct DOM attribute write — potential XSS vulnerability",
+        "fix": "Use textContent, DOMPurify.sanitize(), or framework safe binding mechanisms",
     },
     "path_traversal": {
         "pattern": re.compile(
@@ -87,24 +88,24 @@ _UNSAFE_PATTERNS = {
             re.IGNORECASE,
         ),
         "level": SecurityLevel.HIGH,
-        "description": "潜在的路径遍历漏洞",
-        "fix": "使用 Path.normalize() / os.path.realpath() 规范化路径，并验证其在允许目录内",
+        "description": "Potential path traversal vulnerability",
+        "fix": "Use Path.normalize() / os.path.realpath() to normalize paths and validate they are within allowed directories",
     },
     "command_injection": {
         "pattern": re.compile(
             r"(subprocess\.(call|run|Popen)|os\.system|Runtime\.exec)\s*\([^,)]*\+",
         ),
         "level": SecurityLevel.HIGH,
-        "description": "潜在的命令注入 — 用户输入拼接到系统命令",
-        "fix": "使用参数数组而非字符串；Python中禁用 shell=True",
+        "description": "Potential command injection — user input concatenated into system command",
+        "fix": "Use parameter arrays instead of strings; disable shell=True in Python",
     },
     "eval_usage": {
         # Consolidated single source for eval() detection (previously duplicated in
         # parallel_review.py as _EVAL_RE). eval() on untrusted input → direct RCE.
         "pattern": re.compile(r"\beval\s*\("),
         "level": SecurityLevel.HIGH,
-        "description": "eval() 使用 — 潜在代码注入向量",
-        "fix": "避免 eval；使用安全替代（ast.literal_eval、JSON.parse、shutil.which 等）",
+        "description": "eval() usage — potential code injection vector",
+        "fix": "Avoid eval; use safe alternatives (ast.literal_eval, JSON.parse, shutil.which, etc.)",
     },
     "ssrf_risk": {
         "pattern": re.compile(
@@ -112,16 +113,16 @@ _UNSAFE_PATTERNS = {
             re.IGNORECASE,
         ),
         "level": SecurityLevel.MEDIUM,
-        "description": "潜在的SSRF — HTTP请求目标来自变量（可能是用户输入）",
-        "fix": "验证URL是否在允许的主机白名单中；禁止访问内网地址（169.254.x.x, 10.x.x.x 等）",
+        "description": "Potential SSRF — HTTP request target comes from a variable (possibly user input)",
+        "fix": "Validate URL against allowed host whitelist; prohibit access to internal network addresses (169.254.x.x, 10.x.x.x, etc.)",
     },
     "weak_crypto_algorithm": {
         "pattern": re.compile(
             r"\b(DES|TripleDES|Blowfish|RC4|ECB)\b",
         ),
         "level": SecurityLevel.MEDIUM,
-        "description": "使用不安全的加密算法",
-        "fix": "使用 AES-256-GCM 或 ChaCha20-Poly1305",
+        "description": "Use of insecure encryption algorithm",
+        "fix": "Use AES-256-GCM or ChaCha20-Poly1305",
     },
     "insecure_random": {
         "pattern": re.compile(
@@ -130,8 +131,8 @@ _UNSAFE_PATTERNS = {
             r"\b(Math\.random\s*\(\s*\)|random\.random\s*\(\s*\)|new Random\s*\(\s*\))",
         ),
         "level": SecurityLevel.MEDIUM,
-        "description": "使用非密码学安全的随机数生成器",
-        "fix": "使用 SecureRandom（Java）/ secrets 模块（Python）/ crypto.getRandomValues（JS）",
+        "description": "Use of non-cryptographically secure random number generator",
+        "fix": "Use SecureRandom (Java) / secrets module (Python) / crypto.getRandomValues (JS)",
     },
     # FIX #7: use re.DOTALL to match multiline catch blocks
     "broad_exception_catch": {
@@ -140,8 +141,8 @@ _UNSAFE_PATTERNS = {
             re.DOTALL,
         ),
         "level": SecurityLevel.LOW,
-        "description": "捕获过于宽泛的异常类型",
-        "fix": "捕获具体的异常类型；确保不在catch块中暴露内部实现细节",
+        "description": "Catching overly broad exception type",
+        "fix": "Catch specific exception types; ensure internal implementation details are not exposed in catch blocks",
     },
     "open_redirect": {
         "pattern": re.compile(
@@ -149,8 +150,8 @@ _UNSAFE_PATTERNS = {
             re.IGNORECASE,
         ),
         "level": SecurityLevel.MEDIUM,
-        "description": "潜在的开放重定向漏洞",
-        "fix": "使用允许的URL白名单验证重定向目标",
+        "description": "Potential open redirect vulnerability",
+        "fix": "Validate redirect targets against an allowed URL whitelist",
     },
 }
 
@@ -159,29 +160,29 @@ _GOOD_PATTERNS = {
         "pattern": re.compile(
             r"\b(PreparedStatement|QueryDSL|JpaRepository|cursor\.execute\s*\([^)]*%s)\b"
         ),
-        "description": "使用参数化查询 ✅",
+        "description": "Uses parameterized queries ✅",
     },
     "secure_random": {
         "pattern": re.compile(r"\b(SecureRandom|secrets\.|crypto\.getRandomValues)\b"),
-        "description": "使用安全随机数 ✅",
+        "description": "Uses secure random ✅",
     },
     "strong_password_hash": {
         "pattern": re.compile(
             r"\b(BCrypt|Argon2|scrypt|PasswordEncoder|pbkdf2)\b", re.IGNORECASE
         ),
-        "description": "使用强密码哈希 ✅",
+        "description": "Uses strong password hashing ✅",
     },
     "https_cookie": {
         "pattern": re.compile(
             r"(secure\s*=\s*true|setSecure\s*\(\s*true\s*\))", re.IGNORECASE
         ),
-        "description": "Cookie设置Secure属性 ✅",
+        "description": "Cookie sets Secure attribute ✅",
     },
     "httponly_cookie": {
         "pattern": re.compile(
             r"(httpOnly\s*=\s*true|setHttpOnly\s*\(\s*true\s*\))", re.IGNORECASE
         ),
-        "description": "Cookie设置HttpOnly属性 ✅",
+        "description": "Cookie sets HttpOnly attribute ✅",
     },
 }
 
@@ -190,25 +191,25 @@ _COMMENT_PREFIXES = ("#", "//", "/*", "*", '"""', "'''")
 
 
 class SecurityPatternChecker:
-    """安全设计模式检查器"""
+    """Security Design Pattern Checker"""
 
     def __init__(self):
         self.issues: List[SecurityIssue] = []
 
     def check_file(self, file_path: str) -> None:
-        """检查单个文件"""
+        """Check a single file"""
         try:
             # FIX #6: errors='replace' so binary / latin-1 files don't raise
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
         except OSError as e:
-            print(f"警告: 无法读取文件 {file_path}: {e}")
+            print(f"Warning: Unable to read file {file_path}: {e}")
             return
 
         lines = content.splitlines(keepends=True)
 
-        # Bug 3 fix: 对带 re.DOTALL 的 pattern 做全文件匹配（让 DOTALL 真正生效）
-        # 多行 pattern（如 broad_exception_catch 跨行 catch 块）必须对整个 content 匹配
+        # Bug 3 fix: match patterns with re.DOTALL against the entire file content (so DOTALL actually takes effect)
+        # Multi-line patterns (e.g., broad_exception_catch spanning catch blocks) must match against the entire content
         for name, config in _UNSAFE_PATTERNS.items():
             pattern = config["pattern"]
             if pattern.flags & re.DOTALL:
@@ -226,7 +227,7 @@ class SecurityPatternChecker:
                         )
                     )
 
-        # 单行 pattern（不带 DOTALL）逐行匹配 —— fast path
+        # Single-line patterns (without DOTALL) — match line by line (fast path)
         for line_num, line in enumerate(lines, 1):
             self._check_line(file_path, line_num, line)
 
@@ -235,13 +236,13 @@ class SecurityPatternChecker:
         return any(stripped.startswith(p) for p in _COMMENT_PREFIXES)
 
     def _check_line(self, file_path: str, line_num: int, line: str) -> None:
-        """检查单行代码（跳过注释行）——只处理单行 pattern"""
+        """Check a single line of code (skip comment lines) — only handles single-line patterns"""
         if self._is_comment(line):
             return
 
         for name, config in _UNSAFE_PATTERNS.items():
             pattern = config["pattern"]
-            # Bug 3 fix: 跳过带 DOTALL 的 pattern（已在 check_file 中全文件匹配）
+            # Bug 3 fix: skip patterns with DOTALL (already matched against full file in check_file)
             if pattern.flags & re.DOTALL:
                 continue
             if pattern.search(line):
@@ -259,7 +260,7 @@ class SecurityPatternChecker:
     def check_directory(
         self, directory: str, extensions: Optional[List[str]] = None
     ) -> None:
-        """递归检查目录"""
+        """Recursively check a directory"""
         if extensions is None:
             extensions = [
                 ".java",
@@ -280,18 +281,18 @@ class SecurityPatternChecker:
                     self.check_file(os.path.join(root, file))
 
     def generate_report(self) -> str:
-        """生成安全报告"""
+        """Generate security report"""
         if not self.issues:
-            return "✅ 未发现安全问题！"
+            return "✅ No security issues found!"
 
         _ORDER = {SecurityLevel.HIGH: 0, SecurityLevel.MEDIUM: 1, SecurityLevel.LOW: 2}
         self.issues.sort(key=lambda x: (_ORDER[x.severity], x.file_path, x.line_number))
 
         report = [
             "=" * 60,
-            "安全设计模式检查报告",
+            "Security Design Pattern Check Report",
             "=" * 60,
-            f"\n发现 {len(self.issues)} 个问题：\n",
+            f"\nFound {len(self.issues)} issues:\n",
         ]
 
         for issue in self.issues:
@@ -299,36 +300,36 @@ class SecurityPatternChecker:
                 issue.severity.value, "⚪"
             )
             report.append(f"{icon} {issue.file_path}:{issue.line_number}")
-            report.append(f"   类型: {issue.issue_type}")
-            report.append(f"   严重性: {issue.severity.value.upper()}")
-            report.append(f"   描述: {issue.description}")
-            report.append(f"   建议: {issue.suggestion}")
+            report.append(f"   Type: {issue.issue_type}")
+            report.append(f"   Severity: {issue.severity.value.upper()}")
+            report.append(f"   Description: {issue.description}")
+            report.append(f"   Suggestion: {issue.suggestion}")
             report.append("-" * 40)
 
         stats: dict = {}
         for issue in self.issues:
             stats[issue.severity] = stats.get(issue.severity, 0) + 1
 
-        report.append("\n统计：")
+        report.append("\nStatistics:")
         for level in SecurityLevel:
             if level in stats:
-                report.append(f"  {level.value.upper()}: {stats[level]} 个")
+                report.append(f"  {level.value.upper()}: {stats[level]}")
 
         return "\n".join(report)
 
     def print_summary(self) -> None:
-        """打印摘要"""
+        """Print summary"""
         high = sum(1 for i in self.issues if i.severity == SecurityLevel.HIGH)
         medium = sum(1 for i in self.issues if i.severity == SecurityLevel.MEDIUM)
         low = sum(1 for i in self.issues if i.severity == SecurityLevel.LOW)
 
         print("\n" + "=" * 40)
-        print("安全检查摘要")
+        print("Security Check Summary")
         print("=" * 40)
-        print(f"🔴 高风险: {high}")
-        print(f"🟡 中风险: {medium}")
-        print(f"🔵 低风险: {low}")
-        print(f"合计:     {len(self.issues)}")
+        print(f"🔴 High risk: {high}")
+        print(f"🟡 Medium risk: {medium}")
+        print(f"🔵 Low risk: {low}")
+        print(f"Total:       {len(self.issues)}")
         print("=" * 40)
 
 
@@ -338,7 +339,7 @@ def main() -> None:
     target = sys.argv[1] if len(sys.argv) > 1 else "."
 
     if not os.path.exists(target):
-        print(f"错误: 找不到目标 {target}")
+        print(f"Error: Target not found {target}")
         sys.exit(1)
 
     checker = SecurityPatternChecker()
@@ -351,11 +352,11 @@ def main() -> None:
     checker.print_summary()
     print(checker.generate_report())
 
-    # P1: GitNexus bridge — emit a blast-radius worklist to stderr when an index
-    # is present. The agent layer runs the listed `mcp__gitnexus__*` calls (MCP is
-    # not reachable from this subprocess). See SKILL.md 步骤 1.5.
+    # P1: CodeNexus bridge — emit a blast-radius worklist to stderr when an index
+    # is present. The agent layer runs the listed `codenexus` CLI commands (the CLI
+    # is not invoked from this subprocess). See SKILL.md Step 1.5.
     try:
-        import gitnexus_helpers
+        import codenexus_helpers
 
         findings = [
             {
@@ -367,7 +368,7 @@ def main() -> None:
             }
             for si in checker.issues
         ]
-        section = gitnexus_helpers.section_for_findings(findings, start=target)
+        section = codenexus_helpers.section_for_findings(findings, start=target)
         if section:
             import sys as _sys
 

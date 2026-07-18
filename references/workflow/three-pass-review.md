@@ -1,158 +1,158 @@
-# 三遍审查工作流
+# Three-Pass Review Workflow
 
-可选的人工审查工作流 —— 系统化扫描以避免遗漏问题
+An optional manual review workflow — systematic scanning to avoid missing issues
 
-## 概述
+## Overview
 
-此工作流为人工审查者设计。AI Agent 可使用并行分析模式。
-三遍扫描确保全面覆盖，而非随机浏览。
-
----
-
-## 第一遍：高层结构（2-5 分钟）
-
-**目标**：理解整体架构与变更范围
-
-### 步骤
-
-1. **阅读 PR 描述与关联 Issue**
-   - 变更的目的是什么？
-   - 解决了什么问题？
-   - 是否有约束或限制？
-
-2. **扫描文件列表**
-   - 变更范围是否合理？
-   - 是否有意外的文件被修改？
-   - 文件组织是否合理？
-
-3. **检查整体方案**
-   - 这是正确的方案吗？
-   - 是否有更简单的替代方案？
-   - 是否与项目架构对齐？
-
-4. **验证架构一致性**
-   - 是否引入架构偏差？
-   - 依赖方向是否正确？
-   - 是否违反既有模式？
-
-### 输出清单
-
-```
-□ 变更目的清晰
-□ 范围合理
-□ 方案正确
-□ 架构一致
-```
+This workflow is designed for human reviewers. AI agents can use parallel analysis mode.
+Three-pass scanning ensures comprehensive coverage, not random browsing.
 
 ---
 
-## 第二遍：逐行细节（主要时间）
+## Pass 1: High-Level Structure (2-5 minutes)
 
-**目标**：找出逻辑错误、安全问题、性能问题
+**Goal**: Understand the overall architecture and scope of the change
 
-### 步骤
+### Steps
 
-1. **阅读每个文件 diff 的每一行**
-   - 不要跳过任何行
-   - 理解每次变更的原因
+1. **Read the PR description and linked Issue**
+   - What is the purpose of the change?
+   - What problem does it solve?
+   - Are there constraints or limitations?
 
-2. **应用维度专属清单**
-   | 维度 | 关键检查 |
-   |------|----------|
-   | 安全 | OWASP Top 10、注入、认证/授权 |
-   | 性能 | N+1 查询、算法复杂度、缓存 |
-   | 正确性 | 边界情况、null 值、竞态条件 |
-   | 质量 | 代码坏味、命名、错误处理 |
+2. **Scan the file list**
+   - Is the scope of change reasonable?
+   - Are there unexpected files modified?
+   - Is the file organization reasonable?
 
-3. **在每个 I/O 边界验证错误处理**
-   - 数据库操作
-   - 网络请求
-   - 文件系统
-   - 外部 API
+3. **Evaluate the overall approach**
+   - Is this the right approach?
+   - Is there a simpler alternative?
+   - Does it align with the project architecture?
 
-4. **标记任何让你停顿的地方**
-   - 相信直觉
-   - 不确定性本身就是问题
+4. **Verify architectural consistency**
+   - Does it introduce architectural drift?
+   - Are dependency directions correct?
+   - Does it violate existing patterns?
 
-### 输出清单
+### Output Checklist
 
 ```
-□ 所有变更已阅读
-□ 问题已标记
-□ 错误处理已验证
+□ Change purpose is clear
+□ Scope is reasonable
+□ Approach is correct
+□ Architecture is consistent
 ```
 
 ---
 
-## 第三遍：边界情况与加固（5 分钟）
+## Pass 2: Line-by-Line Detail (main time)
 
-**目标**：找出隐藏问题与缺失测试
+**Goal**: Find logic errors, security issues, performance issues
 
-### 步骤
+### Steps
 
-1. **思考生产环境可能出什么问题**
-   - 高负载下？
-   - 网络不稳定时？
-   - 异常数据下？
+1. **Read every line of every file's diff**
+   - Don't skip any lines
+   - Understand the reason for each change
 
-2. **检查标记代码路径的测试**
-   - 新功能是否有测试？
-   - 边界情况是否覆盖？
-   - 错误路径是否测试？
+2. **Apply dimension-specific checklists**
+   | Dimension | Key Checks |
+   |-----------|------------|
+   | Security | OWASP Top 10, injection, authentication/authorization |
+   | Performance | N+1 queries, algorithm complexity, caching |
+   | Correctness | Edge cases, null values, race conditions |
+   | Quality | Code smells, naming, error handling |
 
-3. **验证回滚安全性**
-   - 变更能否安全回滚？
-   - 是否有数据迁移？
-   - 是否有破坏性变更？
+3. **Verify error handling at every I/O boundary**
+   - Database operations
+   - Network requests
+   - File system
+   - External APIs
 
-4. **确认文档更新**
-   - README 是否需要更新？
-   - API 文档是否需要更新？
-   - CHANGELOG 是否需要条目？
+4. **Mark anything that gives you pause**
+   - Trust your instincts
+   - Uncertainty itself is an issue
 
-### 输出清单
-
-```
-□ 生产风险已评估
-□ 测试覆盖已确认
-□ 回滚安全已验证
-□ 文档已更新
-```
-
----
-
-## 时间预算
-
-| PR 大小 | 第一遍 | 第二遍 | 第三遍 | 合计 |
-|---------|--------|--------|--------|------|
-| 小（<100 行） | 2 分钟 | 5 分钟 | 3 分钟 | ~10 分钟 |
-| 中（100-400 行） | 3 分钟 | 15 分钟 | 5 分钟 | ~25 分钟 |
-| 大（400-1000 行） | 5 分钟 | 30 分钟 | 10 分钟 | ~45 分钟 |
-| 超大（>1000 行） | 考虑拆分 PR |
-
-**注意**：一次审查超过 400 行时理解力急剧下降。
-考虑拆分为多个会话。
-
----
-
-## 与并行分析的关系
-
-| 模式 | 适用场景 | 优势 |
-|------|----------|------|
-| 三遍审查 | 人工审查者、学习过程 | 全面、系统 |
-| 并行分析 | AI Agent、自动化流程 | 快速、一致 |
-
-### 组合使用
+### Output Checklist
 
 ```
-1. AI 并行分析生成初始报告
-2. 人工三遍审查确认并补充
-3. 合并输出最终审查报告
+□ All changes have been read
+□ Issues have been marked
+□ Error handling has been verified
 ```
 
 ---
 
-## 快速参考卡
+## Pass 3: Edge Cases and Hardening (5 minutes)
+
+**Goal**: Find hidden issues and missing tests
+
+### Steps
+
+1. **Think about what could go wrong in production**
+   - Under high load?
+   - With unstable networking?
+   - With abnormal data?
+
+2. **Check tests for marked code paths**
+   - Does the new feature have tests?
+   - Are edge cases covered?
+   - Are error paths tested?
+
+3. **Verify rollback safety**
+   - Can the change be safely rolled back?
+   - Are there data migrations?
+   - Are there breaking changes?
+
+4. **Confirm documentation updates**
+   - Does the README need updating?
+   - Does the API documentation need updating?
+   - Does the CHANGELOG need an entry?
+
+### Output Checklist
+
+```
+□ Production risks have been assessed
+□ Test coverage has been confirmed
+□ Rollback safety has been verified
+□ Documentation has been updated
+```
+
+---
+
+## Time Budget
+
+| PR Size | Pass 1 | Pass 2 | Pass 3 | Total |
+|---------|--------|--------|--------|-------|
+| Small (<100 lines) | 2 min | 5 min | 3 min | ~10 min |
+| Medium (100-400 lines) | 3 min | 15 min | 5 min | ~25 min |
+| Large (400-1000 lines) | 5 min | 30 min | 10 min | ~45 min |
+| Very Large (>1000 lines) | Consider splitting the PR |
+
+**Note**: Comprehension drops sharply when reviewing more than 400 lines at once.
+Consider splitting into multiple sessions.
+
+---
+
+## Relationship to Parallel Analysis
+
+| Mode | When to Use | Advantage |
+|------|-------------|-----------|
+| Three-Pass Review | Human reviewers, learning process | Comprehensive, systematic |
+| Parallel Analysis | AI agents, automated pipelines | Fast, consistent |
+
+### Combined Usage
+
+```
+1. AI parallel analysis generates initial report
+2. Human three-pass review confirms and supplements
+3. Merge into final review report
+```
+
+---
+
+## Quick Reference Card
 
 ```mermaid
 flowchart TD
@@ -180,8 +180,8 @@ flowchart TD
 
 ---
 
-## 参考
+## References
 
-- [../review-workflow.md](../review-workflow.md) —— 完整审查工作流
-- [../templates/feedback-examples.md](../templates/feedback-examples.md) —— 反馈示例
-- [../anti-patterns.md](../anti-patterns.md) —— 审查反模式
+- [../review-workflow.md](../review-workflow.md) — Full review workflow
+- [../templates/feedback-examples.md](../templates/feedback-examples.md) — Feedback examples
+- [../anti-patterns.md](../anti-patterns.md) — Review anti-patterns

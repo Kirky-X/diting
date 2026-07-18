@@ -1,12 +1,12 @@
-# 安全问题与设计模式解决方案
+# Security Issues & Design Pattern Solutions
 
-> 安全修复策略：注入攻击与认证授权问题。详细修复（数据保护/加密/其他安全）详见 [security-fixes-catalog.md](security-fixes-catalog.md)。
+> Security fix strategies: injection attacks and authentication/authorization issues. See [security-fixes-catalog.md](security-fixes-catalog.md) for detailed fixes (data protection/encryption/other security).
 
-## 注入攻击
+## Injection Attacks
 
-### SQL 注入
+### SQL Injection
 
-**问题代码**：
+**Vulnerable Code**:
 ```java
 // 危险！直接 SQL 拼接
 String query = "SELECT * FROM users WHERE id = " + userId;
@@ -14,7 +14,7 @@ Statement stmt = connection.createStatement();
 ResultSet rs = stmt.executeQuery(query);
 ```
 
-**解决方案：参数化查询 + 装饰器模式**
+**Solution: Parameterized Queries + Decorator Pattern**
 ```java
 // 使用参数化查询
 String query = "SELECT * FROM users WHERE id = ?";
@@ -37,22 +37,22 @@ public class SqlInjectionDetector extends SecurityDecorator {
 }
 ```
 
-**清单**：
-- [ ] 所有数据库查询使用参数化查询
-- [ ] 使用 ORM 框架查询构建器
-- [ ] 实施严格输入验证
-- [ ] 数据库使用最小权限账户
+**Checklist**:
+- [ ] All database queries use parameterized queries
+- [ ] Use ORM framework query builders
+- [ ] Implement strict input validation
+- [ ] Database uses least-privilege accounts
 
-### XSS 攻击
+### XSS Attack
 
-**问题代码**：
+**Vulnerable Code**:
 ```java
 // 危险！直接输出用户输入
 String userInput = request.getParameter("comment");
 response.getWriter().write("<div>" + userInput + "</div>");
 ```
 
-**解决方案：输出编码 + 装饰器模式**
+**Solution: Output Encoding + Decorator Pattern**
 ```java
 // HTML 编码
 public class XssProtectionDecorator extends SecurityDecorator {
@@ -80,16 +80,16 @@ public String sanitizeHtml(String input) {
 }
 ```
 
-### 命令注入
+### Command Injection
 
-**问题代码**：
+**Vulnerable Code**:
 ```java
 // 危险！直接执行用户输入作为命令
 String filename = request.getParameter("file");
 Runtime.getRuntime().exec("cat " + filename);
 ```
 
-**解决方案：白名单验证 + 策略模式**
+**Solution: Allowlist Validation + Strategy Pattern**
 ```java
 public class SafeCommandExecutor {
     private final CommandStrategy strategy;
@@ -114,11 +114,11 @@ public class SafeCommandExecutor {
 }
 ```
 
-## 认证与授权问题
+## Authentication & Authorization Issues
 
-### 弱密码策略
+### Weak Password Policy
 
-**解决方案：策略模式 + 验证装饰器**
+**Solution: Strategy Pattern + Validation Decorator**
 ```java
 public class PasswordPolicyValidator extends SecurityDecorator {
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
@@ -137,9 +137,9 @@ public class PasswordPolicyValidator extends SecurityDecorator {
 }
 ```
 
-### 会话管理问题
+### Session Management Issues
 
-**解决方案：安全会话管理策略**
+**Solution: Secure Session Management Strategy**
 ```java
 public class SecureSessionStrategy implements SessionStrategy {
     @Override
@@ -186,9 +186,9 @@ public class SecureSessionStrategy implements SessionStrategy {
 }
 ```
 
-### 权限提升
+### Privilege Escalation
 
-**解决方案：代理模式 + 最小权限检查**
+**Solution: Proxy Pattern + Least Privilege Check**
 ```java
 public class AuthorizationProxy implements SecureResource {
     private final RealSecureResource realResource;
@@ -214,14 +214,14 @@ public class AuthorizationProxy implements SecureResource {
 }
 ```
 
-## 安全清单快速参考
+## Security Checklist Quick Reference
 
-| 漏洞类型 | 检测方法 | 修复模式 | 验证方法 |
+| Vulnerability Type | Detection Method | Fix Pattern | Verification Method |
 |----------|----------|----------|----------|
-| SQL 注入 | 代码审查、SAST | 参数化查询 | 渗透测试 |
-| XSS | DAST、代码审查 | 输出编码 | 自动化扫描 |
-| CSRF | 测试验证 | CSRF Token | 安全测试 |
-| 认证缺陷 | 代码审查、测试 | 强认证策略 | 渗透测试 |
-| 敏感数据泄露 | DAST、人工审查 | 加密、脱敏 | 数据流分析 |
-| 访问控制缺陷 | 代码审查、测试 | 代理模式检查 | 权限测试 |
-| 加密缺陷 | 静态分析 | 策略模式替换 | 算法审计 |
+| SQL Injection | Code review, SAST | Parameterized queries | Penetration testing |
+| XSS | DAST, code review | Output encoding | Automated scanning |
+| CSRF | Testing verification | CSRF tokens | Security testing |
+| Auth Deficiencies | Code review, testing | Strong authentication policies | Penetration testing |
+| Sensitive Data Leakage | DAST, manual review | Encryption, masking | Data flow analysis |
+| Access Control Deficiencies | Code review, testing | Proxy pattern checks | Permission testing |
+| Encryption Deficiencies | Static analysis | Strategy pattern replacement | Algorithm audit |

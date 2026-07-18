@@ -1,25 +1,25 @@
-# 重构模式
+# Refactoring Patterns
 
-> 重构模式目录。技法与工作流详见 [refactoring-techniques.md](refactoring-techniques.md)。
+> Refactoring patterns catalog. For techniques and workflow, see [refactoring-techniques.md](refactoring-techniques.md).
 
-## 重构模式目录
+## Refactoring Patterns Catalog
 
-### 方法重组
+### Method Reorganization
 
-#### 提取方法（Extract Method）
+#### Extract Method
 
-**问题**：长方法难以理解
+**Problem**: Long methods are hard to understand
 
-**解决方案**：将片段转为方法并赋予描述性名称
+**Solution**: Turn fragments into methods with descriptive names
 
 ```python
-# 之前
+# Before
 def print_owing(amount):
     print_banner()
     print(f"name: {customer}")
     print(f"amount: {amount}")
 
-# 之后
+# After
 def print_owing(amount):
     print_banner()
     print_details(amount)
@@ -29,58 +29,58 @@ def print_details(amount):
     print(f"amount: {amount}")
 ```
 
-#### 内联方法（Inline Method）
+#### Inline Method
 
-**问题**：方法体与其名称一样清晰
+**Problem**: A method body is as clear as its name
 
-**解决方案**：用方法内容替换方法调用
+**Solution**: Replace the method call with the method's content
 
 ```python
-# 之前
+# Before
 def get_rating():
     return more_than_five_late_deliveries() ? 2 : 1
 
 def more_than_five_late_deliveries():
     return late_deliveries > 5
 
-# 之后
+# After
 def get_rating():
     return late_deliveries > 5 ? 2 : 1
 ```
 
-#### 提取变量（Extract Variable）
+#### Extract Variable
 
-**问题**：表达式难以理解
+**Problem**: An expression is hard to understand
 
-**解决方案**：将结果放入具有描述性名称的临时变量
+**Solution**: Put the result in a temporary variable with a descriptive name
 
 ```python
-# 之前
+# Before
 if platform.upper().index('MAC') > -1 and browser.upper().index('IE') > -1 and initialized:
     do_something()
 
-# 之后
+# After
 is_mac = platform.upper().index('MAC') > -1
 is_ie = browser.upper().index('IE') > -1
 if is_mac and is_ie and initialized:
     do_something()
 ```
 
-#### 以查询替代临时变量（Replace Temp with Query）
+#### Replace Temp with Query
 
-**问题**：临时变量保存表达式结果
+**Problem**: A temporary variable holds the result of an expression
 
-**解决方案**：用方法替代
+**Solution**: Replace it with a method
 
 ```python
-# 之前
+# Before
 def calculate_total():
     base_price = quantity * item_price
     if base_price > 1000:
         return base_price * 0.95
     return base_price
 
-# 之后
+# After
 def calculate_total():
     if base_price() > 1000:
         return base_price() * 0.95
@@ -90,26 +90,26 @@ def base_price():
     return quantity * item_price
 ```
 
-### 数据组织
+### Data Organization
 
-#### 以符号常量替代魔术数字
+#### Replace Magic Number with Symbolic Constant
 
 ```python
-# 之前
+# Before
 if potential_energy > 9.81:
     return True
 
-# 之后
+# After
 GRAVITY_ACCELERATION = 9.81
 
 if potential_energy > GRAVITY_ACCELERATION:
     return True
 ```
 
-#### 以策略模式替代类型码
+#### Replace Type Code with Strategy Pattern
 
 ```python
-# 之前
+# Before
 def calculate_salary(employee):
     if employee.type == 'ENGINEER':
         return employee.monthly_salary
@@ -118,7 +118,7 @@ def calculate_salary(employee):
     elif employee.type == 'MANAGER':
         return employee.monthly_salary + employee.bonus
 
-# 之后
+# After
 class Engineer:
     def calculate_salary(self):
         return self.monthly_salary
@@ -132,28 +132,28 @@ class Manager:
         return self.monthly_salary + self.bonus
 ```
 
-### 简化条件表达式
+### Simplifying Conditional Expressions
 
-#### 分解条件
+#### Decompose Conditional
 
 ```python
-# 之前
+# Before
 if date < SUMMER_START or date > SUMMER_END:
     charge = quantity * winter_rate + winter_service_charge
 else:
     charge = quantity * summer_rate
 
-# 之后
+# After
 if is_winter(date):
     charge = winter_charge(quantity)
 else:
     charge = summer_charge(quantity)
 ```
 
-#### 合并条件表达式
+#### Consolidate Conditional Expressions
 
 ```python
-# 之前
+# Before
 def disability_amount():
     if seniority < 2:
         return 0
@@ -161,22 +161,22 @@ def disability_amount():
         return 0
     if is_part_time:
         return 0
-    # 计算金额
+    # calculate amount
 
-# 之后
+# After
 def disability_amount():
     if is_not_eligible():
         return 0
-    # 计算金额
+    # calculate amount
 
 def is_not_eligible():
     return seniority < 2 or months_disabled > 12 or is_part_time
 ```
 
-#### 以卫语句替代嵌套条件
+#### Replace Nested Conditionals with Guard Clauses
 
 ```python
-# 之前
+# Before
 def get_payment_amount():
     result = 0
     if is_dead:
@@ -191,7 +191,7 @@ def get_payment_amount():
                 result = normal_amount()
     return result
 
-# 之后
+# After
 def get_payment_amount():
     if is_dead:
         return dead_amount()
@@ -202,16 +202,16 @@ def get_payment_amount():
     return normal_amount()
 ```
 
-#### 引入空对象
+#### Introduce Null Object
 
 ```python
-# 之前
+# Before
 if customer is None:
     plan = BillingPlan.basic()
 else:
     plan = customer.get_plan()
 
-# 之后
+# After
 class NullCustomer:
     def get_plan(self):
         return BillingPlan.basic()

@@ -285,8 +285,8 @@ class CodeAnalyzer:
             r"^\s*(def |function |public |private |protected |static )"
         )
 
-        # Bug 4 fix: 用 method_stack 追踪嵌套方法
-        # 每个栈元素: (start_line, indent, name)
+        # Bug 4 fix: track nested methods with method_stack
+        # Each stack element: (start_line, indent, name)
         method_stack: List[tuple] = []
 
         def _report(start: int, end: int, name: str, outer: Optional[str]) -> None:
@@ -314,13 +314,13 @@ class CodeAnalyzer:
             current_indent = len(line) - len(line.lstrip())
 
             if METHOD_RE.match(line):
-                # Bug 4 fix: 关闭所有 indent >= current_indent 的方法（外层方法结束）
+                # Bug 4 fix: close all methods with indent >= current_indent (outer method ends)
                 while method_stack and current_indent <= method_stack[-1][1]:
                     start, indent, name = method_stack.pop()
                     outer = method_stack[0][2] if method_stack else None
                     _report(start, i - 1, name, outer)
 
-                # 进入新方法
+                # Enter new method
                 try:
                     method_name = stripped.split("(")[0].split()[-1]
                 except IndexError:
@@ -329,7 +329,7 @@ class CodeAnalyzer:
                 method_stack.append((i, current_indent, method_name))
 
             elif method_stack:
-                # 检查是否退出当前方法（indent 回到或低于方法定义层级）
+                # Check if exiting current method (indent returns to or below method definition level)
                 if (
                     current_indent <= method_stack[-1][1]
                     and stripped
@@ -508,15 +508,15 @@ class CodeAnalyzer:
                 )
 
         # Check for outline:none without alternative focus style
-        # Bug 6 fix: 提取 CSS {...} 块后对块整体匹配，支持多行 outline:none
-        # \boutline\s*: 单词边界排除 outline-offset 等同名前缀属性
+        # Bug 6 fix: extract CSS {...} block and match on the block as a whole, supporting multi-line outline:none
+        # \boutline\s*: word boundary excludes outline-offset and similar prefix properties
         css_block_pattern = re.compile(r"\{([^{}]*)\}", re.DOTALL)
         outline_none_pattern = re.compile(r"\boutline\s*:\s*none")
         for block_match in css_block_pattern.finditer(content):
             block = block_match.group(1)
             outline_match = outline_none_pattern.search(block)
             if outline_match:
-                # 用 match 在 content 中的绝对位置计算行号（start(1) 是块内容起始）
+                # Calculate line number using absolute position in content (start(1) is block content start)
                 absolute_pos = block_match.start(1) + outline_match.start()
                 line_number = content.count("\n", 0, absolute_pos) + 1
                 issues.append(
@@ -618,8 +618,8 @@ class CodeAnalyzer:
                 )
 
         # Check for potential race conditions (check-then-act pattern)
-        # Bug 2 fix: 用 re.search 的 match.start() 计算真实匹配起始行，
-        # 而非逐行扫描 'exists()' / '== null' 关键词（会误归因到注释行）
+        # Bug 2 fix: use re.search's match.start() to calculate true match start line,
+        # instead of line-by-line scanning for 'exists()' / '== null' keywords (which could misattribute to comment lines)
         race_patterns = [
             (
                 r"if\s+.*\.exists\(\).*:\s*\n\s*.*write",
@@ -634,7 +634,7 @@ class CodeAnalyzer:
         for pattern, description in race_patterns:
             match = re.search(pattern, content, re.MULTILINE)
             if match:
-                # 用 match.start() 计算真实匹配起始行号
+                # Use match.start() to calculate true match start line number
                 line_number = content.count("\n", 0, match.start()) + 1
                 issues.append(
                     {
@@ -650,8 +650,8 @@ class CodeAnalyzer:
 
         # Check for division without zero check
         # D-P1-2: narrowed pattern to identifier/identifier form to reduce false positives
-        # Bug 7 fix: 用 _is_in_string_literal 状态机精确定位 / 是否在字符串内
-        # 替代旧的 `if '"' in line or "'" in line: continue` 整行跳过
+        # Bug 7 fix: use _is_in_string_literal state machine to precisely locate if / is inside a string
+        # replacing old `if '"' in line or "'" in line: continue` whole-line skip
         div_pattern = re.compile(r"\b[a-zA-Z_]\w*\s*/\s*[a-zA-Z_]\w*\b")
         # Precompute line start offsets for absolute position in content
         line_starts = [0]
@@ -666,7 +666,7 @@ class CodeAnalyzer:
                 slash_pos_in_content = (
                     line_starts[i - 1] + match.start() + slash_offset_in_match
                 )
-                # Bug 7 fix: 只跳过 / 在字符串内的匹配，不整行跳过
+                # Bug 7 fix: only skip matches where / is inside a string, don't skip entire line
                 if self._is_in_string_literal(content, slash_pos_in_content):
                     continue
                 # Check if there's a zero check nearby (current line or ±2 lines context)
@@ -786,18 +786,18 @@ if __name__ == "__main__":
         print(f"Path not found: {path}")
         sys.exit(1)
 
-    # P1: GitNexus bridge — emit a blast-radius worklist to stderr when an index
-    # is present. The agent layer runs the listed `mcp__gitnexus__*` calls (MCP is
-    # not reachable from this subprocess). See SKILL.md 步骤 1.5.
+    # P1: CodeNexus bridge — emit a blast-radius worklist to stderr when an index
+    # is present. The agent layer runs the listed `codenexus` CLI commands (the CLI
+    # is not invoked from this subprocess). See SKILL.md Step 1.5.
     try:
-        import gitnexus_helpers
+        import codenexus_helpers
 
         all_issues = (
             result.issues
             if os.path.isfile(path)
             else [i for r in results for i in r.issues]
         )
-        section = gitnexus_helpers.section_for_findings(all_issues, start=path)
+        section = codenexus_helpers.section_for_findings(all_issues, start=path)
         if section:
             print("\n" + section, file=sys.stderr)
     except ImportError:

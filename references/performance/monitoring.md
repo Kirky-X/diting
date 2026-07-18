@@ -1,6 +1,6 @@
-# 监控配置参考
+# Monitoring Configuration Reference
 
-## Prometheus 指标
+## Prometheus Metrics
 
 ```yaml
 scrape_configs:
@@ -31,7 +31,7 @@ REQUEST_LATENCY = Histogram(
 )
 ```
 
-## Grafana 仪表板
+## Grafana Dashboard
 
 ```json
 {
@@ -59,7 +59,7 @@ REQUEST_LATENCY = Histogram(
 }
 ```
 
-## 告警规则
+## Alert Rules
 
 ```yaml
 groups:

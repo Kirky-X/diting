@@ -1,92 +1,92 @@
-# 代码质量标准
+# Code Quality Standards
 
-## 1. 命名规范
+## 1. Naming Conventions
 
-### 变量命名
+### Variable Naming
 
-| 类型 | 风格 | 示例 |
-|------|------|------|
-| 局部变量 | 小写带下划线 | `user_name`、`total_count` |
-| 常量 | 大写下划线 | `MAX_RETRIES`、`DEFAULT_TIMEOUT` |
-| 实例变量 | 小写下划线或驼峰 | `user_id` / `userId` |
-| 类变量 | 小写下划线 | `_cache`、`instances` |
+| Type | Style | Example |
+|------|-------|---------|
+| Local variables | lowercase with underscores | `user_name`, `total_count` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRIES`, `DEFAULT_TIMEOUT` |
+| Instance variables | lowercase_underscore or camelCase | `user_id` / `userId` |
+| Class variables | lowercase_underscore | `_cache`, `instances` |
 
-### 函数/方法命名
+### Function/Method Naming
 
-- 以动词开头：`get_user()`、`create_order()`、`validate_input()`
-- 布尔值使用 `is_`、`has_`、`can_` 前缀：`is_valid()`、`has_permission()`
-- 避免无意义名称：`do_stuff()`、`process_data()`
+- Start with verbs: `get_user()`, `create_order()`, `validate_input()`
+- Use `is_`, `has_`, `can_` prefixes for booleans: `is_valid()`, `has_permission()`
+- Avoid meaningless names: `do_stuff()`, `process_data()`
 
-### 类命名
+### Class Naming
 
-- 帕斯卡命名：`UserService`、`OrderProcessor`、`PaymentGateway`
-- 避免过度使用后缀：`Manager`、`Handler`、`Utils`（仅在必要时使用）
+- PascalCase: `UserService`, `OrderProcessor`, `PaymentGateway`
+- Avoid overusing suffixes: `Manager`, `Handler`, `Utils` (only when necessary)
 
-### 文件命名
+### File Naming
 
-| 语言 | 风格 | 示例 |
-|------|------|------|
-| Python | 小写下划线 | `user_service.py` |
-| JavaScript | 驼峰或短横线 | `userService.js` / `user-service.js` |
-| Java | 帕斯卡 | `UserService.java` |
-| Go | 小写下划线 | `user_service.go` |
+| Language | Style | Example |
+|----------|-------|---------|
+| Python | lowercase_underscore | `user_service.py` |
+| JavaScript | camelCase or kebab-case | `userService.js` / `user-service.js` |
+| Java | PascalCase | `UserService.java` |
+| Go | lowercase_underscore | `user_service.go` |
 
-## 2. 代码格式
+## 2. Code Formatting
 
-### 缩进
+### Indentation
 
-- **Python**：4 空格
-- **JavaScript/TypeScript**：2 空格
-- **Java/Go/Rust**：4 空格或 2 空格（项目内保持一致）
-- **禁止使用 Tab 字符**
+- **Python**: 4 spaces
+- **JavaScript/TypeScript**: 2 spaces
+- **Java/Go/Rust**: 4 spaces or 2 spaces (consistent within the project)
+- **Tab characters are prohibited**
 
-### 行长度
+### Line Length
 
-- **最大 120 字符**
-- 理想情况不超过 80 字符
+- **Maximum 120 characters**
+- Ideally no more than 80 characters
 
-### 空格
+### Spacing
 
-- 运算符两侧加空格：`a + b` 而非 `a+b`
-- 逗号后加空格：`func(a, b)` 而非 `func(a,b)`
-- 括号内不加空格：`func(a)` 而非 `func( a )`
+- Spaces around operators: `a + b` not `a+b`
+- Spaces after commas: `func(a, b)` not `func(a,b)`
+- No spaces inside parentheses: `func(a)` not `func( a )`
 
-### 空行
+### Blank Lines
 
-- 类之间：2 空行
-- 方法之间：1 空行
-- 逻辑段之间：1 空行
+- Between classes: 2 blank lines
+- Between methods: 1 blank line
+- Between logical sections: 1 blank line
 
-## 3. 注释标准
+## 3. Comment Standards
 
-### 必需注释
+### Required Comments
 
-- **复杂算法**：解释算法思路
-- **业务规则**：描述业务背景
-- **临时方案**：解释为何如此处理
-- **未完成工作**：使用 TODO 标记
+- **Complex algorithms**: Explain the algorithmic approach
+- **Business rules**: Describe business context
+- **Workarounds**: Explain why this approach is used
+- **Incomplete work**: Mark with TODO
 
-### 注释风格
+### Comment Style
 
 ```python
-# 单行注释（Python）
+# Single-line comment (Python)
 def calculate_tax(amount):
-    # 税率根据收入水平动态计算
+    # Tax rate is dynamically calculated based on income level
     if amount > 100000:
         return amount * 0.2
     return amount * 0.1
 ```
 
 ```java
-// 单行注释（Java）
+// Single-line comment (Java)
 public class TaxCalculator {
     /**
-     * 计算税额
-     * @param amount 金额
-     * @return 税额
+     * Calculate tax amount
+     * @param amount The amount
+     * @return The tax amount
      */
     public double calculate(double amount) {
-        // 超过 10 万的金额适用 20% 税率
+        // Amounts over 100,000 are subject to 20% tax rate
         if (amount > 100000) {
             return amount * 0.2;
         }
@@ -95,152 +95,152 @@ public class TaxCalculator {
 }
 ```
 
-### 禁止的注释
+### Prohibited Comments
 
-- 解释显而易见的代码：`i++ // i 自增`
-- 过期注释
-- 注释掉的代码（使用版本控制）
-- 以注释替代好代码
+- Explaining obvious code: `i++ // increment i`
+- Stale comments
+- Commented-out code (use version control)
+- Using comments as a substitute for good code
 
-## 4. 函数标准
+## 4. Function Standards
 
-### 参数数量
+### Parameter Count
 
-- **最多 4 个参数**
-- 超过 4 个应封装为对象或使用选项对象
+- **Maximum 4 parameters**
+- More than 4 should be wrapped in an object or use an options object
 
-### 返回值
+### Return Values
 
-- **单一出口**：减少多个 return
-- **明确返回类型**：避免混合返回类型
-- **错误处理**：使用异常或返回 Result 类型
+- **Single exit point**: Reduce multiple returns
+- **Explicit return types**: Avoid mixed return types
+- **Error handling**: Use exceptions or return Result type
 
-### 函数长度
+### Function Length
 
-| 复杂度 | 行数范围 | 描述 |
-|--------|----------|------|
-| 简单 | 1-10 | 原子操作 |
-| 中等 | 10-30 | 单一职责 |
-| 复杂 | 30-50 | 需要审查 |
-| 过长 | >50 | 需要重构 |
+| Complexity | Lines | Description |
+|------------|-------|-------------|
+| Simple | 1-10 | Atomic operations |
+| Medium | 10-30 | Single responsibility |
+| Complex | 30-50 | Needs review |
+| Too long | >50 | Needs refactoring |
 
-## 5. 错误处理
+## 5. Error Handling
 
-### 异常原则
+### Exception Principles
 
-- **使用具体异常**：避免捕获 `Exception`
-- **不要吞掉异常**：至少记录日志
-- **清理资源**：使用 try-finally 或 with 语句
-- **暴露异常接口**：转换内部异常
+- **Use specific exceptions**: Avoid catching `Exception`
+- **Don't swallow exceptions**: At minimum, log them
+- **Clean up resources**: Use try-finally or with statements
+- **Expose exception interface**: Convert internal exceptions
 
-### 错误示例
+### Error Examples
 
 ```python
-# 错误示例
+# Bad example
 try:
     data = json.loads(body)
 except:
-    pass  # 静默失败
+    pass  # Silent failure
 
-# 正确示例
+# Good example
 try:
     data = json.loads(body)
 except json.JSONDecodeError as e:
-    logger.error(f"JSON 解析失败: {e}")
-    raise ValidationError("无效的 JSON 格式")
+    logger.error(f"JSON parse failed: {e}")
+    raise ValidationError("Invalid JSON format")
 ```
 
-## 6. 测试要求
+## 6. Testing Requirements
 
-### 测试覆盖率
+### Test Coverage
 
-| 组件 | 最低覆盖率 | 推荐覆盖率 |
-|------|------------|------------|
-| 核心业务逻辑 | 80% | 90% |
-| 新功能 | 70% | 85% |
-| Bug 修复 | 100% | 100% |
+| Component | Minimum Coverage | Recommended Coverage |
+|-----------|-----------------|---------------------|
+| Core business logic | 80% | 90% |
+| New features | 70% | 85% |
+| Bug fixes | 100% | 100% |
 
-### 测试原则
+### Testing Principles
 
-- **测试行为而非实现**
-- **使用描述性测试名**
-- **保持测试快速**
-- **隔离外部依赖**
-- **使用 Given-When-Then 模式**
+- **Test behavior, not implementation**
+- **Use descriptive test names**
+- **Keep tests fast**
+- **Isolate external dependencies**
+- **Use Given-When-Then pattern**
 
-### 测试示例
+### Test Example
 
 ```python
 def test_user_registration_with_valid_input():
-    # Given（前置条件）
+    # Given (preconditions)
     user_data = {"email": "test@example.com", "password": "secure123"}
 
-    # When（执行操作）
+    # When (execute action)
     result = UserService.register(user_data)
 
-    # Then（验证结果）
+    # Then (verify result)
     assert result.status == "success"
     assert result.user.email == "test@example.com"
     assert mock_email.called
 ```
 
-## 7. Git 提交标准
+## 7. Git Commit Standards
 
-### 提交信息格式
-
-```
-<类型>(<范围>): <描述>
-
-[可选正文]
-
-[可选页脚]
-```
-
-### 类型标准
-
-| 类型 | 描述 | 示例 |
-|------|------|------|
-| feat | 新功能 | feat(user): 添加用户注册 |
-| fix | Bug 修复 | fix(auth): 修复登录漏洞 |
-| docs | 文档更新 | docs: 更新 README |
-| style | 代码格式 | style: 格式化代码 |
-| refactor | 重构 | refactor(payment): 重构支付逻辑 |
-| test | 测试 | test: 添加单元测试 |
-| chore | 构建/工具 | chore: 更新依赖 |
-
-### 提交示例
+### Commit Message Format
 
 ```
-feat(auth): 实现双因素认证
+<type>(<scope>): <description>
 
-- 添加 TOTP 验证
-- 生成恢复码
-- 更新用户设置页
+[optional body]
+
+[optional footer]
+```
+
+### Type Definitions
+
+| Type | Description | Example |
+|------|-------------|---------|
+| feat | New feature | feat(user): Add user registration |
+| fix | Bug fix | fix(auth): Fix login vulnerability |
+| docs | Documentation update | docs: Update README |
+| style | Code formatting | style: Format code |
+| refactor | Refactoring | refactor(payment): Refactor payment logic |
+| test | Tests | test: Add unit tests |
+| chore | Build/tooling | chore: Update dependencies |
+
+### Commit Example
+
+```
+feat(auth): Implement two-factor authentication
+
+- Add TOTP verification
+- Generate recovery codes
+- Update user settings page
 
 Closes #123
 ```
 
-## 8. 代码审查标准
+## 8. Code Review Standards
 
-### 必须通过
+### Must Pass
 
-- [ ] 所有测试通过
-- [ ] 无严重安全问题
-- [ ] 代码风格遵循规范
-- [ ] 必要的文档更新
-- [ ] 不破坏现有功能
+- [ ] All tests pass
+- [ ] No critical security issues
+- [ ] Code style follows conventions
+- [ ] Required documentation updates
+- [ ] Does not break existing functionality
 
-### 应包含
+### Should Include
 
-- [ ] 有意义的测试
-- [ ] 无显著性能回退
-- [ ] 考虑边界情况
-- [ ] 完整的错误处理
+- [ ] Meaningful tests
+- [ ] No significant performance regression
+- [ ] Edge cases considered
+- [ ] Complete error handling
 
-### 审查重点
+### Review Focus
 
-1. **正确性**：代码是否正确解决问题？
-2. **安全性**：是否存在安全风险？
-3. **可读性**：代码是否易于理解？
-4. **可维护性**：未来修改是否方便？
-5. **测试**：是否有充分的测试？
+1. **Correctness**: Does the code correctly solve the problem?
+2. **Security**: Are there security risks?
+3. **Readability**: Is the code easy to understand?
+4. **Maintainability**: Is future modification easy?
+5. **Testing**: Is there adequate test coverage?

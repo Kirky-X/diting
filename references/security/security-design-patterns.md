@@ -1,252 +1,251 @@
-# 安全设计模式
+# Security Design Patterns
 
-> 安全专属模式目录（架构 / 设计 / 实现三层）。
-> 关于"GoF 模式加安全包装"（Secure Singleton、Secure
-> Factory 模板等）见 [pattern-classification.md](pattern-classification.md)
-> —— 这是不同的维度。本文件是独立的安全模式
-> 体系（Single Access Point、Check Point、Pathname Canonicalization、RAII…）。
+> Security-specific pattern catalog (architecture / design / implementation three layers).
+> For "GoF patterns with security wrappers" (Secure Singleton, Secure
+> Factory templates, etc.), see [pattern-classification.md](pattern-classification.md)
+> — that is a different dimension. This file is an independent security pattern
+> system (Single Access Point, Check Point, Pathname Canonicalization, RAII...).
 
-## 三层一览
+## Three-Layer Overview
 
-| 层级               | 关注点                                     | 模式                                                                                                                      |
+| Layer               | Concerns                                     | Patterns                                                                                                                      |
 | ------------------ | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **架构**   | 信任边界、系统拓扑           | Single Access Point、Check Point、Distrustful Decomposition、Separation of Privilege、Defer to Kernel                         |
-| **设计**         | 组件交互、职责拆分 | Secure Factory、Secure Policy Factory、Secure Chain of Responsibility、Secure State Machine、Secure Visitor、Protection Proxy |
-| **实现** | 单点防御、代码细节           | Input Validation、Secure Logging、Clear Sensitive Information、Pathname Canonicalization、Secure Directory、RAII              |
+| **Architecture**   | Trust boundaries, system topology           | Single Access Point, Check Point, Distrustful Decomposition, Separation of Privilege, Defer to Kernel                         |
+| **Design**         | Component interaction, responsibility splitting | Secure Factory, Secure Policy Factory, Secure Chain of Responsibility, Secure State Machine, Secure Visitor, Protection Proxy |
+| **Implementation** | Point defense, code details           | Input Validation, Secure Logging, Clear Sensitive Information, Pathname Canonicalization, Secure Directory, RAII              |
 
-经验法则：高层失败无法由低层补偿 ——
-架构缺口不能靠添加输入验证修复。
-
----
-
-## 架构层模式
-
-### Single Access Point（单一访问点）
-
-- **意图**：所有外部访问流经一个可监控的入口。
-- **何时使用**：系统有多条入口路径（HTTP + CLI + 队列 + cron）
-  且需强制一致的认证/审计/限流。
-- **审查信号**：认证检查在多个 controller 重复；某入口路径
-  绕过日志；`@login_required` 散落于每个 handler 而非
-  网关/过滤器。
-- **反信号**："我们加了新内部端点却忘了保护。"
-
-### Check Point（检查点）
-
-- **意图**：在定义良好的交互点插入安全检查，而非
-  散落于业务逻辑。
-- **何时使用**：横切关注点（认证、限流、输入验证、
-  审计）须在 handler 前按已知顺序运行。
-- **审查信号**：安全逻辑混入业务方法；"受信任"内部调用跳过
-  检查；顺序依赖的检查（认证在限流前？）
-  无强制排序。
-
-### Distrustful Decomposition（不信任分解）
-
-- **意图**：将系统拆分为互不信任的组件；
-  一个组件被攻破不会级联。
-- **何时使用**：处理不可信输入与特权操作并存；解析器、
-  网络监听器、插件宿主。
-- **审查信号**："低信任"组件持有与
-  核心相同的凭据；解析器失败冒泡为特权操作；同一进程的
-  前端与后端间无特权边界。
-
-### Separation of Privilege（特权分离）
-
-- **意图**：安全关键操作需两个或更多组件/角色
-  共同同意；无单点控制。
-- **何时使用**：敏感操作 —— 资金转账、密钥释放、特权
-  授予、生产部署。
-- **审查信号**：一个服务/账户可独立完成整个敏感操作；
-  "admin" 角色将所有强大权限捆绑在一次授予中。
-- **注意**：与最小权限配对 —— Separation 拆分权限，Least
-  Privilege 最小化每份权限。
-
-### Defer to Kernel（推迟到内核）
-
-- **意图**：对于检查时/使用时（TOCTOU）与访问控制
-  决策，委托给 OS 内核而非在应用代码中模拟。
-- **何时使用**：按用户身份访问文件、setuid 式特权、
-  验证后重新打开文件。
-- **审查信号**：应用代码先 `access(path, R_OK)` 再 `open(path)` ——
-  经典 TOCTOU；手搓内核已强制的权限检查。
+Rule of thumb: failures at a higher layer cannot be compensated by lower layers —
+an architectural gap cannot be fixed by adding input validation.
 
 ---
 
-## 设计层模式
+## Architecture-Layer Patterns
 
-### Secure Factory（安全工厂）
+### Single Access Point
 
-- **意图**：以受控方式创建安全相关对象，使
-  半配置或不一致的实例无法存在。
-- **何时使用**：构造加密上下文、认证策略链、策略
-  对象 —— 配置错误本身即漏洞。
-- **审查信号**：安全配置在调用方代码中逐字段拼装
-  （`ctx.setAlgorithm(...); ctx.setKey(...)` —— 漏掉一个怎么办？）。
+- **Intent**: All external access flows through one monitorable entry point.
+- **When to use**: The system has multiple entry paths (HTTP + CLI + queue + cron)
+  and needs to enforce consistent authentication/audit/rate-limiting.
+- **Audit signals**: Auth checks duplicated across multiple controllers; an entry path
+  bypasses logging; `@login_required` scattered on every handler instead of
+  gateway/filters.
+- **Counter-signal**: "We added a new internal endpoint and forgot to protect it."
 
-### Secure Policy Factory（安全策略工厂）
+### Check Point
 
-- **意图**：基于上下文（环境、租户、角色）从封闭、已审查的集合
-  选择安全策略 —— 绝不临时拼装。
-- **何时使用**：生产/预发/测试不同策略，或每租户
-  隔离规则。
-- **审查信号**：策略由松散标志/字符串构造而非
-  固定枚举；开发策略意外可用于生产。
+- **Intent**: Insert security checks at well-defined interaction points rather than
+  scattering them throughout business logic.
+- **When to use**: Cross-cutting concerns (authentication, rate limiting, input validation,
+  auditing) must run in a known order before the handler.
+- **Audit signals**: Security logic mixed into business methods; "trusted" internal calls skip
+  checks; order-dependent checks (auth before rate limiting?)
+  have no enforced ordering.
 
-### Secure Chain of Responsibility（安全责任链）
+### Distrustful Decomposition
 
-- **意图**：将安全检查排序为链，每阶段可拒绝；
-  链是通往 handler 的唯一路径。
-- **何时使用**：多阶段请求验证（认证 → 授权 → 输入检查 →
-  限流 → 审计 → handler）。
-- **审查信号**：任何检查可通过直接调用 handler
-  绕过；顺序未强制（限流在认证前会泄露用户存在性）。
+- **Intent**: Split the system into mutually distrustful components;
+  compromising one component does not cascade.
+- **When to use**: Processing untrusted input alongside privileged operations; parsers,
+  network listeners, plugin hosts.
+- **Audit signals**: "Low-trust" components hold the same credentials as
+  core; parser failures bubble up to privileged operations; no privilege boundary
+  between frontend and backend in the same process.
 
-### Secure State Machine（安全状态机）
+### Separation of Privilege
 
-- **意图**：将安全相关生命周期（会话、账户、订单）建模为
-  显式状态与受守卫的转换；不允许的转换抛异常。
-- **何时使用**：带锁定的登录尝试、会话生命周期、支付
-  状态、账户验证。
-- **审查信号**：状态以松散布尔（`isLocked`、`isActive`、
-  `isVerified`）持有，可组合成非法配置；无默认
-  拒绝转换规则。
+- **Intent**: Security-critical operations require two or more components/roles
+  to agree; no single point of control.
+- **When to use**: Sensitive operations — fund transfers, key release, privilege
+  grants, production deployments.
+- **Audit signals**: A single service/account can independently complete an entire sensitive operation;
+  "admin" role bundles all powerful permissions into a single grant.
+- **Note**: Pair with Least Privilege — Separation splits permissions, Least
+  Privilege minimizes each share.
 
-### Secure Visitor（安全访问者）
+### Defer to Kernel
 
-- **意图**：跨异构对象树应用安全操作
-  而不污染每个元素的接口。
-- **何时使用**：ACL 遍历、配置树审计、混合
-  记录类型脱敏。
-- **审查信号**：每个领域类有自己的 `checkPermission` /
-  `redact` 方法 —— 安全逻辑涂抹在领域代码上。
-
-### Protection Proxy（保护代理）
-
-- **意图**：代理对象在委托给
-  真实主题前强制访问控制。
-- **何时使用**：敏感资源的延迟认证、每次调用授权、
-  审计包装的访问。
-- **审查信号**：客户端直接调用敏感对象；认证仅在
-  构造时做但对象生命周期长于凭据。
+- **Intent**: For check-time/use-time (TOCTOU) and access control
+  decisions, delegate to the OS kernel rather than simulating in application code.
+- **When to use**: File access by user identity, setuid-style privilege,
+  reopening files after verification.
+- **Audit signals**: Application code does `access(path, R_OK)` then `open(path)` —
+  classic TOCTOU; hand-rolled permission checks the kernel already enforces.
 
 ---
 
-## 实现层模式
+## Design-Layer Patterns
 
-### Input Validation（输入验证）
+### Secure Factory
 
-- **意图**：在每个信任边界验证；先拒绝再净化，绝不
-  仅净化。
-- **何时使用**：任何数据跨越信任边界（HTTP、文件、队列、IPC）。
-- **审查信号**：仅在"正常"路径验证；`try/except: pass`
-  包裹解析；可用白名单处无白名单。
-- **边界规则**：边界处验证一次，内部信任 —— 不要
-  在调用栈中重复验证同一值五次。
+- **Intent**: Create security-related objects in a controlled manner so that
+  half-configured or inconsistent instances cannot exist.
+- **When to use**: Constructing encryption contexts, authentication policy chains, policy
+  objects — misconfiguration itself is a vulnerability.
+- **Audit signals**: Security configuration assembled field-by-field in caller code
+  (`ctx.setAlgorithm(...); ctx.setKey(...)` — what if one is missed?).
 
-### Secure Logging（安全日志）
+### Secure Policy Factory
 
-- **意图**：为审计/取证记录安全相关事件 —— 而不
-  泄露密钥或可伪造。
-- **何时使用**：认证事件、权限变更、拒绝访问、配置
-  变更、可疑流量信号。
-- **审查信号**：日志含密钥/PII（`password=...`、完整 token、PAN）；
-  日志可被其审计的同一主体写入；审计日志无
-  防篡改；成功未记录导致可抵赖。
+- **Intent**: Select security policies from a closed, audited set based on context (environment, tenant, role)
+  — never assembled ad hoc.
+- **When to use**: Different policies for production/staging/testing, or per-tenant
+  isolation rules.
+- **Audit signals**: Policies constructed from loose flags/strings rather than
+  a fixed enumeration; development policy accidentally available in production.
 
-### Clear Sensitive Information（清除敏感信息）
+### Secure Chain of Responsibility
 
-- **意图**：密钥不再需要时立即清零/覆盖 ——
-  内存中、缓冲区中、日志中、错误消息中。
-- **何时使用**：加密密钥、密码、token、解密明文、会话
-  密钥。
-- **审查信号**：密钥存于长期字段/字符串且从不
-  清除；异常消息包含密钥；调试转储
-  含凭据的请求体。
+- **Intent**: Order security checks into a chain where each stage can reject;
+  the chain is the only path to the handler.
+- **When to use**: Multi-stage request validation (authentication → authorization → input check →
+  rate limiting → audit → handler).
+- **Audit signals**: Any check can be bypassed by calling the handler directly;
+  ordering not enforced (rate limiting before authentication leaks user existence).
 
-### Pathname Canonicalization（路径名规范化）
+### Secure State Machine
 
-- **意图**：在任何白名单/前缀检查前将路径解析为
-  规范绝对形式，以击败 `..`、符号链接与大小写
-  技巧。
-- **何时使用**：任何代码从用户影响的输入打开文件。
-- **审查信号**：`if path.startswith(base_dir)` 未先 `realpath`/
-  `canonicalize`；用户输入用字符串
-  拼接进文件系统路径。
+- **Intent**: Model security-related lifecycles (sessions, accounts, orders) as
+  explicit states with guarded transitions; disallowed transitions throw exceptions.
+- **When to use**: Login attempts with locking, session lifecycles, payment
+  states, account verification.
+- **Audit signals**: States held as loose booleans (`isLocked`, `isActive`,
+  `isVerified`) that can be combined into illegal configurations; no default-deny
+  transition rule.
 
-### Secure Directory（安全目录）
+### Secure Visitor
 
-- **意图**：将敏感文件放在权限受限、由正确主体拥有的
-  目录中，使无关用户无法读取
-  或竞争。
-- **何时使用**：临时文件、套接字、磁盘密钥、上传目的地。
-- **审查信号**：临时文件在世界可读的 `/tmp`；`mktemp` 竞争；
-  `chmod 777` "修复"权限错误。
+- **Intent**: Apply security operations across heterogeneous object trees
+  without polluting every element's interface.
+- **When to use**: ACL traversal, configuration tree auditing, mixed
+  record-type masking.
+- **Audit signals**: Each domain class has its own `checkPermission` /
+  `redact` method — security logic smeared across domain code.
 
-### RAII / Try-with-Resources（资源获取即初始化）
+### Protection Proxy
 
-- **意图**：将资源生命周期绑定到作用域，使清理（关闭、清零、释放）
-  不会被遗忘，即使异常。
-- **何时使用**：文件句柄、套接字、加密上下文、锁、DB
-  事务。
-- **审查信号**：无 `finally`/上下文管理器的手动 `close()`；
-  锁仅在正常路径释放；资源跨可抛异常的
-  awaitable 持有。
+- **Intent**: The proxy object enforces access control before delegating to
+  the real subject.
+- **When to use**: Deferred authentication on sensitive resources, per-call authorization,
+  audit-wrapped access.
+- **Audit signals**: Client calls sensitive object directly; authentication only done at
+  construction but object lifetime exceeds credentials.
 
 ---
 
-## 安全原则 → 模式映射
+## Implementation-Layer Patterns
 
-| 原则                | 实现它的模式                                                     |
+### Input Validation
+
+- **Intent**: Validate at every trust boundary; reject first, then sanitize, never
+  sanitize only.
+- **When to use**: Any data crossing a trust boundary (HTTP, files, queues, IPC).
+- **Audit signals**: Validation only on the "happy" path; `try/except: pass`
+  wrapping parsing; no whitelist where one is available.
+- **Boundary rule**: Validate once at the boundary, trust internally — do not
+  re-validate the same value five times up the call stack.
+
+### Secure Logging
+
+- **Intent**: Record security-relevant events for audit/forensics — without
+  leaking keys or being forgeable.
+- **When to use**: Authentication events, permission changes, access denials, configuration
+  changes, suspicious traffic signals.
+- **Audit signals**: Logs contain keys/PII (`password=...`, full tokens, PANs);
+  logs writable by the same subject they audit; audit logs lack
+  tamper-protection; successes unrecorded enabling repudiation.
+
+### Clear Sensitive Information
+
+- **Intent**: Zero/overwrite keys as soon as they are no longer needed —
+  in memory, in buffers, in logs, in error messages.
+- **When to use**: Encryption keys, passwords, tokens, decrypted plaintext, session
+  keys.
+- **Audit signals**: Keys stored in long-lived fields/strings and never
+  cleared; exception messages contain keys; debug dumps
+  include request bodies with credentials.
+
+### Pathname Canonicalization
+
+- **Intent**: Resolve paths to their canonical absolute form before any
+  whitelist/prefix check, defeating `..`, symlinks, and case
+  tricks.
+- **When to use**: Any code opening files from user-influenced input.
+- **Audit signals**: `if path.startswith(base_dir)` without first `realpath`/
+  `canonicalize`; user input string-concatenated into filesystem paths.
+
+### Secure Directory
+
+- **Intent**: Place sensitive files in restricted directories owned by the correct principal
+  so unauthorized users cannot read
+  or race them.
+- **When to use**: Temporary files, sockets, disk keys, upload destinations.
+- **Audit signals**: Temp files in world-readable `/tmp`; `mktemp` races;
+  `chmod 777` to "fix" permission errors.
+
+### RAII / Try-with-Resources
+
+- **Intent**: Bind resource lifetimes to scope so cleanup (close, zero, release)
+  is never forgotten, even on exceptions.
+- **When to use**: File handles, sockets, encryption contexts, locks, DB
+  transactions.
+- **Audit signals**: Manual `close()` without `finally`/context managers;
+  locks released only on normal path; resources held across throwable
+  awaitables.
+
+---
+
+## Security Principles → Pattern Mapping
+
+| Principle                | Patterns That Implement It                                                     |
 | ------------------------ | ---------------------------------------------------------------------------- |
-| 最小权限          | Separation of Privilege、Check Point、Protection Proxy、Secure State Machine |
-| 职责分离     | Distrustful Decomposition、Separation of Privilege                           |
-| 纵深防御         | Single Access Point → Check Point → Input Validation（分层）               |
-| 默认安全        | Secure State Machine（默认拒绝状态）、Clear Sensitive Information       |
-| 失败安全              | Secure Chain of Responsibility（任何阶段可拒绝）、Secure State Machine  |
-| 机制经济性     | Single Access Point、Secure Factory（更少误构建方式）                |
-| 保护最弱链     | Secure Logging（使弱链可观测）                               |
+| Least Privilege          | Separation of Privilege, Check Point, Protection Proxy, Secure State Machine |
+| Separation of Duties     | Distrustful Decomposition, Separation of Privilege                           |
+| Defense in Depth         | Single Access Point → Check Point → Input Validation (layered)               |
+| Secure by Default        | Secure State Machine (default-deny state), Clear Sensitive Information       |
+| Fail Secure              | Secure Chain of Responsibility (any stage can reject), Secure State Machine  |
+| Economy of Mechanism     | Single Access Point, Secure Factory (fewer ways to misbuild)                |
+| Weakest Link             | Secure Logging (makes the weak link observable)                               |
 
-## 威胁（STRIDE）→ 模式选择
+## Threats (STRIDE) → Pattern Selection
 
-| 威胁                     | 主要模式                                                         |
+| Threat                     | Primary Pattern                                                         |
 | -------------------------- | ------------------------------------------------------------------------ |
-| **S**poofing（欺骗）               | Single Access Point + 认证 Check Point + Protection Proxy                |
-| **T**ampering（篡改）              | Input Validation + Pathname Canonicalization + Secure State Machine      |
-| **R**epudiation（抵赖）            | Secure Logging（写侧审计、防篡改）                        |
-| **I**nformation Disclosure（信息泄露） | Clear Sensitive Information + Separation of Privilege + Secure Directory |
-| **D**enial of Service（拒绝服务）      | Check Point（限流）+ Distrustful Decomposition（隔离）           |
-| **E**levation of Privilege（权限提升） | Separation of Privilege + 最小权限 + Secure State Machine         |
+| **S**poofing               | Single Access Point + Auth Check Point + Protection Proxy                |
+| **T**ampering              | Input Validation + Pathname Canonicalization + Secure State Machine      |
+| **R**epudiation            | Secure Logging (write-side audit, tamper-proof)                          |
+| **I**nformation Disclosure | Clear Sensitive Information + Separation of Privilege + Secure Directory |
+| **D**enial of Service      | Check Point (rate limiting) + Distrustful Decomposition (isolation)      |
+| **E**levation of Privilege | Separation of Privilege + Least Privilege + Secure State Machine         |
 
-## "本应使用此模式"审查信号（默认严重度）
+## "Should Have Used This Pattern" Audit Signals (Default Severity)
 
-| 审查中的代码坏味                                | 缺失模式                   | 严重度 |
+| Code Smell in Audit                                | Missing Pattern                   | Severity |
 | --------------------------------------------------- | --------------------------------- | -------- |
-| 多个无守卫入口点、认证不一致  | Single Access Point / Check Point | High     |
-| 安全配置逐字段拼装、可跳过 | Secure Factory                    | Medium   |
-| 松散布尔形成非法安全状态      | Secure State Machine              | High     |
-| `path.startswith(prefix)` 未规范化      | Pathname Canonicalization         | High     |
-| 密钥存于长期字符串、从不清除   | Clear Sensitive Information       | High     |
-| 临时文件在共享 `/tmp`                         | Secure Directory                  | Medium   |
-| 审计日志可被审计主体写入         | Secure Logging                    | High     |
-| 用户路径上 `access()` 再 `open()`               | Defer to Kernel                   | High     |
-| 一个角色/账户可独立完成关键操作   | Separation of Privilege           | High     |
+| Multiple unguarded entry points, inconsistent auth  | Single Access Point / Check Point | High     |
+| Security config assembled field-by-field, skippable | Secure Factory                    | Medium   |
+| Loose booleans forming illegal security states      | Secure State Machine              | High     |
+| `path.startswith(prefix)` without canonicalization  | Pathname Canonicalization         | High     |
+| Keys in long-lived strings, never cleared           | Clear Sensitive Information       | High     |
+| Temp files in shared `/tmp`                         | Secure Directory                  | Medium   |
+| Audit logs writable by audited subject              | Secure Logging                    | High     |
+| `access()` then `open()` on user path               | Defer to Kernel                   | High     |
+| One role/account can complete critical ops alone    | Separation of Privilege           | High     |
 
-## 采用工作流（面向审查）
+## Adoption Workflow (Audit-Oriented)
 
-1. **识别威胁** —— 对每个信任边界/入口点做 STRIDE。
-2. **匹配模式** —— 从上表选取；优先架构层
-   先于实现层。
-3. **集成** —— 模式在边界处，而非涂抹于业务逻辑。
-4. **验证** —— 确认检查无法被替代路径绕过。
-5. **监控** —— Secure Logging 覆盖模式所强制的内容。
+1. **Identify threats** — do STRIDE on each trust boundary/entry point.
+2. **Match patterns** — select from the tables above; prioritize architecture-layer
+   over implementation-layer.
+3. **Integrate** — patterns at boundaries, not smeared over business logic.
+4. **Verify** — confirm checks cannot be bypassed via alternative paths.
+5. **Monitor** — Secure Logging covers what the patterns enforce.
 
-## 参考
+## References
 
-- [pattern-classification.md](pattern-classification.md) —— 带安全包装的 GoF 模式
-  （Secure Singleton 模板、Secure Decorator 链等）
-- [security-expert-guide.md](security-expert-guide.md) —— 威胁建模
-  流程与完整审查工作流
-- [security-fixes.md](security-fixes.md) —— 每类漏洞的具体修复配方
-- [../quality/security-checklist.md](../quality/security-checklist.md) ——
-  提交前安全清单
+- [pattern-classification.md](pattern-classification.md) — GoF patterns with security wrappers
+  (Secure Singleton template, Secure Decorator chains, etc.)
+- [security-expert-guide.md](security-expert-guide.md) — Threat modeling
+  process and complete audit workflow
+- [security-fixes.md](security-fixes.md) — Concrete fix recipes per vulnerability category
+- [../quality/security-checklist.md](../quality/security-checklist.md) —
+  Pre-commit security checklist

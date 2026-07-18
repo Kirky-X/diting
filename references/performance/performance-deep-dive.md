@@ -1,19 +1,19 @@
-# 性能深度分析
+# Performance Deep Dive
 
-> 性能工程深度分析：前端优化、后端优化、监控配置。主流程详见 [performance-engineer-guide.md](performance-engineer-guide.md)。
+> In-depth performance engineering analysis: frontend optimization, backend optimization, monitoring configuration. See [performance-engineer-guide.md](performance-engineer-guide.md) for the main workflow.
 
-## 1. 前端优化
+## 1. Frontend Optimization
 
-### Core Web Vitals 优化
+### Core Web Vitals Optimization
 
-#### LCP 优化
+#### LCP Optimization
 
 ```javascript
-// 预加载关键资源
+// Preload critical resources
 <link rel="preload" href="/fonts/inter.woff2" as="font" crossorigin>
 <link rel="preload" href="/hero-image.webp" as="image">
 
-// 使用响应式图片
+// Use responsive images
 <img 
   srcset="image-400.webp 400w, image-800.webp 800w"
   sizes="(max-width: 600px) 400px, 800px"
@@ -21,22 +21,22 @@
   decoding="async"
 />
 
-// 关键内容服务端渲染
-// 静态资源 CDN 缓存
+// Server-side rendering for critical content
+// CDN caching for static assets
 ```
 
-#### FID 优化
+#### FID Optimization
 
 ```javascript
-// 代码分割
+// Code splitting
 const LazyComponent = React.lazy(() => import('./LazyComponent'));
 
-// 延迟非关键工作
+// Defer non-critical work
 requestIdleCallback(() => {
-  // 非关键初始化
+  // Non-critical initialization
 });
 
-// 拆分长任务
+// Break up long tasks
 function processLargeArray(array) {
   const CHUNK_SIZE = 100;
   let index = 0;
@@ -55,28 +55,28 @@ function processLargeArray(array) {
 }
 ```
 
-#### CLS 优化
+#### CLS Optimization
 
 ```css
-/* 为图片预留空间 */
+/* Reserve space for images */
 .image-container {
   aspect-ratio: 16 / 9;
   background: #f0f0f0;
 }
 
-/* 为广告预留空间 */
+/* Reserve space for ads */
 .ad-slot {
   min-height: 250px;
 }
 
-/* 字体加载 */
+/* Font loading */
 @font-face {
   font-family: 'Inter';
   font-display: swap;
 }
 ```
 
-### 包优化
+### Bundle Optimization
 
 ```javascript
 // webpack.config.js
@@ -96,33 +96,33 @@ module.exports = {
 };
 
 // Tree shaking
-export { usedFunction };  // 仅导出使用的
+export { usedFunction };  // Only export what's used
 
-// 动态导入
+// Dynamic imports
 const module = await import('./heavy-module');
 ```
 
-## 2. 后端优化
+## 2. Backend Optimization
 
-### 算法复杂度
+### Algorithm Complexity
 
-| 复杂度 | n=1000 时的操作数 | 优化建议 |
-|------------|----------------------|--------------|
-| O(1) | 1 | 理想 |
-| O(log n) | 10 | 优秀 |
-| O(n) | 1,000 | 良好 |
-| O(n log n) | 10,000 | 可接受 |
-| O(n²) | 1,000,000 | 需要优化 |
-| O(2^n) | 2^1000 | 避免 |
+| Complexity | Operations at n=1000 | Optimization Suggestion |
+|------------|----------------------|-------------------------|
+| O(1) | 1 | Ideal |
+| O(log n) | 10 | Excellent |
+| O(n) | 1,000 | Good |
+| O(n log n) | 10,000 | Acceptable |
+| O(n²) | 1,000,000 | Needs optimization |
+| O(2^n) | 2^1000 | Avoid |
 
-### 缓存策略
+### Caching Strategies
 
-#### 多级缓存
+#### Multi-Level Caching
 ```python
 class CacheStrategy:
-    L1_CACHE = {}  # 内存
-    L2_CACHE = Redis()  # 分布式
-    L3_CACHE = Database()  # 持久化
+    L1_CACHE = {}  # In-memory
+    L2_CACHE = Redis()  # Distributed
+    L3_CACHE = Database()  # Persistent
     
     async def get(self, key: str):
         if key in self.L1_CACHE:
@@ -138,7 +138,7 @@ class CacheStrategy:
         return value
 ```
 
-#### 缓存保护与预热
+#### Cache Protection and Warm-Up
 ```python
 class CachePenetrationProtection:
     async def get_or_default(self, key: str, fallback_value: str = ""):
@@ -150,7 +150,7 @@ class CachePenetrationProtection:
     async def might_exist(self, key: str) -> bool:
         return self.bloom_filter.might_contain(key)
 
-# 缓存预热 - 系统启动时预加载热点数据
+# Cache warm-up - preload hot data on system startup
 async def warm_up_cache():
     hot_keys = ["config:system", "config:features", "user:popular_tags"]
     for key in hot_keys:
@@ -158,70 +158,70 @@ async def warm_up_cache():
         await cache.set(key, value, ttl=3600)
 ```
 
-#### 缓存更新策略
+#### Cache Update Strategies
 ```python
 class CacheUpdateStrategy:
-    # 强一致性 - DB 更新后立即更新缓存
+    # Strong consistency - update cache immediately after DB update
     async def write_through(self, key: str, value: Any):
         await self.db.update(key, value)
         await self.cache.set(key, value)
     
-    # 最终一致性 - 允许轻微延迟
+    # Eventual consistency - allow slight delay
     async def write_back(self, key: str, value: Any):
         await self.cache.set(key, value)
-        await self.queue.push(f"update:{key}:{value}")  # 异步 DB 同步
+        await self.queue.push(f"update:{key}:{value}")  # Async DB sync
     
-    # 定时刷新
+    # Timed refresh
     async def timed_refresh(self, key: str):
         while True:
             value = await self.db.query(key)
             await self.cache.set(key, value)
-            await asyncio.sleep(300)  # 每 5 分钟刷新
+            await asyncio.sleep(300)  # Refresh every 5 minutes
 ```
 
-### 数据库优化
+### Database Optimization
 
 ```sql
--- 索引优化
+-- Index optimization
 CREATE INDEX idx_orders_user_date 
 ON orders(user_id, created_at DESC);
 
--- 查询优化
+-- Query optimization
 EXPLAIN ANALYZE
 SELECT * FROM orders 
 WHERE user_id = 123 
 ORDER BY created_at DESC 
 LIMIT 20;
 
--- 分区
+-- Partitioning
 CREATE TABLE orders (
     id BIGSERIAL,
     created_at TIMESTAMP,
     -- ...
 ) PARTITION BY RANGE (created_at);
 
--- 连接池
--- 池大小 = (核心数 * 2) + 磁盘主轴数
+-- Connection pool
+-- Pool size = (number of cores * 2) + number of disk spindles
 ```
 
-### 异步处理
+### Async Processing
 
-> 完整实现模式（Redis 管道、连接池、Celery 重试）在 [backend-optimization.md](backend-optimization.md) 中。
+> Complete implementation patterns (Redis pipelines, connection pooling, Celery retries) are in [backend-optimization.md](backend-optimization.md).
 
-关键原则：将慢操作（邮件、通知、报表生成）移出请求路径到异步工作器。
+Key principle: Move slow operations (email, notifications, report generation) out of the request path into async workers.
 
 ```mermaid
 flowchart TD
-    Req["请求"] --> Queue["入队任务"]
-    Queue --> Resp["返回 202 Accepted"]
-    Queue --> Worker["工作器"]
-    Worker --> Proc["处理"]
-    Proc --> Notify["通过 webhook/push 通知"]
+    Req["Request"] --> Queue["Enqueue Task"]
+    Queue --> Resp["Return 202 Accepted"]
+    Queue --> Worker["Worker"]
+    Worker --> Proc["Process"]
+    Proc --> Notify["Notify via webhook/push"]
 ```
 
-## 3. 监控配置
+## 3. Monitoring Configuration
 
-### Prometheus 指标
+### Prometheus Metrics
 
 ```yaml
 # prometheus.yml
@@ -234,25 +234,25 @@ scrape_configs:
       - targets: ['localhost:8080']
 ```
 
-### Grafana 仪表板
+### Grafana Dashboard
 
 ```json
 {
   "panels": [
     {
-      "title": "请求速率",
+      "title": "Request Rate",
       "targets": [{
         "expr": "rate(http_requests_total[5m])"
       }]
     },
     {
-      "title": "P95 延迟",
+      "title": "P95 Latency",
       "targets": [{
         "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
       }]
     },
     {
-      "title": "错误率",
+      "title": "Error Rate",
       "targets": [{
         "expr": "rate(http_requests_total{status=~\"5..\"}[5m])"
       }]

@@ -1,68 +1,68 @@
-# 简化审查命令
+# Simplification Review Command
 
-简化审查模式 —— 提升可读性、消除冗余、降低认知负担
+Simplification Review Mode — improve readability, eliminate redundancy, reduce cognitive load
 
-## 用法
+## Usage
 
 ```bash
 review simplification [target-path]
 ```
 
-## 核心原则
+## Core Principle
 
-**简化 = 降低认知负担，保留行为。**
-绝不改变代码做什么。只改变它怎么做。
-总是验证测试仍通过。
+**Simplification = reducing cognitive load while preserving behavior.**
+Never change what the code does. Only change how it does it.
+Always verify tests still pass.
 
 ---
 
-## 检查内容
+## Checklist
 
-### 可读性
-
-```
-□ 变量名清晰描述其内容
-□ 函数名清晰描述其行为（动词短语）
-□ 无非通用缩写（mgr vs manager）
-□ 复杂表达式提取为命名变量
-□ 魔法字面量替换为命名常量
-□ 布尔表达式无不必要反转（if !(!a) → if a）
-```
-
-### 结构
+### Readability
 
 ```
-□ 函数只做一件事（单一职责）
-□ 嵌套深度 ≤ 3（用 guard 子句/提前返回扁平化）
-□ 无深嵌套三元（提取为 if-else 或独立函数）
-□ 循环逻辑提取为命名函数（filterActiveUsers vs 内联 lambda）
-□ 相关代码分组，无关代码分离
+□ Variable names clearly describe their content
+□ Function names clearly describe their behavior (verb phrases)
+□ No non-universal abbreviations (mgr vs manager)
+□ Complex expressions extracted into named variables
+□ Magic literals replaced with named constants
+□ Boolean expressions free of unnecessary inversions (if !(!a) → if a)
 ```
 
-### 重复
+### Structure
 
 ```
-□ 无复制粘贴代码块（≥ 3 次重复 → 提取函数）
-□ 不同位置的相似逻辑泛化（参数化差异）
-□ 无可提升的重复条件检查
-□ 工具函数未重复实现（用标准库）
+□ Functions do one thing (single responsibility)
+□ Nesting depth ≤ 3 (use guard clauses/early returns to flatten)
+□ No deeply nested ternaries (extract to if-else or separate functions)
+□ Loop logic extracted into named functions (filterActiveUsers vs inline lambda)
+□ Related code grouped, unrelated code separated
 ```
 
-### 死代码
+### Duplication
 
 ```
-□ 无不可达代码（return/throw/break 之后）
-□ 无未使用变量、参数、导入
-□ 无注释掉的代码（用版本控制）
-□ 无超过 6 个月且无 issue 引用的 TODO/FIXME
-□ 无永久启用/禁用的 feature flag
+□ No copy-pasted code blocks (≥ 3 occurrences → extract function)
+□ Similar logic in different locations generalized (parameterize differences)
+□ No extractable repeated conditional checks
+□ Utility functions not re-implemented (use standard library)
 ```
 
-### 现代惯用法（语言专属）
+### Dead Code
+
+```
+□ No unreachable code (after return/throw/break)
+□ No unused variables, parameters, imports
+□ No commented-out code (use version control)
+□ No TODO/FIXME older than 6 months without issue references
+□ No permanently enabled/disabled feature flags
+```
+
+### Modern Idioms (Language-Specific)
 
 **Python**
 ```python
-# ❌ 冗长
+# ❌ Verbose
 result = []
 for item in items:
     if item.active:
@@ -71,34 +71,34 @@ for item in items:
 # ✅ Pythonic
 result = [item.name for item in items if item.active]
 
-# ❌ 手动 None 检查
+# ❌ Manual None check
 if value is not None:
     return value
 return default
 
-# ✅ 用 walrus / or
+# ✅ Using walrus / or
 return value or default
 ```
 
 **TypeScript / JavaScript**
 ```typescript
-// ❌ 嵌套三元
+// ❌ Nested ternary
 const label = isAdmin ? 'Admin' : isMod ? 'Moderator' : 'User'
 
-// ✅ Map 或函数
+// ✅ Map or function
 const ROLE_LABELS = { admin: 'Admin', mod: 'Moderator' }
 const label = ROLE_LABELS[role] ?? 'User'
 
-// ❌ 手动数组扁平化
+// ❌ Manual array flattening
 const flat = arr.reduce((acc, curr) => acc.concat(curr), [])
 
-// ✅ 内置
+// ✅ Built-in
 const flat = arr.flat()
 ```
 
 **Java**
 ```java
-// ❌ 命令式集合处理
+// ❌ Imperative collection processing
 List<String> names = new ArrayList<>();
 for (User user : users) {
     if (user.isActive()) {
@@ -115,10 +115,10 @@ List<String> names = users.stream()
 
 **Go**
 ```go
-// ❌ 错误被检查但通过空白标识符忽略
+// ❌ Error checked but ignored with blank identifier
 result, _ := riskyOperation()
 
-// ✅ 总是处理错误
+// ✅ Always handle errors
 result, err := riskyOperation()
 if err != nil {
     return fmt.Errorf("riskyOperation failed: %w", err)
@@ -127,12 +127,12 @@ if err != nil {
 
 ---
 
-## 简化技法
+## Simplification Techniques
 
-### Guard 子句（扁平化嵌套）
+### Guard Clauses (Flatten Nesting)
 
 ```python
-# ❌ 箭头型代码
+# ❌ Arrow code
 def process(user, order):
     if user:
         if user.active:
@@ -140,7 +140,7 @@ def process(user, order):
                 if order.valid:
                     do_work(user, order)
 
-# ✅ Guard 子句
+# ✅ Guard clauses
 def process(user, order):
     if not user: return
     if not user.active: return
@@ -149,29 +149,29 @@ def process(user, order):
     do_work(user, order)
 ```
 
-### 提取变量
+### Extract Variables
 
 ```python
-# ❌ 不透明条件
+# ❌ Opaque condition
 if user.created_at > datetime.now() - timedelta(days=30) and user.plan == 'trial':
     ...
 
-# ✅ 命名表达式
+# ✅ Named expressions
 is_new_user = user.created_at > datetime.now() - timedelta(days=30)
 is_trial = user.plan == 'trial'
 if is_new_user and is_trial:
     ...
 ```
 
-### 用多态替换条件
+### Replace Conditionals with Polymorphism
 
 ```python
-# ❌ 类型 switch
+# ❌ Type switch
 def get_area(shape):
     if shape.type == 'circle': return pi * shape.r ** 2
     if shape.type == 'rect': return shape.w * shape.h
 
-# ✅ 多态
+# ✅ Polymorphism
 class Circle:
     def area(self): return pi * self.r ** 2
 
@@ -181,21 +181,21 @@ class Rectangle:
 
 ---
 
-## 何时不简化
+## When Not to Simplify
 
-- 代码是性能关键且有基准证明（不要优化掉）
-- 复杂算法正确且测试充分（加注释解释而非简化）
-- 简化会破坏向后兼容
-- 团队不熟悉结果惯用法（清晰 > 聪明）
+- Code is performance-critical with benchmarks proving it (don't optimize away)
+- Complex algorithms are correct and well-tested (add comments explaining, don't simplify)
+- Simplification would break backward compatibility
+- Team unfamiliar with resulting idiom (clarity > cleverness)
 
 ---
 
-## 参考
+## References
 
-- [simplification-guidelines.md](../simplification/simplification-guidelines.md) — 完整指南
-- [refactoring-patterns.md](../simplification/refactoring-patterns.md) — 重构目录
+- [simplification-guidelines.md](../simplification/simplification-guidelines.md) — full guide
+- [refactoring-patterns.md](../simplification/refactoring-patterns.md) — refactoring catalog
 
-## 相关命令
+## Related Commands
 
 - [security.md](security.md)
 - [performance.md](performance.md)

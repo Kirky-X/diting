@@ -1,25 +1,25 @@
-简化审查，全仓库范围。扫描整个树而非 diff。按最大削减量排名发现。
+Simplification audit, full-repo scope. Scan the entire tree, not just a diff. Rank findings by maximum potential removal.
 
-## 标签
+## Tags
 
-与 diff 范围审查相同的标签：
+Same tags as diff-scoped review:
 
-- `delete:` 死代码、未使用的灵活性、投机性功能。替代：无。
-- `stdlib:` 标准库已有的手写东西。命名函数。
-- `native:` 依赖或代码做了平台已做的事。命名特性。
-- `yagni:` 单一实现的抽象、无人设置的配置、单一调用方的层。
-- `shrink:` 相同逻辑，更少行。展示更短形式。
+- `delete:` Dead code, unused flexibility, speculative features. Replacement: none.
+- `stdlib:` Hand-rolled things that already exist in the standard library. Name the function.
+- `native:` Dependency or code doing what the platform already does. Name the feature.
+- `yagni:` Abstractions with a single implementation, config nobody sets, layers with a single caller.
+- `shrink:` Same logic, fewer lines. Show the shorter form.
 
-## 搜寻
+## What to Hunt
 
-标准库或平台已有的依赖、单一实现的接口、单一产品的工厂、仅委托的包装器、导出单一东西的文件、死标志和配置、手写标准库。
+Dependencies already covered by stdlib or platform, interfaces with a single implementation, factories for a single product, wrappers that only delegate, files that export a single thing, dead flags and config, hand-rolled stdlib.
 
-## 输出
+## Output
 
-每个发现一行，排名：`<标签> <要削减什么>. <替代>. [路径]`。
-以 `净: -<N> 行, -<M> 个依赖可能.` 结束。无可削减：`已经精简。交付。`
+One line per finding, ranked: `<tag> What to remove. <Replacement>. [path]`.
+End with `Net: -<N> lines, -<M> dependencies possible.` Nothing to remove: `Already lean. Ship it.`
 
-## 边界
+## Boundaries
 
-范围：仅过度工程和复杂度。正确性 bug、安全漏洞和性能明确不在范围内。将它们路由到正常审查流程。列出发现，不应用任何东西。一次性。
-"stop simplify-audit" 或 "normal mode" 恢复。
+Scope: over-engineering and complexity only. Correctness bugs, security vulnerabilities, and performance are explicitly out of scope. Route them to the normal review process. List findings, do not apply anything. One-shot.
+"stop simplify-audit" or "normal mode" resumes.

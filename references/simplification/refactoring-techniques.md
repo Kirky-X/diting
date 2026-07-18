@@ -1,58 +1,58 @@
-# 重构技法
+# Refactoring Techniques
 
-> 重构技法：方法调用简化、泛化处理、大型重构、工作流与优先级。模式目录详见 [refactoring-patterns.md](refactoring-patterns.md)。
+> Refactoring techniques: simplifying method calls, generalizing, large-scale refactoring, workflow and priorities. For the patterns catalog, see [refactoring-patterns.md](refactoring-patterns.md).
 
-## 简化方法调用
+## Simplifying Method Calls
 
-### 重命名方法
+### Rename Method
 
 ```python
-# 之前
+# Before
 def get_num(self):
     return self.number
 
-# 之后
+# After
 def get_phone_number(self):
     return self.number
 ```
 
-### 添加参数
+### Add Parameter
 
 ```python
-# 之前
+# Before
 def get_contact():
     return self.contact
 
-# 之后
+# After
 def get_contact(include_extension=False):
     if include_extension:
         return f"{self.contact} x{self.extension}"
     return self.contact
 ```
 
-### 移除参数
+### Remove Parameter
 
 ```python
-# 之前
+# Before
 def get_order(order, customer):
     return order
 
-# 之后
+# After
 def get_order(order):
     return order
 ```
 
-### 分离查询与修改
+### Separate Query from Modifier
 
 ```python
-# 之前
+# Before
 def get_and_set_attribute(name, value):
     if attribute_exists(name):
         return get_attribute(name)
     set_attribute(name, value)
     return value
 
-# 之后
+# After
 def get_attribute(name):
     return attributes.get(name)
 
@@ -63,27 +63,27 @@ def attribute_exists(name):
     return name in attributes
 ```
 
-### 参数化方法
+### Parameterize Method
 
 ```python
-# 之前
+# Before
 def five_percent_raise():
     salary *= 1.05
 
 def ten_percent_raise():
     salary *= 1.10
 
-# 之后
+# After
 def raise(percentage):
     salary *= (1 + percentage / 100)
 ```
 
-## 处理泛化
+## Handling Generalization
 
-### 上拉方法
+### Pull Up Method
 
 ```python
-# 之前（子类中重复方法）
+# Before (duplicated method in subclasses)
 class Engineer:
     def get_name(self):
         return self.name
@@ -92,7 +92,7 @@ class Manager:
     def get_name(self):
         return self.name
 
-# 之后（方法在父类中）
+# After (method in parent class)
 class Employee:
     def get_name(self):
         return self.name
@@ -104,21 +104,21 @@ class Manager(Employee):
     pass
 ```
 
-### 下推方法
+### Push Down Method
 
 ```python
-# 之前（方法仅与子类相关）
+# Before (method only relevant to subclass)
 class Employee:
     def get_quota(self):
         return self.quota
 
 class Engineer(Employee):
-    pass  # 不使用 quota
+    pass  # does not use quota
 
 class Salesman(Employee):
-    pass  # 使用 quota
+    pass  # uses quota
 
-# 之后
+# After
 class Employee:
     pass
 
@@ -130,10 +130,10 @@ class Salesman(Employee):
         return self.quota
 ```
 
-### 提取子类
+### Extract Subclass
 
 ```python
-# 之前
+# Before
 class JobItem:
     def __init__(self, unit_price, quantity, is_labor):
         self.unit_price = unit_price
@@ -145,7 +145,7 @@ class JobItem:
             return self.quantity * LABOR_RATE
         return self.quantity * self.unit_price
 
-# 之后
+# After
 class JobItem:
     def __init__(self, quantity):
         self.quantity = quantity
@@ -166,12 +166,12 @@ class PartsItem(JobItem):
         return self.unit_price
 ```
 
-## 大型重构
+## Large-Scale Refactoring
 
-### 将过程式设计转为对象
+### Convert Procedural Design to Objects
 
 ```python
-# 之前
+# Before
 def calculate_order_total(order):
     total = 0
     for item in order['items']:
@@ -181,7 +181,7 @@ def calculate_order_total(order):
 def apply_discount(order, discount):
     order['total'] = calculate_order_total(order) * (1 - discount)
 
-# 之后
+# After
 class Order:
     def __init__(self, items):
         self.items = items
@@ -193,17 +193,17 @@ class Order:
         self.total = self.calculate_total() * (1 - discount)
 ```
 
-### 分离领域与表示
+### Separate Domain from Presentation
 
 ```python
-# 之前（关注点混合）
+# Before (mixed concerns)
 class OrderView:
     def display_order(self, order_id):
         order = self.db.query(f"SELECT * FROM orders WHERE id = {order_id}")
         print(f"<h1>Order {order_id}</h1>")
         print(f"<p>Total: ${order.total}</p>")
 
-# 之后（已分离）
+# After (separated)
 class Order:
     def __init__(self, order_id, db):
         self.data = db.query(f"SELECT * FROM orders WHERE id = {order_id}")
@@ -218,54 +218,54 @@ class OrderView:
         print(f"<p>Total: ${order.total}</p>")
 ```
 
-## 重构工作流
+## Refactoring Workflow
 
-### 逐步流程
+### Step-by-Step Process
 
-1. **识别代码坏味**
-   - 使用检测标准
-   - 按影响排序
+1. **Identify code smells**
+   - Use detection criteria
+   - Rank by impact
 
-2. **编写测试**
-   - 确保现有行为被捕获
-   - 添加边界情况测试
+2. **Write tests**
+   - Ensure existing behavior is captured
+   - Add edge case tests
 
-3. **应用重构**
-   - 做小的增量变更
-   - 每次变更后运行测试
+3. **Apply refactoring**
+   - Make small, incremental changes
+   - Run tests after each change
 
-4. **验证行为**
-   - 所有测试通过
-   - 无回归
+4. **Verify behavior**
+   - All tests pass
+   - No regressions
 
-5. **提交**
-   - 每次重构一次提交
-   - 清晰的提交信息
+5. **Commit**
+   - One commit per refactoring
+   - Clear commit message
 
-### 安全检查
+### Safety Checklist
 
 ```
-重构前：
-[ ] 受影响代码已有测试
-[ ] 测试通过
-[ ] 代码覆盖率充足
+Before refactoring:
+[ ] Affected code already has tests
+[ ] Tests pass
+[ ] Code coverage is adequate
 
-重构中：
-[ ] 小而聚焦的变更
-[ ] 频繁运行测试
-[ ] 无行为变更
+During refactoring:
+[ ] Small, focused changes
+[ ] Tests run frequently
+[ ] No behavior changes
 
-重构后：
-[ ] 所有测试通过
-[ ] 代码更干净
-[ ] 未引入新复杂度
+After refactoring:
+[ ] All tests pass
+[ ] Code is cleaner
+[ ] No new complexity introduced
 ```
 
-## 重构优先级矩阵
+## Refactoring Priority Matrix
 
-| 影响 | 工作量 | 优先级 |
+| Impact | Effort | Priority |
 |--------|--------|----------|
-| 高 | 低 | 立即执行 |
-| 高 | 高 | 计划执行 |
-| 低 | 低 | 有空时做 |
-| 低 | 高 | 跳过 |
+| High | Low | Do immediately |
+| High | High | Plan it |
+| Low | Low | Do when available |
+| Low | High | Skip |

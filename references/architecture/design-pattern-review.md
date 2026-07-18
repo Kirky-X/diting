@@ -1,288 +1,288 @@
-# 设计模式审查指南
+# Design Pattern Review Guide
 
-## 创建型模式
+## Creational Patterns
 
-### 工厂模式
+### Factory Pattern
 
-**何时使用**
+**When to Use**
 
-- 创建初始化复杂的对象
-- 需要将对象创建委托给子类
-- 想要解耦对象创建与使用
+- Creating objects with complex initialization
+- Need to delegate object creation to subclasses
+- Want to decouple object creation from usage
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 工厂返回接口类型，而非具体类型
-- [ ] 创建逻辑已封装
-- [ ] 易于添加新产品类型
-- [ ] 客户端代码无直接对象实例化
+- [ ] Factory returns interface type, not concrete type
+- [ ] Creation logic is encapsulated
+- [ ] Easy to add new product types
+- [ ] Client code has no direct object instantiation
 
-**坏味检测**
+**Code Smell Detection**
 
-`if type == 'A': obj = ClassA() elif type == 'B': obj = ClassB()` → 使用工厂模式
+`if type == 'A': obj = ClassA() elif type == 'B': obj = ClassB()` → Use Factory pattern
 
-### 建造者模式
+### Builder Pattern
 
-**何时使用**
+**When to Use**
 
-- 对象有多个可选参数
-- 构造过程有多个步骤
-- 想要带多个属性的不变对象
+- Object has many optional parameters
+- Construction process has multiple steps
+- Want immutable objects with many attributes
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 建造者返回完全构造的对象
-- [ ] 支持流式接口
-- [ ] build() 方法中有验证
-- [ ] 结果对象不可变
+- [ ] Builder returns fully constructed object
+- [ ] Supports fluent interface
+- [ ] Validation in build() method
+- [ ] Result object is immutable
 
-### 单例模式
+### Singleton Pattern
 
-**何时使用**
+**When to Use**
 
-- 需要恰好一个实例
-- 需要全局访问点
-- 资源共享（连接池、缓存）
+- Need exactly one instance
+- Need a global access point
+- Resource sharing (connection pool, cache)
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 线程安全实现
-- [ ] 私有构造函数
-- [ ] 延迟或饿汉式初始化适当
-- [ ] 考虑是否优先用 DI 容器
+- [ ] Thread-safe implementation
+- [ ] Private constructor
+- [ ] Lazy or eager initialization is appropriate
+- [ ] Consider whether DI container is preferred
 
-**警示信号**
+**Warning Signs**
 
 ```
-[ ] 为方便而非必要使用
-[ ] 持有可变状态
-[ ] 使测试困难
-[ ] 隐藏依赖
+[ ] Used for convenience, not necessity
+[ ] Holds mutable state
+[ ] Makes testing difficult
+[ ] Hides dependencies
 ```
 
-## 结构型模式
+## Structural Patterns
 
-### 适配器模式
+### Adapter Pattern
 
-**何时使用**
+**When to Use**
 
-- 集成不兼容接口
-- 包装第三方库
-- 遗留系统集成
+- Integrating incompatible interfaces
+- Wrapping third-party libraries
+- Legacy system integration
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 适配接口，而非实现
-- [ ] 客户端代码不变
-- [ ] 保持单一职责
-- [ ] 无过度包装
+- [ ] Adapts interface, not implementation
+- [ ] Client code unchanged
+- [ ] Maintains single responsibility
+- [ ] No over-wrapping
 
-### 装饰器模式
+### Decorator Pattern
 
-**何时使用**
+**When to Use**
 
-- 动态添加职责
-- 避免组合爆炸导致的类膨胀
-- 不通过继承扩展功能
+- Dynamically adding responsibilities
+- Avoiding class explosion from composition explosion
+- Extending functionality without inheritance
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 装饰器实现同一接口
-- [ ] 包装并委托给组件
-- [ ] 可叠加多个装饰器
-- [ ] 装饰器顺序重要且已文档化
+- [ ] Decorators implement the same interface
+- [ ] Wraps and delegates to the component
+- [ ] Multiple decorators can be stacked
+- [ ] Decorator ordering is important and documented
 
-**安全装饰器链**
+**Secure Decorator Chain**
 
 ```
 InputValidator -> Encryption -> Compression -> Audit -> BaseProcessor
 ```
 
-### 外观模式
+### Facade Pattern
 
-**何时使用**
+**When to Use**
 
-- 简化复杂子系统
-- 提供统一接口
-- 减少与子系统的耦合
+- Simplifying complex subsystems
+- Providing a unified interface
+- Reducing coupling with subsystems
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 提供简化接口
-- [ ] 不添加新功能
-- [ ] 子系统在需要时仍可访问
-- [ ] 降低客户端复杂度
+- [ ] Provides simplified interface
+- [ ] Does not add new functionality
+- [ ] Subsystem is still accessible when needed
+- [ ] Reduces client complexity
 
-### 代理模式
+### Proxy Pattern
 
-**何时使用**
+**When to Use**
 
-- 控制对象访问
-- 添加安全层
-- 延迟加载
-- 远程对象访问
+- Controlling object access
+- Adding security layer
+- Lazy loading
+- Remote object access
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 代理与真实对象共享接口
-- [ ] 实现访问控制
-- [ ] 对客户端透明
-- [ ] 性能收益可衡量
+- [ ] Proxy shares interface with real object
+- [ ] Implements access control
+- [ ] Transparent to client
+- [ ] Performance benefit is measurable
 
-## 行为型模式
+## Behavioral Patterns
 
-### 策略模式
+### Strategy Pattern
 
-**何时使用**
+**When to Use**
 
-- 同一任务有多个算法
-- 需要运行时切换算法
-- 避免复杂条件逻辑
+- Same task with multiple algorithms
+- Need to switch algorithms at runtime
+- Avoiding complex conditional logic
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 策略接口定义良好
-- [ ] 上下文委托给策略
-- [ ] 策略可互换
-- [ ] 易于添加新策略
+- [ ] Strategy interface is well-defined
+- [ ] Context delegates to strategy
+- [ ] Strategies are interchangeable
+- [ ] Easy to add new strategies
 
-**坏味检测**
+**Code Smell Detection**
 
-`if algorithm == 'A': process_a(data) elif algorithm == 'B': process_b(data)` → 使用策略模式
+`if algorithm == 'A': process_a(data) elif algorithm == 'B': process_b(data)` → Use Strategy pattern
 
-### 观察者模式
+### Observer Pattern
 
-**何时使用**
+**When to Use**
 
-- 一对多依赖
-- 对象需要知道状态变化
-- 事件驱动架构
+- One-to-many dependency
+- Objects need to know about state changes
+- Event-driven architecture
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 主题仅知道观察者接口
-- [ ] 观察者可动态添加/移除
-- [ ] 通知顺序不关键
-- [ ] 防止内存泄漏（取消订阅）
+- [ ] Subject only knows Observer interface
+- [ ] Observers can be dynamically added/removed
+- [ ] Notification order is not critical
+- [ ] Prevents memory leaks (unsubscribe)
 
-### 责任链模式
+### Chain of Responsibility Pattern
 
-**何时使用**
+**When to Use**
 
-- 一个请求有多个处理者
-- 处理者在运行时确定
-- 解耦发送者与接收者
+- A request has multiple handlers
+- Handlers are determined at runtime
+- Decoupling sender and receiver
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 每个处理者仅知道后继者
-- [ ] 链可动态配置
-- [ ] 请求可被处理或传递
-- [ ] 无处理者也是有效结果
+- [ ] Each handler only knows the successor
+- [ ] Chain can be dynamically configured
+- [ ] Request can be handled or passed
+- [ ] No handler is also a valid outcome
 
-**安全链示例**
+**Security Chain Example**
 
 ```
 Request -> Authentication -> Authorization -> Validation -> RateLimit -> Handler
 ```
 
-### 命令模式
+### Command Pattern
 
-**何时使用**
+**When to Use**
 
-- 用操作参数化对象
-- 排队操作以稍后执行
-- 支持撤销操作
+- Parameterizing objects with operations
+- Queuing operations for later execution
+- Supporting undo operations
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 命令封装所有所需信息
-- [ ] 调用者仅知道命令接口
-- [ ] 接收者封装在命令中
-- [ ] 需要时支持撤销
+- [ ] Command encapsulates all required information
+- [ ] Invoker only knows command interface
+- [ ] Receiver is encapsulated in command
+- [ ] Supports undo when needed
 
-### 模板方法模式
+### Template Method Pattern
 
-**何时使用**
+**When to Use**
 
-- 通用算法结构带变体
-- 控制子类扩展点
-- 跨子类代码复用
+- Generic algorithm structure with variants
+- Controlling subclass extension points
+- Code reuse across subclasses
 
-**审查清单**
+**Review Checklist**
 
-- [ ] 模板方法为 final
-- [ ] 钩子方法为 protected
-- [ ] 子类仅覆盖特定步骤
-- [ ] 不变部分在基类
+- [ ] Template method is final
+- [ ] Hook methods are protected
+- [ ] Subclasses only override specific steps
+- [ ] Invariant parts are in base class
 
-## 应检测的反模式
+## Anti-Patterns to Detect
 
-| 反模式 | 检测信号 | 修复 |
+| Anti-Pattern | Detection Signal | Fix |
 |--------------|-------------------|-----|
-| God Object | > 20 方法、> 10 实例变量、到处使用 | 应用 SRP（单一职责） |
-| Spaghetti 代码 | 深嵌套（> 4）、长方法（> 50 行）、全局状态、无结构 | 提取方法、应用模式 |
-| Copy-Paste 编程 | 多处相似代码块、仅细微变化 | 提取公共代码；继承/组合 |
-| 过早优化 | 为假设性能写复杂代码、无 profiling 数据 | 先 profile；仅优化已证实的瓶颈 |
-| 魔法数字/字符串 | `if status == 3`、散落的 `'admin'` 字面量 | 使用常量或枚举 |
+| God Object | > 20 methods, > 10 instance variables, used everywhere | Apply SRP (Single Responsibility) |
+| Spaghetti Code | Deep nesting (> 4), long methods (> 50 lines), global state, no structure | Extract methods, apply patterns |
+| Copy-Paste Programming | Similar code blocks in multiple places with only slight variations | Extract common code; inheritance/composition |
+| Premature Optimization | Complex code for assumed performance, no profiling data | Profile first; only optimize proven bottlenecks |
+| Magic Numbers/Strings | `if status == 3`, scattered `'admin'` literals | Use constants or enums |
 
-## 模式选择指南
+## Pattern Selection Guide
 
-| 问题                    | 主要模式         | 替代             |
+| Problem                    | Primary Pattern         | Alternative             |
 | -------------------------- | ----------------------- | ----------------------- |
-| 对象创建复杂 | Factory                 | Builder                 |
-| 需要单一实例       | Singleton               | DI Container            |
-| 动态添加行为   | Decorator               | Chain of Responsibility |
-| 简化接口         | Facade                  | Adapter                 |
-| 切换算法          | Strategy                | State                   |
-| 事件处理             | Observer                | Mediator                |
-| 多步验证      | Chain of Responsibility | Decorator               |
-| 撤销操作            | Command                 | Memento                 |
-| 带变体的模板   | Template Method         | Strategy                |
+| Complex object creation | Factory                 | Builder                 |
+| Need single instance       | Singleton               | DI Container            |
+| Dynamically add behavior   | Decorator               | Chain of Responsibility |
+| Simplify interface         | Facade                  | Adapter                 |
+| Switch algorithms          | Strategy                | State                   |
+| Event handling             | Observer                | Mediator                |
+| Multi-step validation      | Chain of Responsibility | Decorator               |
+| Undo operations            | Command                 | Memento                 |
+| Templates with variants    | Template Method         | Strategy                |
 
-## 模式组合示例
+## Pattern Combination Examples
 
-- **Web 请求**：Facade（Controller）→ Chain of Responsibility（Auth/Validation/Rate Limit）→ Strategy（业务逻辑）→ Decorator（Logging/Caching/Tx）
-- **数据管道**：Builder（Config）→ Chain of Responsibility（转换步骤）→ Strategy（处理）→ Observer（进度）
+- **Web Request**: Facade (Controller) → Chain of Responsibility (Auth/Validation/Rate Limit) → Strategy (Business Logic) → Decorator (Logging/Caching/Tx)
+- **Data Pipeline**: Builder (Config) → Chain of Responsibility (Transformation Steps) → Strategy (Processing) → Observer (Progress)
 
-## 审查优先级："本应使用模式"
+## Review Priority: "Should Have Used a Pattern"
 
-缺失模式本身即审查发现 —— 但仅当坏味真实存在时。
-默认严重度：
+Missing patterns are themselves review findings — but only when the code smell truly exists.
+Default severity:
 
-| 代码中的信号                                                              | 应使用的模式                  | 严重度             |
+| Code Signal                                                              | Pattern to Use                  | Severity             |
 | --------------------------------------------------------------------------- | ----------------------------------- | -------------------- |
-| `if type == 'A' … elif type == 'B' …` 按类型分支                            | Factory / Strategy / 多态   | 分支 > 3 时为 High |
-| 一个类持有 > 6 个不相关职责                              | Facade + Extract Class              | High                 |
-| 相同算法带细微变化复制 ≥ 3×                             | Template Method / Strategy          | Medium               |
-| 构造函数长、可选参数多                                      | Builder                             | Medium               |
-| 通过模块全局手搓单实例                               | Singleton，或（优先）DI container | Low                  |
-| 横切关注点（logging/caching/auth）在每个调用点临时接线 | Decorator                           | Medium               |
-| 子系统通过直接依赖纠结调用                            | Facade                              | Medium               |
+| `if type == 'A' … elif type == 'B' …` branching by type                    | Factory / Strategy / Polymorphism   | High if > 3 branches |
+| A class holds > 6 unrelated responsibilities                                | Facade + Extract Class              | High                 |
+| Same algorithm with slight variations copied ≥ 3×                           | Template Method / Strategy          | Medium               |
+| Long constructor with many optional parameters                              | Builder                             | Medium               |
+| Manual singleton via module globals                                         | Singleton, or (preferred) DI container | Low              |
+| Cross-cutting concerns (logging/caching/auth) wired ad-hoc at each call site | Decorator                           | Medium               |
+| Subsystems tangled via direct dependencies                                  | Facade                              | Medium               |
 
-**YAGNI 守卫**：当简单的非模式代码明显足够时，不要标记缺失模式。2 分支 `if/else` 不需要 Strategy；单方法接口不需要 Factory。发现项要求坏味达到上述阈值 —— 简化引擎（Engine C）捕获相反的失败（在不该引入模式处引入）。
+**YAGNI Guard**: Do not flag missing patterns when simple non-pattern code is clearly sufficient. A 2-branch `if/else` does not need Strategy; a single-method interface does not need Factory. Findings require the smell to reach the above thresholds — the Simplification Engine (Engine C) catches the opposite failure (introducing patterns where they should not be introduced).
 
-## 代码坏味 → 模式反向查找
+## Code Smells → Pattern Reverse Lookup
 
-审查通常从坏味开始，而非从"用哪个模式"。反向映射：
+Reviews typically start from code smells, not from "which pattern to use." Reverse mapping:
 
-| 坏味 (Fowler)       | 识别信号                        | 应应用的模式                       |
+| Code Smell (Fowler)       | Detection Signal                        | Pattern to Apply                       |
 | -------------------- | -------------------------------------------- | -------------------------------------- |
-| Long Method          | > 50 行，或名称含 "And"/"Or"      | Extract Method；分支用 Strategy |
-| Large Class          | > 300 行，许多不相关字段           | Extract Class；Facade                  |
-| Duplicate Code       | 相同块 ≥ 3 处                        | Extract Method；Template Method        |
-| Switch Statements    | 类型 switch 在代码库中重复         | Strategy / State / Factory             |
-| Parallel Hierarchies | 添加子类迫使其他地方添加 | 组合优于继承           |
-| Feature Envy         | 方法主要使用另一个类的数据      | Move Method                            |
-| Data Class           | 仅 getter/setter，无行为            | 移入行为；变更用 Observer |
-| Mysterious Name      | 名称不清、魔法数字                  | Rename；Extract Constant               |
+| Long Method          | > 50 lines, or name contains "And"/"Or"      | Extract Method; branches use Strategy |
+| Large Class          | > 300 lines, many unrelated fields           | Extract Class; Facade                  |
+| Duplicate Code       | Same block ≥ 3 places                        | Extract Method; Template Method        |
+| Switch Statements    | Type switch repeated across codebase         | Strategy / State / Factory             |
+| Parallel Hierarchies | Adding a subclass forces changes elsewhere   | Composition over inheritance           |
+| Feature Envy         | Method primarily uses another class's data   | Move Method                            |
+| Data Class           | Only getter/setter, no behavior              | Move behavior in; Observer for changes |
+| Mysterious Name      | Unclear name, magic numbers                  | Rename; Extract Constant               |
 
-## 重构优先级（多个坏味同时出现时）
+## Refactoring Priority (When Multiple Smells Coexist)
 
-1. **安全 / 阻塞性缺陷优先**（硬编码凭据、null 路径、
-   缺少 auth）—— 不是模式问题，但它是以下一切的门禁。
-2. **重复与长方法（Medium）** —— 杠杆最高、风险最低。
-3. **耦合 / 模式引入（Medium）** —— 已在改该区域时做；不要为强加模式打开正在工作的模块。
-4. **命名 / 清晰度打磨（Low）** —— 除非要求可读性否则延后。
+1. **Security / Blocking Defects First** (hardcoded credentials, null paths,
+   missing auth) — not a pattern issue, but it gates everything else.
+2. **Duplication & Long Methods (Medium)** — highest leverage, lowest risk.
+3. **Coupling / Pattern Introduction (Medium)** — do while already changing the area; do not open working modules just to impose patterns.
+4. **Naming / Clarity Polish (Low)** — defer unless readability is requested.
 
-此排序防止为命中抽象理想而搅动工作代码的模式驱动重构 —— 删除方向的对应见 Engine C 的过度工程审查。
+This ordering prevents pattern-driven refactoring that churns working code to hit abstract ideals — the opposite direction (removing patterns) is covered by Engine C's over-engineering review.

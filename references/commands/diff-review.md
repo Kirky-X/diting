@@ -1,29 +1,29 @@
-# Diff 审查
+# Diff Review
 
-PR diff 专项审查。
+PR diff-specific review.
 
-## 检查清单
+## Checklist
 
-### 变更范围
-- 变更是否过大
-- 能否拆分
-- 相关文件是否一起修改
+### Change Scope
+- Is the change too large
+- Can it be split
+- Related files modified together
 
-### 代码质量
-- 遵循项目规范
-- 测试覆盖
-- 注释完整性
+### Code Quality
+- Follows project conventions
+- Test coverage
+- Comment completeness
 
-### 安全
-- 无敏感信息泄露
-- 依赖安全
-- 输入验证
+### Security
+- No sensitive information leakage
+- Dependency security
+- Input validation
 
-### 性能
-- 无明显性能问题
-- 资源释放
+### Performance
+- No obvious performance issues
+- Resource cleanup
 
-### 可维护性
-- 代码可读性
-- 命名清晰
-- 无重复代码
+### Maintainability
+- Code readability
+- Clear naming
+- No duplicate code

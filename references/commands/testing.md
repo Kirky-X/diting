@@ -1,27 +1,27 @@
-# 测试审查
+# Testing Review
 
-测试覆盖率和质量审查。
+Test coverage and quality review.
 
-## 检查清单
+## Checklist
 
-### 覆盖率
-- 核心业务逻辑覆盖
-- 边界条件测试
-- 错误处理测试
-- 覆盖率目标（通常 > 80%）
+### Coverage
+- Core business logic coverage
+- Boundary condition tests
+- Error handling tests
+- Coverage target (typically > 80%)
 
-### 测试质量
-- 清晰的测试命名
-- AAA 模式（Arrange-Act-Assert）
-- 测试独立性
-- 可维护性
+### Test Quality
+- Clear test naming
+- AAA pattern (Arrange-Act-Assert)
+- Test independence
+- Maintainability
 
 ### Mock/Stub
-- 外部依赖正确 mock
-- 不过度 mock
-- 真实场景模拟
+- External dependencies correctly mocked
+- Not over-mocked
+- Realistic scenario simulation
 
-### 集成测试
-- 数据库操作测试
-- API 端点测试
-- 外部服务集成
+### Integration Tests
+- Database operation tests
+- API endpoint tests
+- External service integration

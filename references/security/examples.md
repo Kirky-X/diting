@@ -1,16 +1,16 @@
-# 安全设计模式代码示例
+# Security Design Pattern Code Examples
 
-> 安全设计模式代码案例主索引。完整案例已按安全域拆分为子文件。
+> Main index for security design pattern code cases. Complete cases have been split into sub-files by security domain.
 
-## 子文件导航
+## Sub-file Navigation
 
-| 子文件 | 内容 | 适用场景 |
+| Sub-file | Content | Use Cases |
 |------|------|---------|
-| [examples-injection.md](examples-injection.md) | 代理/装饰器/责任链模式 | 注入防御、输入校验、XSS/SQL注入 |
-| [examples-auth-config.md](examples-auth-config.md) | 观察者/策略模式、配置管理 | 认证授权、加密策略、配置管理 |
-| [examples-owasp.md](examples-owasp.md) | 纵深防御、审计系统、告警 | OWASP 防御、审计日志、入侵检测 |
+| [examples-injection.md](examples-injection.md) | Proxy / Decorator / Chain of Responsibility patterns | Injection defense, input validation, XSS/SQL injection |
+| [examples-auth-config.md](examples-auth-config.md) | Observer / Strategy patterns, configuration management | Authentication & authorization, encryption strategies, configuration management |
+| [examples-owasp.md](examples-owasp.md) | Defense in depth, audit systems, alerts | OWASP defense, audit logging, intrusion detection |
 
-## 1. 完整安全系统架构
+## 1. Complete Secure System Architecture
 
 ```java
 public class SecureSystem {
@@ -107,7 +107,7 @@ class SecurityEventPublisher {
 }
 ```
 
-## 2. 完整综合演示
+## 2. Complete Comprehensive Demo
 
 ```java
 public class ComprehensiveSecurityDemo {
@@ -165,102 +165,102 @@ public class ComprehensiveSecurityDemo {
 }
 ```
 
-## 3. 模式应用指南
+## 3. Pattern Application Guide
 
-### 何时使用哪种模式
+### When to Use Which Pattern
 
-| 模式 | 适用场景 | 安全收益 |
+| Pattern | Use Cases | Security Benefit |
 |------|----------|----------|
-| 单例模式 | 安全管理器、配置管理器、加密服务 | 统一管理共享资源，防止重复创建 |
-| 工厂模式 | 安全上下文创建、加密算法选择 | 隔离不同环境的安全策略 |
-| 代理模式 | 资源访问控制、远程服务调用 | 集中安全检查与审计 |
-| 装饰器模式 | 安全特性叠加（验证、加密、审计） | 灵活组合安全特性 |
-| 观察者模式 | 安全事件监控、告警系统 | 实时响应安全事件 |
-| 策略模式 | 加密算法切换、访问策略 | 灵活调整安全级别 |
+| Singleton Pattern | Security managers, configuration managers, encryption services | Unified shared resource management, prevents duplicate creation |
+| Factory Pattern | Security context creation, encryption algorithm selection | Isolates security strategies across different environments |
+| Proxy Pattern | Resource access control, remote service calls | Centralized security checks and auditing |
+| Decorator Pattern | Security feature stacking (validation, encryption, auditing) | Flexible composition of security features |
+| Observer Pattern | Security event monitoring, alert systems | Real-time response to security events |
+| Strategy Pattern | Encryption algorithm switching, access strategies | Flexible adjustment of security levels |
 
-### 典型安全架构组合
+### Typical Secure Architecture Combinations
 
 ```mermaid
 flowchart TD
-    SS["安全系统"]
-    SS --> SP["单例模式：SecurityManager（统一管理）"]
-    SS --> FP["工厂模式：SecurityContextFactory（环境隔离）"]
-    SS --> PP["代理模式：SecurityProxy（访问控制）"]
-    SS --> DP["装饰器模式：SecurityDecorator（特性叠加）"]
-    SS --> OP["观察者模式：SecurityEventManager（事件监控）"]
-    SS --> STP["策略模式：EncryptionStrategy（算法切换）"]
+    SS["Security System"]
+    SS --> SP["Singleton Pattern: SecurityManager (Unified Management)"]
+    SS --> FP["Factory Pattern: SecurityContextFactory (Environment Isolation)"]
+    SS --> PP["Proxy Pattern: SecurityProxy (Access Control)"]
+    SS --> DP["Decorator Pattern: SecurityDecorator (Feature Stacking)"]
+    SS --> OP["Observer Pattern: SecurityEventManager (Event Monitoring)"]
+    SS --> STP["Strategy Pattern: EncryptionStrategy (Algorithm Switching)"]
 ```
 
-## 4. 安全清单
+## 4. Security Checklist
 
-### 实施阶段清单
+### Implementation Phase Checklist
 
-**认证与授权**
-- [ ] 使用安全认证机制（避免硬编码凭据）
-- [ ] 实施最小权限原则
-- [ ] 会话管理使用安全 Cookie（HttpOnly、Secure、SameSite）
-- [ ] 实施密码哈希（bcrypt/Argon2）
+**Authentication & Authorization**
+- [ ] Use secure authentication mechanisms (avoid hardcoded credentials)
+- [ ] Implement least privilege principle
+- [ ] Session management uses secure cookies (HttpOnly, Secure, SameSite)
+- [ ] Implement password hashing (bcrypt/Argon2)
 
-**输入验证**
-- [ ] 验证所有用户输入
-- [ ] 检查输入长度限制
-- [ ] 过滤危险字符（`< > " ' & ;`）
-- [ ] 防止 SQL 注入（使用参数化查询）
-- [ ] 防止 XSS（输出编码）
-- [ ] 防止路径遍历
+**Input Validation**
+- [ ] Validate all user inputs
+- [ ] Check input length limits
+- [ ] Filter dangerous characters (`< > " ' & ;`)
+- [ ] Prevent SQL injection (use parameterized queries)
+- [ ] Prevent XSS (output encoding)
+- [ ] Prevent path traversal
 
-**加密处理**
-- [ ] 使用强加密算法（AES-256、RSA-2048+）
-- [ ] 安全密钥管理（不硬编码、密钥轮换）
-- [ ] 静态敏感数据加密
-- [ ] 强制 HTTPS 使用 TLS 1.2+
+**Encryption**
+- [ ] Use strong encryption algorithms (AES-256, RSA-2048+)
+- [ ] Secure key management (no hardcoding, key rotation)
+- [ ] Encrypt sensitive data at rest
+- [ ] Enforce HTTPS with TLS 1.2+
 
-**错误处理**
-- [ ] 错误消息中不暴露敏感信息
-- [ ] 统一错误处理，避免信息泄露
-- [ ] 记录安全相关错误
+**Error Handling**
+- [ ] Do not expose sensitive information in error messages
+- [ ] Unified error handling to prevent information leakage
+- [ ] Log security-related errors
 
-**多线程安全**
-- [ ] 共享资源使用同步机制
-- [ ] 使用线程安全数据结构
-- [ ] 单例模式使用双重检查锁定
+**Concurrency Safety**
+- [ ] Use synchronization mechanisms for shared resources
+- [ ] Use thread-safe data structures
+- [ ] Singleton pattern uses double-checked locking
 
-### 审查阶段清单
+### Review Phase Checklist
 
-**架构审查**
-- [ ] 安全边界清晰定义
-- [ ] 敏感数据有保护措施
-- [ ] 审计日志完整记录
-- [ ] 安全组件可配置
+**Architecture Review**
+- [ ] Security boundaries clearly defined
+- [ ] Sensitive data has protection measures
+- [ ] Audit logs are completely recorded
+- [ ] Security components are configurable
 
-**代码审查**
-- [ ] 无硬编码密码/密钥
-- [ ] 验证所有外部输入
-- [ ] 敏感操作有授权检查
-- [ ] 异常正确处理
-- [ ] 使用安全设计模式
+**Code Review**
+- [ ] No hardcoded passwords/keys
+- [ ] All external inputs validated
+- [ ] Sensitive operations have authorization checks
+- [ ] Exceptions handled correctly
+- [ ] Secure design patterns used
 
-**测试验证**
-- [ ] 单元测试覆盖安全逻辑
-- [ ] 集成测试验证认证/授权
-- [ ] 渗透测试漏洞已修复
+**Testing & Verification**
+- [ ] Unit tests cover security logic
+- [ ] Integration tests verify authentication/authorization
+- [ ] Penetration test vulnerabilities are fixed
 
-## 5. 安全编码原则
+## 5. Secure Coding Principles
 
-1. **纵深防御**：多层安全措施，每层可独立提供保护
-2. **最小权限**：仅授予必要权限
-3. **默认安全**：默认配置应为安全配置
-4. **失败安全**：操作失败时默认拒绝访问
-5. **开闭原则**：对扩展开放，对修改关闭
+1. **Defense in Depth**: Multiple layers of security measures; each layer provides independent protection
+2. **Least Privilege**: Only grant the minimum necessary permissions
+3. **Secure by Default**: Default configurations should be secure
+4. **Fail Secure**: Deny access by default when operations fail
+5. **Open/Closed Principle**: Open for extension, closed for modification
 
-## 6. 常见安全漏洞及对应模式
+## 6. Common Security Vulnerabilities & Corresponding Patterns
 
-| 漏洞类型 | 设计模式解决方案 |
+| Vulnerability Type | Design Pattern Solution |
 |----------|------------------|
-| 权限提升 | 代理模式 + 最小权限检查 |
-| SQL 注入 | 装饰器模式 + 参数化查询 |
-| XSS 攻击 | 装饰器模式 + 输出编码 |
-| 会话劫持 | 策略模式 + 安全 Cookie 策略 |
-| 暴力破解 | 观察者模式 + 限流 |
-| 敏感信息泄露 | 装饰器模式 + 加密 |
-| 路径遍历 | 责任链模式 + 路径验证 |
+| Privilege Escalation | Proxy Pattern + Least Privilege Check |
+| SQL Injection | Decorator Pattern + Parameterized Queries |
+| XSS Attack | Decorator Pattern + Output Encoding |
+| Session Hijacking | Strategy Pattern + Secure Cookie Strategy |
+| Brute Force | Observer Pattern + Rate Limiting |
+| Sensitive Information Leakage | Decorator Pattern + Encryption |
+| Path Traversal | Chain of Responsibility Pattern + Path Validation |

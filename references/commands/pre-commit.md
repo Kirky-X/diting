@@ -1,23 +1,23 @@
-# Pre-commit 审查
+# Pre-commit Review
 
-Pre-commit 自动化审查。
+Pre-commit automated review.
 
-## 检查清单
+## Checklist
 
 ### Linting
-- 代码格式化
-- 风格检查
-- 静态分析
+- Code formatting
+- Style checks
+- Static analysis
 
-### 测试
-- 单元测试通过
-- 集成测试通过
+### Testing
+- Unit tests pass
+- Integration tests pass
 
-### 安全
-- 敏感信息检查
-- 依赖漏洞扫描
+### Security
+- Sensitive information check
+- Dependency vulnerability scanning
 
-### 其他
-- 提交信息规范
-- 文件大小限制
-- 冲突检查
+### Other
+- Commit message conventions
+- File size limits
+- Conflict checks

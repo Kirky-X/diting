@@ -1,58 +1,58 @@
-# 代码简化指南
+# Code Simplification Guidelines
 
-## 核心原则
+## Core Principles
 
-### 1. 保持功能
+### 1. Preserve Functionality
 
-**规则**：永不改变代码做什么 —— 只改变它怎么做。
+**Rule**: Never change what code does — only change how it does it.
 
 ```
-之前：返回用户列表
-之后：返回用户列表（相同行为，更干净的代码）
+Before: Returns a list of users
+After: Returns a list of users (same behavior, cleaner code)
 ```
 
-**验证**
-- 所有测试通过
-- 相同输入产生相同输出
-- 相同副作用
-- 相同错误处理
+**Verification**
+- All tests pass
+- Same inputs produce same outputs
+- Same side effects
+- Same error handling
 
-### 2. 应用项目标准
+### 2. Apply Project Standards
 
-遵循 CLAUDE.md 中的既有约定：
-- 导入排序与扩展名
-- function 关键字优先于箭头函数（适当时）
-- 显式返回类型注解
-- 正确的错误处理模式
-- 一致的命名约定
+Follow existing conventions in CLAUDE.md:
+- Import sorting and extensions
+- `function` keyword over arrow functions (where appropriate)
+- Explicit return type annotations
+- Correct error handling patterns
+- Consistent naming conventions
 
-### 3. 增强清晰度
+### 3. Enhance Clarity
 
-**优先级**
-1. 减少不必要的复杂度和嵌套
-2. 消除冗余代码和抽象
-3. 通过清晰命名提升可读性
-4. 合并相关逻辑
-5. 移除不必要注释
+**Priority**
+1. Reduce unnecessary complexity and nesting
+2. Eliminate redundant code and abstractions
+3. Improve readability through clear naming
+4. Consolidate related logic
+5. Remove unnecessary comments
 
-**平衡点**
-- 显式代码优先于巧妙代码
-- 可读性优先于简洁
-- 可维护性优先于优化
+**Balance**
+- Explicit code over clever code
+- Readability over brevity
+- Maintainability over optimization
 
-### 4. 保持平衡
+### 4. Maintain Balance
 
-**避免过度简化**
-- 不降低代码清晰度
-- 不创造过于巧妙的方案
-- 不合并过多关注点
-- 不以"更少行数"为由牺牲可读性
+**Avoid Over-Simplification**
+- Don't reduce code clarity
+- Don't create overly clever solutions
+- Don't merge too many concerns
+- Don't sacrifice readability for "fewer lines"
 
-## 简化技法
+## Simplification Techniques
 
-### 1. 提取方法
+### 1. Extract Method
 
-**之前**
+**Before**
 ```python
 def process_order(order):
     if order.status == 'pending':
@@ -68,7 +68,7 @@ def process_order(order):
             notify(order.user)
 ```
 
-**之后**
+**After**
 ```python
 def process_order(order):
     if not _can_process(order):
@@ -94,9 +94,9 @@ def _finalize(order):
     notify(order.user)
 ```
 
-### 2. 以卫语句替代嵌套条件
+### 2. Replace Nested Conditionals with Guard Clauses
 
-**之前**
+**Before**
 ```python
 def get_user_permission(user, resource):
     if user is not None:
@@ -107,7 +107,7 @@ def get_user_permission(user, resource):
     return 'denied'
 ```
 
-**之后**
+**After**
 ```python
 def get_user_permission(user, resource):
     if user is None:
@@ -121,9 +121,9 @@ def get_user_permission(user, resource):
     return 'allowed'
 ```
 
-### 3. 以命名常量替代魔术数字
+### 3. Replace Magic Numbers with Named Constants
 
-**之前**
+**Before**
 ```python
 if status == 3:
     process()
@@ -132,7 +132,7 @@ if hours > 40:
     overtime = hours - 40
 ```
 
-**之后**
+**After**
 ```python
 STATUS_COMPLETED = 3
 STANDARD_WORK_WEEK = 40
@@ -144,9 +144,9 @@ if hours > STANDARD_WORK_WEEK:
     overtime = hours - STANDARD_WORK_WEEK
 ```
 
-### 4. 合并重复条件片段
+### 4. Consolidate Duplicate Conditional Fragments
 
-**之前**
+**Before**
 ```python
 if is_special_customer:
     total = calculate_total()
@@ -157,7 +157,7 @@ else:
     send_receipt(total)
 ```
 
-**之后**
+**After**
 ```python
 total = calculate_total()
 if is_special_customer:
@@ -165,9 +165,9 @@ if is_special_customer:
 send_receipt(total)
 ```
 
-### 5. 以多态替代条件
+### 5. Replace Conditional with Polymorphism
 
-**之前**
+**Before**
 ```python
 def calculate_area(shape):
     if shape.type == 'circle':
@@ -178,7 +178,7 @@ def calculate_area(shape):
         return 0.5 * shape.base * shape.height
 ```
 
-**之后**
+**After**
 ```python
 class Circle:
     def calculate_area(self):
@@ -196,9 +196,9 @@ def calculate_area(shape):
     return shape.calculate_area()
 ```
 
-### 6. 分解条件
+### 6. Decompose Conditional
 
-**之前**
+**Before**
 ```python
 if date.before(SUMMER_START) or date.after(SUMMER_END):
     charge = quantity * winter_rate + winter_service_charge
@@ -206,7 +206,7 @@ else:
     charge = quantity * summer_rate
 ```
 
-**之后**
+**After**
 ```python
 if is_winter(date):
     charge = winter_charge(quantity)
@@ -223,9 +223,9 @@ def summer_charge(quantity):
     return quantity * summer_rate
 ```
 
-### 7. 以 if-else 或 switch 替代嵌套三元
+### 7. Replace Nested Ternary with if-else or switch
 
-**之前**
+**Before**
 ```javascript
 const status = user 
   ? user.isActive 
@@ -236,7 +236,7 @@ const status = user
   : 'no-user';
 ```
 
-**之后**
+**After**
 ```javascript
 function getStatus(user) {
   if (!user) return 'no-user';
@@ -246,50 +246,50 @@ function getStatus(user) {
 }
 ```
 
-### 8. 移除对参数的赋值
+### 8. Remove Assignments to Parameters
 
-不要修改参数；在局部变量中累积结果。示例：`discount(value, is_vip, is_new)` —— 跟踪一个 `multiplier` 局部变量，而非重新赋值 `result = result * 0.9`。
+Don't modify parameters; accumulate results in local variables. Example: `discount(value, is_vip, is_new)` — track a `multiplier` local variable instead of reassigning `result = result * 0.9`.
 
-### 9. 以方法对象替代方法
+### 9. Replace Method with Method Object
 
-对于有大量局部变量的长方法，将方法转为类：每个参数/局部变量成为字段，每个步骤成为私有方法。当提取方法因共享局部变量而受阻时使用。
+For long methods with many local variables, convert the method into a class: each parameter/local variable becomes a field, each step becomes a private method. Use when extract method is blocked by shared local variables.
 
-### 10. 引入参数对象
+### 10. Introduce Parameter Object
 
-当方法接收 > 4 个参数时（如 `create_user(name, email, age, address, phone, country)`），将相关参数分组为 `@dataclass UserParams` 并传递该对象。减少参数演进时的调用点变更。
+When a method receives > 4 parameters (e.g. `create_user(name, email, age, address, phone, country)`), group related parameters into a `@dataclass UserParams` and pass that object. Reduces call-site churn when parameters evolve.
 
-## 待处理的代码坏味
+## Code Smells to Address
 
-> 完整的坏味分类、检测信号与解决方案详见 [code-smells.md](code-smells.md)。
+> For the full classification of smells, detection signals, and solutions, see [code-smells.md](code-smells.md).
 
-**优先级速查**：高（长方法 >50 行 / 深嵌套 >4 层 / 过大类 >300 行 / 长参数 >4 / 重复代码）→ 中（死代码 / 魔术数字 / 投机性通用性 / 依恋情结）→ 低（注释 / 不一致命名 / 未使用参数）。
+**Priority cheat sheet**: High (long methods >50 lines / deep nesting >4 levels / god classes >300 lines / long parameter lists >4 / duplicated code) → Medium (dead code / magic numbers / speculative generality / feature envy) → Low (comments / inconsistent naming / unused parameters).
 
-## 简化清单
+## Simplification Checklist
 
-### 结构
-- [ ] 方法不超过 50 行
-- [ ] 嵌套不超过 4 层
-- [ ] 参数不超过 4 个
-- [ ] 每个方法/类单一职责
+### Structure
+- [ ] Methods no more than 50 lines
+- [ ] Nesting no more than 4 levels
+- [ ] Parameters no more than 4
+- [ ] Single responsibility per method/class
 
-### 清晰度
-- [ ] 描述性命名
-- [ ] 无魔术数字
-- [ ] 清晰的控制流
-- [ ] 最少的必要注释
+### Clarity
+- [ ] Descriptive naming
+- [ ] No magic numbers
+- [ ] Clear control flow
+- [ ] Minimal necessary comments
 
-### 重复
-- [ ] 无复制粘贴代码
-- [ ] 公共逻辑已提取
-- [ ] 相似代码已合并
+### Duplication
+- [ ] No copy-paste code
+- [ ] Common logic extracted
+- [ ] Similar code consolidated
 
-### 复杂度
-- [ ] 圈复杂度 < 10
-- [ ] 认知复杂度 < 15
-- [ ] 无深层嵌套条件
-- [ ] 清晰的算法结构
+### Complexity
+- [ ] Cyclomatic complexity < 10
+- [ ] Cognitive complexity < 15
+- [ ] No deeply nested conditionals
+- [ ] Clear algorithmic structure
 
-## 何时不简化
+## When Not to Simplify
 
-**保持原样**：破坏向后兼容 / 性能关键已基准测试路径 / 充分测试的复杂业务逻辑 / 外部约束 / 回归风险 > 收益。
-**改为文档化**：复杂算法 / 复杂业务规则 / 法规要求 / 不熟悉的领域。
+**Keep as-is**: Breaking backward compatibility / performance-critical benchmarked paths / well-tested complex business logic / external constraints / regression risk > benefit.
+**Document instead**: Complex algorithms / complex business rules / regulatory requirements / unfamiliar domains.

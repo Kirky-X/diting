@@ -1,24 +1,24 @@
-# API 审查
+# API Review
 
-REST/GraphQL API 设计审查。
+REST/GraphQL API design review.
 
-## 检查清单
+## Checklist
 
 ### REST API
-- URL 结构遵循 REST 约定
-- HTTP 方法使用正确（GET/POST/PUT/DELETE）
-- 状态码返回正确
-- 版本管理策略
-- 分页和过滤参数
-- 错误响应格式一致性
+- URL structure follows REST conventions
+- HTTP methods used correctly (GET/POST/PUT/DELETE)
+- Status codes returned correctly
+- Versioning strategy
+- Pagination and filtering parameters
+- Error response format consistency
 
 ### GraphQL
-- Query/Mutation/Subscription 分离
-- N+1 查询问题
-- 认证和授权
-- 限流策略
+- Query/Mutation/Subscription separation
+- N+1 query issues
+- Authentication and authorization
+- Rate limiting strategy
 
-### 通用
-- API 文档完整性
-- 请求/响应示例
-- 认证机制（OAuth、JWT、API Key）
+### General
+- API documentation completeness
+- Request/response examples
+- Authentication mechanisms (OAuth, JWT, API Key)

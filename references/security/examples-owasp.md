@@ -1,8 +1,8 @@
-# 安全 OWASP 与审计示例
+# Security OWASP & Audit Examples
 
-> OWASP 防御与审计案例：纵深防御、审计系统、告警日志、审计分析。详见主索引 [examples.md](examples.md)。
+> OWASP defense and audit cases: defense in depth, audit systems, alert logging, audit analysis. See the main index [examples.md](examples.md).
 
-## 1. 纵深防御系统
+## 1. Defense in Depth System
 
 ```java
 public class DefenseInDepthManager {
@@ -77,7 +77,7 @@ class IntrusionDetectionLayer implements SecurityLayer {
 }
 ```
 
-## 2. 安全审计系统
+## 2. Security Audit System
 
 ```java
 public interface AuditLogger {
@@ -170,7 +170,7 @@ public class DatabaseAuditLogger implements AuditLogger {
 }
 ```
 
-## 3. 告警与日志观察者
+## 3. Alert & Log Observer
 
 ```java
 // 日志观察者
@@ -225,7 +225,7 @@ public class AlertObserver implements SecurityObserver {
 }
 ```
 
-## 4. 审计分析器
+## 4. Audit Analyzer
 
 ```java
 public class AuditAnalyzer {

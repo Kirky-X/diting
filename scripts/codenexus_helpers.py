@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""GitNexus bridge for the diting scanner suite.
+"""CodeNexus bridge for the diting scanner suite.
 
-Architectural note — why this module does NOT call `mcp__gitnexus__*` directly:
-  The three Engine-A scanners run as standalone Python subprocesses. MCP tools
-  (`mcp__gitnexus__impact`, `mcp__gitnexus__query`, …) are JSON-RPC calls served
-  to the agent layer (Claude Code) over its MCP transport — they are NOT reachable
-  from a child process. So this module does the part that *must* live in the
-  scripts (detect the index, extract & prioritize symbol-level blast-radius
-  targets from concrete findings) and emits a structured worklist. The agent
-  layer then executes the listed `mcp__gitnexus__*` calls — the only place they
-  can actually run. See SKILL.md "步骤 1.5 — GitNexus 爆炸半径预检" for the contract.
+Architectural note — why this module emits CLI commands, not MCP calls:
+  The three Engine-A scanners run as standalone Python subprocesses. CodeNexus is
+  a flag-based CLI (`codenexus <subcommand> --flag value`); its MCP server
+  (`codenexus mcp`) is only reachable from the agent layer over stdio, NOT from a
+  child process. So this module does the part that *must* live in the scripts
+  (detect the index DB, extract & prioritize symbol-level blast-radius targets
+  from concrete findings) and emits a structured worklist of `codenexus` CLI
+  commands. The agent layer then runs those commands — the only place they can
+  actually execute. See SKILL.md "Step 1.5 — CodeNexus Blast Radius Pre-check" for the contract.
 
-The embedded sub-skills under `.claude/skills/gitnexus/` (6 files) describe the
-full MCP workflow; this module is the scanner-side adapter that feeds it.
+The embedded CodeNexus skill under `.claude/skills/codenexus/SKILL.md` describes the
+full CLI workflow; this module is the scanner-side adapter that feeds it.
 """
 
 from __future__ import annotations
@@ -21,6 +21,9 @@ import os
 import re
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional
+
+# Default CodeNexus database file name (used by `codenexus index` / `--db`).
+_CODENEXUS_DB = "codenexus.lbug"
 
 # Severity ordering for target prioritization — only critical/high findings are
 # worth a blast-radius check (those are the ones that block approval).
@@ -33,7 +36,7 @@ _DEF_RE = re.compile(
     r"\s+(\w+)"
 )
 
-# Heuristic concept keywords per finding category, fed to gitnexus_query so the
+# Heuristic concept keywords per finding category, fed to `codenexus query` so the
 # agent can locate the execution flow a finding lives in.
 _CATEGORY_CONCEPTS: Dict[str, str] = {
     "security": "security-sensitive code path",
@@ -47,7 +50,7 @@ _CATEGORY_CONCEPTS: Dict[str, str] = {
 
 @dataclass(frozen=True)
 class ImpactTarget:
-    """A single symbol worth a `mcp__gitnexus__impact` call."""
+    """A single symbol worth a `codenexus impact` call."""
 
     symbol: str
     file: str
@@ -57,26 +60,38 @@ class ImpactTarget:
     rule_id: str
 
 
-def find_repo_root(start: str = ".") -> str:
-    """Walk upward from `start` looking for a directory containing a .gitnexus/ index.
+def _find_db(start: str = ".") -> Optional[str]:
+    """Walk upward from `start` looking for a CodeNexus DB (`.codenexus.lbug`).
 
-    Returns the repo root if found, else the resolved `start`. Never raises.
+    Returns the absolute path to the DB file if found, else None. Never raises.
     """
     here = os.path.abspath(start)
     if os.path.isfile(here):
         here = os.path.dirname(here)
     while True:
-        if os.path.isdir(os.path.join(here, ".gitnexus")):
-            return here
+        candidate = os.path.join(here, _CODENEXUS_DB)
+        if os.path.isfile(candidate):
+            return candidate
         parent = os.path.dirname(here)
         if parent == here:
-            return os.path.abspath(start)
+            return None
         here = parent
 
 
+def find_repo_root(start: str = ".") -> str:
+    """Walk upward from `start` looking for a directory containing a CodeNexus DB.
+
+    Returns the repo root if found, else the resolved `start`. Never raises.
+    """
+    db = _find_db(start)
+    if db:
+        return os.path.dirname(db)
+    return os.path.abspath(start)
+
+
 def index_available(start: str = ".") -> bool:
-    """True iff a GitNexus index (`.gitnexus/`) is present at/above `start`."""
-    return os.path.isdir(os.path.join(find_repo_root(start), ".gitnexus"))
+    """True iff a CodeNexus DB (`codenexus.lbug`) is present at/above `start`."""
+    return _find_db(start) is not None
 
 
 def enclosing_symbol(file_path: str, line: int) -> Optional[str]:
@@ -112,7 +127,7 @@ def build_impact_targets(
     findings: Iterable[Dict[str, Any]],
     max_targets: int = 15,
 ) -> List[ImpactTarget]:
-    """Extract deduplicated, prioritized GitNexus impact targets from findings.
+    """Extract deduplicated, prioritized CodeNexus impact targets from findings.
 
     Only critical/high findings are considered — lower-severity findings rarely
     warrant a blast-radius check, and impact queries are not free. When the scanner
@@ -140,7 +155,7 @@ def build_impact_targets(
             f.get("method") or f.get("symbol") or enclosing_symbol(str(file_path), line)
         )
         if not symbol:
-            continue  # nothing to target with `mcp__gitnexus__impact`
+            continue  # nothing to target with `codenexus impact`
         key = (symbol, os.path.basename(str(file_path)))
         if key in seen:
             continue
@@ -161,7 +176,7 @@ def build_impact_targets(
 
 
 def build_query_concepts(findings: Iterable[Dict[str, Any]]) -> List[str]:
-    """Distinct concept strings for `mcp__gitnexus__query`, one per finding category.
+    """Distinct concept strings for `codenexus query`, one per finding category.
 
     These let the agent locate the execution flows the findings live in, even when
     no individual symbol is impact-worthy (e.g. medium-severity findings).
@@ -175,47 +190,55 @@ def build_query_concepts(findings: Iterable[Dict[str, Any]]) -> List[str]:
     return concepts
 
 
-def format_gitnexus_section(
+def format_codenexus_section(
     targets: List[ImpactTarget],
     concepts: List[str],
     repo_root: Optional[str] = None,
+    db: Optional[str] = None,
 ) -> str:
-    """Render a markdown worklist the agent executes via `mcp__gitnexus__*`.
+    """Render a markdown worklist the agent executes via `codenexus` CLI.
 
     Returns an empty string when there is nothing to recommend (no targets AND no
     concepts), so callers can unconditionally append the result.
     """
     if not targets and not concepts:
         return ""
+    db_flag = f" --db {db}" if db else ""
     lines: List[str] = []
-    lines.append("### 🔭 GitNexus 爆炸半径预检\n")
+    lines.append("### 🔭 CodeNexus Blast Radius Pre-check\n")
     if repo_root:
-        lines.append(f"**Index detected**: `{repo_root}/.gitnexus/`\n")
+        lines.append(f"**Index detected**: `{repo_root}/{_CODENEXUS_DB}`\n")
     lines.append(
-        "> Scanner-side adapter. The listed `mcp__gitnexus__*` calls must be made "
-        "by the agent (MCP is not reachable from the scanner subprocess). See "
-        "`.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md`.\n"
+        "> Scanner-side adapter. The listed `codenexus` CLI commands must be run "
+        "by the agent (the CLI is not invoked from the scanner subprocess). See "
+        "`.claude/skills/codenexus/SKILL.md`.\n"
     )
     if targets:
         lines.append("**Impact analysis** (critical/high findings → upstream callers):")
         lines.append("")
         for t in targets:
             lines.append(
-                f'- `mcp__gitnexus__impact({{target: "{t.symbol}", '
-                f'direction: "upstream"}})` — {t.severity}/{t.rule_id} @ '
+                f'- `codenexus impact --symbol {t.symbol} --depth 3 '
+                f'--edge_types "CALLS,IMPLEMENTS,USES_TYPE" --max_depth 3 '
+                f'--include_tests false{db_flag}` — {t.severity}/{t.rule_id} @ '
                 f"`{os.path.basename(t.file)}:{t.line}`"
             )
         lines.append("")
         lines.append(
             "> Review `d=1` (WILL BREAK) callers first; cross-check affected "
-            "execution flows via `READ gitnexus://repo/{name}/processes`."
+            "execution flows via `codenexus context --symbol <SYMBOL> --enhanced true`."
         )
         lines.append("")
     if concepts:
         lines.append("**Execution-flow location** (one query per finding category):")
         lines.append("")
         for c in concepts:
-            lines.append(f'- `mcp__gitnexus__query({{query: "{c}"}})`')
+            # Escape double quotes inside the concept for safe Cypher embedding.
+            safe = c.replace('"', "'")
+            lines.append(
+                f'- `codenexus query --cypher "MATCH (f:Function) WHERE f.name '
+                f"CONTAINS '{safe}' RETURN f.name, f.filePath, f.startLine LIMIT 20\"{db_flag}`"
+            )
         lines.append("")
     return "\n".join(lines)
 
@@ -225,14 +248,15 @@ def section_for_findings(
     start: str = ".",
     max_targets: int = 15,
 ) -> str:
-    """One-call helper: build & format the GitNexus section if an index exists.
+    """One-call helper: build & format the CodeNexus section if an index exists.
 
-    Returns "" when no GitNexus index is present at/above `start` (graceful no-op),
+    Returns "" when no CodeNexus DB is present at/above `start` (graceful no-op),
     so scanners can call this unconditionally and only emit output when relevant.
     """
-    root = find_repo_root(start)
-    if not os.path.isdir(os.path.join(root, ".gitnexus")):
+    db = _find_db(start)
+    if not db:
         return ""
+    root = os.path.dirname(db)
     targets = build_impact_targets(findings, max_targets=max_targets)
     concepts = build_query_concepts(findings)
-    return format_gitnexus_section(targets, concepts, repo_root=root)
+    return format_codenexus_section(targets, concepts, repo_root=root, db=db)

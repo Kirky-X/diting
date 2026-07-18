@@ -1,267 +1,267 @@
-# 安全审查清单
+# Security Review Checklist
 
-## 1. 认证与授权
+## 1. Authentication & Authorization
 
-### 认证安全
+### Authentication Security
 
-- [ ] 密码存储使用强哈希算法（bcrypt、Argon2）
-- [ ] 避免硬编码凭据
-- [ ] 实施密码强度验证
-- [ ] 支持多因素认证
-- [ ] 会话管理使用安全 Cookie（HttpOnly、Secure、SameSite）
-- [ ] 实施合理的会话超时
+- [ ] Password storage uses strong hashing algorithms (bcrypt, Argon2)
+- [ ] No hardcoded credentials
+- [ ] Password strength validation implemented
+- [ ] Multi-factor authentication supported
+- [ ] Session management uses secure cookies (HttpOnly, Secure, SameSite)
+- [ ] Reasonable session timeout implemented
 
-### 授权检查
+### Authorization Checks
 
-- [ ] 实施最小权限原则
-- [ ] 验证用户对资源的访问权限
-- [ ] 防止水平越权
-- [ ] 防止垂直越权
-- [ ] API 端点有适当的授权检查
+- [ ] Principle of least privilege implemented
+- [ ] User access to resources verified
+- [ ] Horizontal privilege escalation prevented
+- [ ] Vertical privilege escalation prevented
+- [ ] API endpoints have proper authorization checks
 
-## 2. 输入验证
+## 2. Input Validation
 
-### 参数验证
+### Parameter Validation
 
-- [ ] 验证所有用户输入
-- [ ] 检查输入长度限制
-- [ ] 验证输入类型
-- [ ] 优先使用白名单验证而非黑名单
-- [ ] 防止整数溢出
-- [ ] 验证文件上传类型和大小
+- [ ] All user input is validated
+- [ ] Input length limits checked
+- [ ] Input types validated
+- [ ] Whitelist validation preferred over blacklist
+- [ ] Integer overflow prevented
+- [ ] File upload type and size validated
 
-### SQL 注入防护
+### SQL Injection Prevention
 
-- [ ] 使用参数化查询
-- [ ] 避免动态 SQL 拼接
-- [ ] 使用 ORM 或查询构建器
-- [ ] 存储过程使用参数
+- [ ] Parameterized queries used
+- [ ] Dynamic SQL string concatenation avoided
+- [ ] ORM or query builder used
+- [ ] Stored procedures use parameters
 
-### NoSQL 注入防护
+### NoSQL Injection Prevention
 
-- [ ] 验证查询参数类型
-- [ ] 避免使用 $where 操作符
-- [ ] 使用 MongoDB 参数化查询
+- [ ] Query parameter types validated
+- [ ] $where operator avoided
+- [ ] MongoDB parameterized queries used
 
-## 3. 输出编码
+## 3. Output Encoding
 
-### XSS 防护
+### XSS Prevention
 
-- [ ] HTML 上下文使用 HTML 编码
-- [ ] JavaScript 上下文使用 JavaScript 编码
-- [ ] URL 参数使用 URL 编码
-- [ ] CSS 上下文使用 CSS 编码
-- [ ] 使用内容安全策略（CSP）
+- [ ] HTML encoding used in HTML context
+- [ ] JavaScript encoding used in JavaScript context
+- [ ] URL encoding used for URL parameters
+- [ ] CSS encoding used in CSS context
+- [ ] Content Security Policy (CSP) used
 
-### 敏感数据保护
+### Sensitive Data Protection
 
-- [ ] 不记录敏感数据
-- [ ] 错误消息不暴露敏感数据
-- [ ] API 响应不包含敏感字段
-- [ ] 静态金融数据加密
-- [ ] PII 数据脱敏
+- [ ] Sensitive data not logged
+- [ ] Error messages don't expose sensitive data
+- [ ] API responses don't contain sensitive fields
+- [ ] Static financial data encrypted
+- [ ] PII data masked
 
-## 4. 加密处理
+## 4. Cryptographic Handling
 
-### 算法选择
+### Algorithm Selection
 
-- [ ] 使用强加密算法（AES-256、RSA-2048+）
-- [ ] 避免已知不安全算法（MD5、SHA1、DES）
-- [ ] 使用安全随机数生成器
-- [ ] 正确实现加密模式（CBC、GCM）
+- [ ] Strong encryption algorithms used (AES-256, RSA-2048+)
+- [ ] Known insecure algorithms avoided (MD5, SHA1, DES)
+- [ ] Secure random number generator used
+- [ ] Cryptographic modes properly implemented (CBC, GCM)
 
-### 密钥管理
+### Key Management
 
-- [ ] 不硬编码密钥
-- [ ] 通过安全渠道获取密钥
-- [ ] 实施密钥轮换策略
-- [ ] 开发与生产密钥分离
-- [ ] 使用密钥管理服务（KMS、Vault）
+- [ ] Keys not hardcoded
+- [ ] Keys obtained through secure channels
+- [ ] Key rotation strategy implemented
+- [ ] Development and production keys separated
+- [ ] Key management service used (KMS, Vault)
 
-### 传输安全
+### Transport Security
 
-- [ ] 使用 HTTPS（TLS 1.2+）
-- [ ] 证书正确配置
-- [ ] 防止降级攻击
-- [ ] 配置 HSTS 头
+- [ ] HTTPS used (TLS 1.2+)
+- [ ] Certificates properly configured
+- [ ] Downgrade attacks prevented
+- [ ] HSTS header configured
 
-## 5. 错误处理
+## 5. Error Handling
 
-### 错误消息
+### Error Messages
 
-- [ ] 不暴露堆栈跟踪
-- [ ] 记录详细错误信息
-- [ ] 向用户提供通用错误消息
-- [ ] 区分不同错误类型
+- [ ] Stack traces not exposed
+- [ ] Detailed error information logged
+- [ ] Generic error messages provided to users
+- [ ] Different error types distinguished
 
-### 异常处理
+### Exception Handling
 
-- [ ] 捕获具体异常
-- [ ] 失败时清理资源
-- [ ] 不吞掉关键异常
-- [ ] 实施重试机制（指数退避）
+- [ ] Specific exceptions caught
+- [ ] Resources cleaned up on failure
+- [ ] Critical exceptions not swallowed
+- [ ] Retry mechanism implemented (exponential backoff)
 
-## 6. 文件安全
+## 6. File Security
 
-### 文件上传
+### File Upload
 
-- [ ] 验证文件类型（MIME 和扩展名）
-- [ ] 限制文件大小
-- [ ] 重命名上传文件
-- [ ] 存储在非可执行目录
-- [ ] 扫描恶意软件
+- [ ] File type validated (MIME and extension)
+- [ ] File size limited
+- [ ] Uploaded files renamed
+- [ ] Files stored in non-executable directory
+- [ ] Malware scanned
 
-### 文件访问
+### File Access
 
-- [ ] 防止路径遍历
-- [ ] 验证文件路径在允许范围内
-- [ ] 限制文件权限
-- [ ] 不执行用户上传的文件
+- [ ] Path traversal prevented
+- [ ] File paths verified to be within allowed scope
+- [ ] File permissions restricted
+- [ ] User-uploaded files not executed
 
-## 7. 业务逻辑
+## 7. Business Logic
 
-### 业务安全
+### Business Security
 
-- [ ] 防止金额溢出
-- [ ] 订单状态机正确实现
-- [ ] 防止重复提交
-- [ ] 实施幂等性
-- [ ] 验证码保护
+- [ ] Amount overflow prevented
+- [ ] Order state machine correctly implemented
+- [ ] Duplicate submissions prevented
+- [ ] Idempotency implemented
+- [ ] CAPTCHA protection
 
-### 竞态条件
+### Race Conditions
 
-- [ ] 使用事务
-- [ ] 实施乐观/悲观锁
-- [ ] 防止 TOCTOU 漏洞
-- [ ] 原子化余额操作
+- [ ] Transactions used
+- [ ] Optimistic/pessimistic locking implemented
+- [ ] TOCTOU vulnerabilities prevented
+- [ ] Balance operations made atomic
 
-## 8. API 安全
+## 8. API Security
 
 ### REST API
 
-- [ ] 使用适当的 HTTP 方法
-- [ ] 实施限流
-- [ ] CORS 正确配置
-- [ ] API 版本管理
-- [ ] 请求签名验证
+- [ ] Appropriate HTTP methods used
+- [ ] Rate limiting implemented
+- [ ] CORS properly configured
+- [ ] API versioning managed
+- [ ] Request signature verification
 
-### 认证方式
+### Authentication Methods
 
-- [ ] JWT 安全配置（短过期时间）
-- [ ] OAuth 2.0 正确实现
-- [ ] API Key 轮换
-- [ ] Refresh token 安全存储
+- [ ] JWT properly configured (short expiry)
+- [ ] OAuth 2.0 correctly implemented
+- [ ] API Key rotation
+- [ ] Refresh token securely stored
 
-## 9. 基础设施
+## 9. Infrastructure
 
-### 配置安全
+### Configuration Security
 
-- [ ] 生产配置安全
-- [ ] 禁用调试模式
-- [ ] 安全的默认配置
-- [ ] 配置加密存储
+- [ ] Production configuration secured
+- [ ] Debug mode disabled
+- [ ] Secure default configurations
+- [ ] Configuration encrypted at rest
 
-### 依赖安全
+### Dependency Security
 
-- [ ] 定期更新依赖
-- [ ] 使用依赖扫描工具
-- [ ] 已知漏洞已修复
-- [ ] 最小化依赖数量
+- [ ] Dependencies regularly updated
+- [ ] Dependency scanning tools used
+- [ ] Known vulnerabilities patched
+- [ ] Dependency count minimized
 
-## 10. 日志与监控
+## 10. Logging & Monitoring
 
-### 日志
+### Logging
 
-- [ ] 记录认证尝试
-- [ ] 记录敏感操作
-- [ ] 记录错误和异常
-- [ ] 安全的日志存储
-- [ ] 实施日志脱敏
+- [ ] Authentication attempts logged
+- [ ] Sensitive operations logged
+- [ ] Errors and exceptions logged
+- [ ] Secure log storage
+- [ ] Log data masking implemented
 
-### 监控与告警
+### Monitoring & Alerting
 
-- [ ] 异常检测
-- [ ] 登录失败告警
-- [ ] 性能异常告警
-- [ ] 安全事件告警
+- [ ] Anomaly detection
+- [ ] Failed login alerts
+- [ ] Performance anomaly alerts
+- [ ] Security event alerts
 
 ---
 
-## 代码示例：常见问题对比
+## Code Examples: Common Issues Comparison
 
-### SQL 注入
+### SQL Injection
 
 ```python
-# 危险 - 字符串拼接
+# Dangerous - string concatenation
 query = "SELECT * FROM users WHERE name = '" + username + "'"
 cursor.execute(query)
 
-# 安全 - 参数化查询
+# Safe - parameterized query
 cursor.execute("SELECT * FROM users WHERE name = %s", (username,))
 ```
 
-### 硬编码凭据
+### Hardcoded Credentials
 
 ```python
-# 危险
+# Dangerous
 API_KEY = "sk-prod-abc123xyz"
 
-# 安全
+# Safe
 import os
-API_KEY = os.environ["API_KEY"]   # 或从 KMS/Vault 读取
+API_KEY = os.environ["API_KEY"]   # Or read from KMS/Vault
 ```
 
-### 密码哈希
+### Password Hashing
 
 ```python
-# 危险
+# Dangerous
 import hashlib
 stored = hashlib.md5(password.encode()).hexdigest()
 
-# 安全
+# Safe
 import bcrypt
 stored = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 ```
 
-### XSS 防护
+### XSS Prevention
 
 ```javascript
-// 危险
+// Dangerous
 element.innerHTML = userInput;
 
-// 安全
+// Safe
 element.textContent = userInput;
-// 或使用 DOMPurify
+// Or use DOMPurify
 element.innerHTML = DOMPurify.sanitize(userInput);
 ```
 
-### IDOR 防护
+### IDOR Prevention
 
 ```python
-# 危险 - 无所有权验证
+# Dangerous - no ownership verification
 def get_order(order_id):
     return Order.objects.get(id=order_id)
 
-# 安全 - 验证当前用户拥有该资源
+# Safe - verify current user owns the resource
 def get_order(order_id, current_user):
     order = Order.objects.get(id=order_id)
     if order.user_id != current_user.id:
-        raise PermissionDenied("访问被拒绝")
+        raise PermissionDenied("Access denied")
     return order
 ```
 
-### Cookie 安全配置
+### Cookie Security Configuration
 
 ```python
-# 危险
+# Dangerous
 response.set_cookie("session", token)
 
-# 安全
+# Safe
 response.set_cookie(
     "session", token,
-    httponly=True,       # XSS 防护
-    secure=True,         # 仅 HTTPS
-    samesite="Strict",   # CSRF 防护
+    httponly=True,       # XSS protection
+    secure=True,         # HTTPS only
+    samesite="Strict",   # CSRF protection
     max_age=3600,
 )
 ```

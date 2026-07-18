@@ -1,8 +1,8 @@
-# 安全注入防御示例
+# Security Injection Defense Examples
 
-> 注入类安全案例：代理模式、装饰器模式、责任链模式。详见主索引 [examples.md](examples.md)。
+> Injection-type security cases: Proxy Pattern, Decorator Pattern, Chain of Responsibility Pattern. See the main index [examples.md](examples.md).
 
-## 1. 完整代理模式实现
+## 1. Complete Proxy Pattern Implementation
 
 ```java
 // 抽象主题
@@ -102,7 +102,7 @@ public class SecurityProxy implements SensitiveResource {
 }
 ```
 
-## 2. 完整装饰器模式实现
+## 2. Complete Decorator Pattern Implementation
 
 ```java
 // 抽象组件
@@ -193,7 +193,7 @@ public class AuditDecorator extends SecurityDecorator {
 }
 ```
 
-## 3. 责任链模式实现
+## 3. Chain of Responsibility Pattern Implementation
 
 ```java
 // 安全请求
