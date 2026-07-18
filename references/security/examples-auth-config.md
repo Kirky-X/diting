@@ -5,14 +5,14 @@
 ## 1. Complete Observer Pattern Implementation
 
 ```java
-// 安全事件类型
+// Security event types
 enum SecurityEventType {
     LOGIN_SUCCESS, LOGIN_FAILURE,
     UNAUTHORIZED_ACCESS, DATA_BREACH_ATTEMPT,
     CONFIG_CHANGE, PRIVILEGE_ESCALATION
 }
 
-// 安全事件
+// Security event
 public class SecurityEvent {
     private final SecurityEventType type;
     private final String user;
@@ -30,12 +30,12 @@ public class SecurityEvent {
     }
 }
 
-// 安全事件观察者
+// Security event observer
 public interface SecurityObserver {
     void update(SecurityEvent event);
 }
 
-// 事件管理器
+// Event manager
 public class SecurityEventManager {
     private static final SecurityEventManager INSTANCE =
         new SecurityEventManager();
@@ -57,13 +57,13 @@ public class SecurityEventManager {
             try {
                 observer.update(event);
             } catch (Exception e) {
-                System.err.println("观察者执行失败: " + e.getMessage());
+                System.err.println("Observer execution failed: " + e.getMessage());
             }
         }
     }
 }
 
-// 暴力破解检测观察者
+// Brute force detection observer
 public class BruteForceDetector implements SecurityObserver {
     private final Map<String, List<Instant>> loginAttempts =
         new ConcurrentHashMap<>();
@@ -83,11 +83,11 @@ public class BruteForceDetector implements SecurityObserver {
             attempts.add(Instant.now());
 
             if (attempts.size() >= MAX_ATTEMPTS) {
-                // 触发账户锁定
+                // Trigger account lockout
                 SecurityEvent lockEvent = new SecurityEvent(
                     SecurityEventType.DATA_BREACH_ATTEMPT,
                     user, "BruteForceDetector",
-                    "检测到多次登录失败尝试"
+                    "Multiple login failure attempts detected"
                 );
                 SecurityEventManager.getInstance().notifyObservers(lockEvent);
             }
@@ -99,26 +99,26 @@ public class BruteForceDetector implements SecurityObserver {
 ## 2. Strategy Pattern Implementation
 
 ```java
-// 加密策略接口
+// Encryption strategy interface
 public interface EncryptionStrategy {
     String encrypt(String data);
     String decrypt(String encryptedData);
     String getAlgorithmName();
 }
 
-// AES 加密策略
+// AES encryption strategy
 public class AESEncryptionStrategy implements EncryptionStrategy {
     private static final String ALGORITHM = "AES/GCM/NoPadding";
     private final SecretKey key;
 
     @Override
     public String encrypt(String data) {
-        // 实现 AES 加密
+        // Implement AES encryption
     }
 
     @Override
     public String decrypt(String encryptedData) {
-        // 实现 AES 解密
+        // Implement AES decryption
     }
 
     @Override
@@ -127,18 +127,18 @@ public class AESEncryptionStrategy implements EncryptionStrategy {
     }
 }
 
-// RSA 加密策略
+// RSA encryption strategy
 public class RSAStrategy implements EncryptionStrategy {
     private static final String ALGORITHM = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding";
 
     @Override
     public String encrypt(String data) {
-        // 实现 RSA 加密
+        // Implement RSA encryption
     }
 
     @Override
     public String decrypt(String encryptedData) {
-        // 实现 RSA 解密
+        // Implement RSA decryption
     }
 
     @Override
@@ -147,7 +147,7 @@ public class RSAStrategy implements EncryptionStrategy {
     }
 }
 
-// 使用策略的安全上下文
+// Security context using strategy
 public class EncryptionContext {
     private EncryptionStrategy strategy;
 
@@ -204,7 +204,7 @@ public class SecureConfigurationManager {
 
     public void updateConfig(String key, Object value, String adminUser) {
         if (!verifyAdminAccess(adminUser)) {
-            throw new SecurityException("权限不足");
+            throw new SecurityException("Insufficient permissions");
         }
         logConfigChange(adminUser, key, value);
         config.put(key, value);
@@ -216,10 +216,10 @@ public class SecureConfigurationManager {
     }
 
     private void logConfigChange(String user, String key, Object value) {
-        System.out.println("配置变更: 用户=" + user +
-                          ", 键=" + key +
-                          ", 值=" + value +
-                          ", 时间=" + new Date());
+        System.out.println("Config change: user=" + user +
+                          ", key=" + key +
+                          ", value=" + value +
+                          ", time=" + new Date());
     }
 }
 ```
@@ -227,7 +227,7 @@ public class SecureConfigurationManager {
 ## 4. Security Configuration Strategy
 
 ```java
-// 配置策略工厂
+// Config strategy factory
 class SecurityConfigStrategyFactory {
     public static SecurityConfigStrategy getStrategy(String configType) {
         switch (configType) {
@@ -238,12 +238,12 @@ class SecurityConfigStrategyFactory {
             case "password-policy":
                 return new PasswordPolicyUpdateStrategy();
             default:
-                throw new IllegalArgumentException("未知配置类型: " + configType);
+                throw new IllegalArgumentException("Unknown config type: " + configType);
         }
     }
 }
 
-// 配置策略接口
+// Config strategy interface
 interface SecurityConfigStrategy {
     void apply(String value);
 }
@@ -251,24 +251,24 @@ interface SecurityConfigStrategy {
 class EncryptionKeyUpdateStrategy implements SecurityConfigStrategy {
     @Override
     public void apply(String value) {
-        System.out.println("更新加密密钥: " + value);
-        // 实现密钥更新逻辑
+        System.out.println("Updating encryption key: " + value);
+        // Implement key update logic
     }
 }
 
 class AccessPolicyUpdateStrategy implements SecurityConfigStrategy {
     @Override
     public void apply(String value) {
-        System.out.println("更新访问策略: " + value);
-        // 实现访问策略更新逻辑
+        System.out.println("Updating access policy: " + value);
+        // Implement access policy update logic
     }
 }
 
 class PasswordPolicyUpdateStrategy implements SecurityConfigStrategy {
     @Override
     public void apply(String value) {
-        System.out.println("更新密码策略: " + value);
-        // 实现密码策略更新逻辑
+        System.out.println("Updating password policy: " + value);
+        // Implement password policy update logic
     }
 }
 ```

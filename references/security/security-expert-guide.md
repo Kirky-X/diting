@@ -112,7 +112,7 @@ Senior security expert with 10+ years of hands-on experience, specializing in:
 - XXE protection
 
 ```java
-// 禁用 XML 解析的 DTD
+// Disable DTD in XML parsing
 factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
 ```
 
@@ -155,7 +155,7 @@ factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
 ### Authorization Best Practices
 
 ```python
-# RBAC 示例
+# RBAC example
 class Permission(Enum):
     READ = "read"
     WRITE = "write"

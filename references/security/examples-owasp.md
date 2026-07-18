@@ -56,7 +56,7 @@ class EncryptionLayer implements SecurityLayer {
 class AuditLayer implements SecurityLayer {
     @Override
     public boolean check(SecurityRequest request) {
-        System.out.println("审计: " + request.getUser() + " - " + request.getAction());
+        System.out.println("Audit: " + request.getUser() + " - " + request.getAction());
         return true;
     }
 }
@@ -69,7 +69,7 @@ class IntrusionDetectionLayer implements SecurityLayer {
         String user = request.getUser();
         int count = requestCount.merge(user, 1, Integer::sum);
         if (count > 100) {
-            System.err.println("IDS: " + user + " 请求过多");
+            System.err.println("IDS: " + user + " too many requests");
             return false;
         }
         return true;
@@ -124,7 +124,7 @@ public class DatabaseAuditLogger implements AuditLogger {
             stmt.setTimestamp(5, Timestamp.from(event.getTimestamp()));
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("记录安全事件失败: " + e.getMessage());
+            System.err.println("Failed to record security event: " + e.getMessage());
         }
     }
 
@@ -139,7 +139,7 @@ public class DatabaseAuditLogger implements AuditLogger {
             stmt.setTimestamp(4, Timestamp.from(Instant.now()));
             stmt.executeUpdate();
         } catch (SQLException e) {
-            System.err.println("记录访问失败: " + e.getMessage());
+            System.err.println("Failed to record access: " + e.getMessage());
         }
     }
 
@@ -163,7 +163,7 @@ public class DatabaseAuditLogger implements AuditLogger {
                 ));
             }
         } catch (SQLException e) {
-            System.err.println("获取审计轨迹失败: " + e.getMessage());
+            System.err.println("Failed to retrieve audit trail: " + e.getMessage());
         }
         return records;
     }
@@ -173,13 +173,13 @@ public class DatabaseAuditLogger implements AuditLogger {
 ## 3. Alert & Log Observer
 
 ```java
-// 日志观察者
+// Logging observer
 public class LoggingObserver implements SecurityObserver {
     private static final Logger logger = Logger.getLogger(LoggingObserver.class.getName());
 
     @Override
     public void update(SecurityEvent event) {
-        String logMessage = String.format("[%s] %s - 用户: %s, 来源: %s, 详情: %s",
+        String logMessage = String.format("[%s] %s - user: %s, source: %s, details: %s",
             event.getTimestamp(),
             event.getType(),
             event.getUser(),
@@ -196,7 +196,7 @@ public class LoggingObserver implements SecurityObserver {
     }
 }
 
-// 告警观察者
+// Alert observer
 public class AlertObserver implements SecurityObserver {
     private final EmailService emailService;
     private final Set<SecurityEventType> alertTypes;
@@ -213,9 +213,9 @@ public class AlertObserver implements SecurityObserver {
     @Override
     public void update(SecurityEvent event) {
         if (alertTypes.contains(event.getType())) {
-            String subject = "安全告警: " + event.getType();
+            String subject = "Security alert: " + event.getType();
             String body = String.format(
-                "检测到安全事件:\n类型: %s\n用户: %s\n来源: %s\n时间: %s\n详情: %s",
+                "Security event detected:\nType: %s\nUser: %s\nSource: %s\nTime: %s\nDetails: %s",
                 event.getType(), event.getUser(), event.getSource(),
                 event.getTimestamp(), event.getDetails()
             );
@@ -235,7 +235,7 @@ public class AuditAnalyzer {
         this.auditLogger = auditLogger;
     }
 
-    // 检测可疑登录模式
+    // Detect suspicious login patterns
     public void detectSuspiciousLogins(Instant from, Instant to) {
         List<AuditRecord> records = auditLogger.getAuditTrail("ALL", from, to);
         Map<String, Long> loginFailures = records.stream()
@@ -244,20 +244,20 @@ public class AuditAnalyzer {
 
         loginFailures.forEach((user, count) -> {
             if (count > 5) {
-                System.err.println("可疑: 用户 " + user + " 有 " + count + " 次登录失败");
+                System.err.println("Suspicious: user " + user + " has " + count + " login failures");
             }
         });
     }
 
-    // 检测权限提升
+    // Detect privilege escalation
     public void detectPrivilegeEscalation(Instant from, Instant to) {
         List<AuditRecord> records = auditLogger.getAuditTrail("ALL", from, to);
         records.stream()
             .filter(r -> r.getAction().equals("PRIVILEGE_CHANGE"))
-            .forEach(r -> System.out.println("权限提升: " + r));
+            .forEach(r -> System.out.println("Privilege escalation: " + r));
     }
 
-    // 生成安全报告
+    // Generate security report
     public String generateSecurityReport(Instant from, Instant to) {
         List<AuditRecord> records = auditLogger.getAuditTrail("ALL", from, to);
         long totalEvents = records.size();
@@ -265,8 +265,8 @@ public class AuditAnalyzer {
         long uniqueUsers = records.stream().map(AuditRecord::getUser).distinct().count();
 
         return String.format(
-            "安全报告:\n时间段: %s 至 %s\n事件总数: %d\n" +
-            "失败事件: %d\n独立用户: %d\n失败率: %.2f%%",
+            "Security report:\nPeriod: %s to %s\nTotal events: %d\n" +
+            "Failed events: %d\nUnique users: %d\nFailure rate: %.2f%%",
             from, to, totalEvents, failedEvents, uniqueUsers,
             (double) failedEvents / totalEvents * 100
         );

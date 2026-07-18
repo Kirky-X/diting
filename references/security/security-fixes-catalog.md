@@ -13,7 +13,7 @@ public class SensitiveDataProtector extends SecurityDecorator {
 
     @Override
     public Data process(Data input) {
-        // 检测并加密敏感字段
+        // Detect and encrypt sensitive fields
         if (containsSensitiveData(input)) {
             Data protected = input.clone();
             for (Field field : protected.getSensitiveFields()) {
@@ -45,7 +45,7 @@ public class LogSanitizerDecorator extends SecurityDecorator {
         Map<String, Object> sanitized = new HashMap<>();
         for (Map.Entry<String, Object> field : entry.getData().entrySet()) {
             if (SENSITIVE_FIELDS.contains(field.getKey().toLowerCase())) {
-                sanitized.put(field.getKey(), "***已脱敏***");
+                sanitized.put(field.getKey(), "***masked***");
             } else {
                 sanitized.put(field.getKey(), field.getValue());
             }
@@ -71,7 +71,7 @@ public class ApprovedEncryptionStrategies {
     public static EncryptionStrategy getStrategy(String algorithm) {
         EncryptionStrategy strategy = APPROVED.get(algorithm);
         if (strategy == null) {
-            throw new SecurityException("算法未获批准: " + algorithm);
+            throw new SecurityException("Algorithm not approved: " + algorithm);
         }
         return strategy;
     }
@@ -105,8 +105,8 @@ public class KeyManagementService {
 
     public void rotateKey(String keyId) {
         Key newKey = generateKey();
-        // 使用旧密钥重新加密所有数据
-        // 更新密钥版本
+        // Re-encrypt all data with old key
+        // Update key version
         hsm.storeKey(keyId, newKey, KeyVersion.NEXT);
     }
 }
@@ -126,16 +126,16 @@ public class PathTraversalProtection extends SecurityDecorator {
         Path requestedPath = Paths.get(userPath).normalize();
         Path basePath = Paths.get(baseDirectory).toAbsolutePath();
 
-        // 确保路径在 baseDirectory 范围内
+        // Ensure path is within baseDirectory scope
         if (!requestedPath.startsWith(basePath)) {
-            throw new SecurityException("路径遍历尝试: " + userPath);
+            throw new SecurityException("Path traversal attempt: " + userPath);
         }
 
-        // 检查符号链接
+        // Check symbolic links
         if (Files.isSymbolicLink(requestedPath)) {
             Path realPath = Files.readSymbolicLink(requestedPath);
             if (!realPath.startsWith(basePath)) {
-                throw new SecurityException("符号链接遍历尝试");
+                throw new SecurityException("Symbolic link traversal attempt");
             }
         }
 
@@ -178,7 +178,7 @@ public class SafeDeserializationStrategy implements DeserializationStrategy {
     public <T> T deserialize(byte[] data, Class<T> expectedType) {
         if (!ALLOWED_CLASSES.contains(expectedType)) {
             throw new SecurityException(
-                "不允许反序列化: " + expectedType.getName()
+                "Deserialization not allowed: " + expectedType.getName()
             );
         }
 

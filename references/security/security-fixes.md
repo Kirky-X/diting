@@ -8,7 +8,7 @@
 
 **Vulnerable Code**:
 ```java
-// 危险！直接 SQL 拼接
+// Danger! Direct SQL concatenation
 String query = "SELECT * FROM users WHERE id = " + userId;
 Statement stmt = connection.createStatement();
 ResultSet rs = stmt.executeQuery(query);
@@ -16,12 +16,12 @@ ResultSet rs = stmt.executeQuery(query);
 
 **Solution: Parameterized Queries + Decorator Pattern**
 ```java
-// 使用参数化查询
+// Use parameterized queries
 String query = "SELECT * FROM users WHERE id = ?";
 PreparedStatement pstmt = connection.prepareStatement(query);
 pstmt.setString(1, userId);
 
-// 或用装饰器模式添加 SQL 注入检测
+// Or use decorator pattern to add SQL injection detection
 public class SqlInjectionDetector extends SecurityDecorator {
     private static final Pattern SQL_PATTERN = Pattern.compile(
         "(?i)(union|select|insert|update|delete|drop|create|alter|exec|execute)"
@@ -30,7 +30,7 @@ public class SqlInjectionDetector extends SecurityDecorator {
     @Override
     public String execute(String sql) {
         if (SQL_PATTERN.matcher(sql).find()) {
-            throw new SecurityException("检测到潜在 SQL 注入");
+            throw new SecurityException("Potential SQL injection detected");
         }
         return wrapped.execute(sql);
     }
@@ -47,14 +47,14 @@ public class SqlInjectionDetector extends SecurityDecorator {
 
 **Vulnerable Code**:
 ```java
-// 危险！直接输出用户输入
+// Danger! Direct output of user input
 String userInput = request.getParameter("comment");
 response.getWriter().write("<div>" + userInput + "</div>");
 ```
 
 **Solution: Output Encoding + Decorator Pattern**
 ```java
-// HTML 编码
+// HTML encoding
 public class XssProtectionDecorator extends SecurityDecorator {
     private static final Map<Character, String> HTML_ENTITIES = Map.of(
         '<', "&lt;", '>', "&gt;",
@@ -72,7 +72,7 @@ public class XssProtectionDecorator extends SecurityDecorator {
     }
 }
 
-// 或使用现有库
+// Or use existing libraries
 import org.owasp.encoder.Encode;
 
 public String sanitizeHtml(String input) {
@@ -84,7 +84,7 @@ public String sanitizeHtml(String input) {
 
 **Vulnerable Code**:
 ```java
-// 危险！直接执行用户输入作为命令
+// Danger! Direct execution of user input as command
 String filename = request.getParameter("file");
 Runtime.getRuntime().exec("cat " + filename);
 ```
@@ -99,11 +99,11 @@ public class SafeCommandExecutor {
     }
 
     public CommandResult execute(CommandRequest request) {
-        // 用白名单验证文件名
+        // Validate filename with allowlist
         if (!isAllowedFilename(request.getFilename())) {
-            throw new SecurityException("文件名不允许");
+            throw new SecurityException("Filename not allowed");
         }
-        // 用策略执行
+        // Execute with strategy
         return strategy.execute(buildCommand(request));
     }
 
@@ -129,7 +129,7 @@ public class PasswordPolicyValidator extends SecurityDecorator {
     public boolean validate(String password) {
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
             throw new SecurityException(
-                "密码须包含：8+ 字符、大写、小写、数字、特殊字符"
+                "Password must contain: 8+ chars, uppercase, lowercase, digits, special characters"
             );
         }
         return wrapped.validate(password);
@@ -154,7 +154,7 @@ public class SecureSessionStrategy implements SessionStrategy {
         session.setIpAddress(getClientIp());
         session.setUserAgent(getClientUserAgent());
 
-        // 设置安全属性
+        // Set security attributes
         Cookie cookie = new Cookie("SESSION_ID", sessionId);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
@@ -169,13 +169,13 @@ public class SecureSessionStrategy implements SessionStrategy {
         Session session = sessionStore.get(sessionId);
         if (session == null) return false;
 
-        // 验证 IP 与 User-Agent
+        // Validate IP and User-Agent
         if (!session.getIpAddress().equals(request.getClientIp())) {
             logSecurityEvent("SESSION_HIJACK", session.getUserId());
             return false;
         }
 
-        // 检查会话过期
+        // Check session expiration
         if (session.isExpired(Duration.ofHours(24))) {
             sessionStore.remove(sessionId);
             return false;
@@ -197,7 +197,7 @@ public class AuthorizationProxy implements SecureResource {
 
     @Override
     public Data access(String userId, String resourceId, String action) {
-        // 检查权限
+        // Check permissions
         Permission required = Permission.from(action);
         if (!permissionService.hasPermission(userId, resourceId, required)) {
             auditLogger.logSecurityEvent("PRIVILEGE_VIOLATION",
@@ -205,10 +205,10 @@ public class AuthorizationProxy implements SecureResource {
             throw new AccessDeniedException();
         }
 
-        // 记录访问
+        // Log access
         auditLogger.logAccess(userId, resourceId, action);
 
-        // 执行操作
+        // Execute operation
         return realResource.access(userId, resourceId, action);
     }
 }

@@ -1,6 +1,6 @@
 # Diting (谛听) — Code Quality Review Suite
 
-[中文](README.md)
+[Chinese](README.md)
 
 [![GitHub Release](https://img.shields.io/github/v/release/Kirky-X/diting?style=flat-square)](https://github.com/Kirky-X/diting/releases) [![GitHub License](https://img.shields.io/github/license/Kirky-X/diting?style=flat-square)](LICENSE)
 

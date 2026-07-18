@@ -114,17 +114,17 @@ public class SecurityAdapter implements SecureTarget {
 
     @Override
     public void secureOperation(Request request) {
-        // 1. 授权检查
+        // 1. Authorization check
         if (!securityContext.authorize(request)) {
-            throw new SecurityException("未授权");
+            throw new SecurityException("Unauthorized");
         }
-        // 2. 输入验证
+        // 2. Input validation
         validateInput(request);
-        // 3. 数据转换
+        // 3. Data conversion
         LegacyRequest legacyRequest = convert(request);
-        // 4. 调用遗留系统
+        // 4. Call legacy system
         LegacyResponse response = legacySource.operation(legacyRequest);
-        // 5. 输出验证
+        // 5. Output validation
         return convertAndSanitize(response);
     }
 }
@@ -148,19 +148,19 @@ public class SecurityAdapter implements SecureTarget {
 **Security Event Types**:
 ```java
 enum SecurityEventType {
-    // 认证相关
+    // Authentication related
     LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT, SESSION_TIMEOUT,
 
-    // 授权相关
+    // Authorization related
     UNAUTHORIZED_ACCESS, PRIVILEGE_ESCALATION,
 
-    // 数据相关
+    // Data related
     DATA_BREACH_ATTEMPT, SENSITIVE_DATA_ACCESS,
 
-    // 配置相关
+    // Configuration related
     CONFIG_CHANGE, POLICY_VIOLATION,
 
-    // 攻击相关
+    // Attack related
     BRUTE_FORCE_ATTEMPT, SQL_INJECTION_DETECTED,
     XSS_ATTEMPT, PATH_TRAVERSAL_ATTEMPT
 }
@@ -226,7 +226,7 @@ public interface SecurityState {
 public class NormalState implements SecurityState {
     @Override
     public void handleLogin(LoginContext context) {
-        // 正常登录流程
+        // Normal login flow
     }
 }
 
@@ -247,13 +247,13 @@ public class LockedState implements SecurityState {
 public abstract class SecurityValidationTemplate {
     public final ValidationResult validate(SecurityRequest request) {
         if (!preValidate(request)) {
-            return ValidationResult.failure("预验证失败");
+            return ValidationResult.failure("Pre-validation failed");
         }
         if (!doValidate(request)) {
-            return ValidationResult.failure("验证失败");
+            return ValidationResult.failure("Validation failed");
         }
         if (!postValidate(request)) {
-            return ValidationResult.failure("后置验证失败");
+            return ValidationResult.failure("Post-validation failed");
         }
         return ValidationResult.success();
     }

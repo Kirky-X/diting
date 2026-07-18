@@ -50,9 +50,9 @@ so subsequent steps don't need to ask again.
    ```
 
 0c. Parse the reply (first-match wins, rules evaluated in order):
-   1. **Hard no** (`no`, `n`, `abort`, `cancel`, `取消`, `不要`): abort and output "Aborted before scan — no files modified."
-   2. **Consent** (`Y`, `yes`, `ok`, `sure`, `proceed`, `go`, `continue`, `好`, `好的`, `行`, `可以`): proceed to Step 1.
-   3. **Soft pause** (`wait`, `hold on`, `等一下`, `等我`, `let me`): one-line acknowledgment ("Understood, waiting"), then wait for the user's next message and re-evaluate from Rule 1.
+   1. **Hard no** (`no`, `n`, `abort`, `cancel`): abort and output "Aborted before scan — no files modified."
+   2. **Consent** (`Y`, `yes`, `ok`, `sure`, `proceed`, `go`, `continue`): proceed to Step 1.
+   3. **Soft pause** (`wait`, `hold on`, `let me`): one-line acknowledgment ("Understood, waiting"), then wait for the user's next message and re-evaluate from Rule 1.
    4. **Question**: answer the question, then display the notification verbatim again and wait for the next reply. If the next reply is not consent (Rule 2) — whether a second question, another pause, or anything else — abort and output "Aborted — did not receive consent after clarification."
 
 0d. After consent, ask no more questions until Step 8.

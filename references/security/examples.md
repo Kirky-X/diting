@@ -52,7 +52,7 @@ public class SecureSystem {
     public String processData(String user, String data) {
         if (!securityContext.authorize("process", user)) {
             eventPublisher.publishUnauthorizedAccess(user, "data-processing", "process");
-            throw new SecurityException("未授权");
+            throw new SecurityException("Unauthorized");
         }
         DataProcessor processor = new AuditDecorator(
             new EncryptionDecorator(
@@ -72,7 +72,7 @@ public class SecureSystem {
     }
 }
 
-// 事件发布器
+// Event publisher
 class SecurityEventPublisher {
     private final SecurityEventManager eventManager;
 
@@ -82,20 +82,20 @@ class SecurityEventPublisher {
 
     public void publishLoginSuccess(String user, String source) {
         eventManager.notifyObservers(
-            new SecurityEvent(SecurityEventType.LOGIN_SUCCESS, user, source, "登录成功")
+            new SecurityEvent(SecurityEventType.LOGIN_SUCCESS, user, source, "Login successful")
         );
     }
 
     public void publishLoginFailure(String user, String source) {
         eventManager.notifyObservers(
-            new SecurityEvent(SecurityEventType.LOGIN_FAILURE, user, source, "登录失败")
+            new SecurityEvent(SecurityEventType.LOGIN_FAILURE, user, source, "Login failed")
         );
     }
 
     public void publishUnauthorizedAccess(String user, String resource, String action) {
         eventManager.notifyObservers(
             new SecurityEvent(SecurityEventType.UNAUTHORIZED_ACCESS, user, resource,
-                "尝试执行 " + action)
+                "Attempted to execute " + action)
         );
     }
 
@@ -112,55 +112,55 @@ class SecurityEventPublisher {
 ```java
 public class ComprehensiveSecurityDemo {
     public static void main(String[] args) {
-        // 设置环境
+        // Set environment
         System.setProperty("env", "production");
 
-        // 创建安全系统
+        // Create security system
         SecureSystem system = new SecureSystem("production");
 
-        System.out.println("=== 安全系统演示 ===");
+        System.out.println("=== Security System Demo ===");
 
-        // 1. 认证
-        System.out.println("\n1. 用户认证:");
+        // 1. Authentication
+        System.out.println("\n1. User authentication:");
         boolean authResult = system.authenticate("alice", "password123");
-        System.out.println("认证结果: " + authResult);
+        System.out.println("Authentication result: " + authResult);
 
-        // 2. 数据处理
-        System.out.println("\n2. 数据处理:");
+        // 2. Data processing
+        System.out.println("\n2. Data processing:");
         try {
             String processed = system.processData("alice", "Sensitive Data");
-            System.out.println("处理结果: " + processed);
+            System.out.println("Processing result: " + processed);
         } catch (Exception e) {
-            System.err.println("处理失败: " + e.getMessage());
+            System.err.println("Processing failed: " + e.getMessage());
         }
 
-        // 3. 资源访问
-        System.out.println("\n3. 资源访问:");
+        // 3. Resource access
+        System.out.println("\n3. Resource access:");
         try {
             String resource = system.accessResource("alice", "user-data");
-            System.out.println("资源内容: " + resource);
+            System.out.println("Resource content: " + resource);
         } catch (Exception e) {
-            System.err.println("访问失败: " + e.getMessage());
+            System.err.println("Access failed: " + e.getMessage());
         }
 
-        // 4. 模拟攻击
-        System.out.println("\n4. 模拟攻击场景:");
+        // 4. Simulated attack
+        System.out.println("\n4. Simulated attack scenario:");
         try {
             system.processData("attacker", "<script>alert('xss')</script>");
         } catch (SecurityException e) {
-            System.err.println("攻击被阻止: " + e.getMessage());
+            System.err.println("Attack blocked: " + e.getMessage());
         }
 
-        // 5. 未授权访问
-        System.out.println("\n5. 未授权访问:");
+        // 5. Unauthorized access
+        System.out.println("\n5. Unauthorized access:");
         try {
             system.authenticate("bob", "wrongpass");
             system.accessResource("bob", "admin-data");
         } catch (SecurityException e) {
-            System.err.println("未授权访问被阻止: " + e.getMessage());
+            System.err.println("Unauthorized access blocked: " + e.getMessage());
         }
 
-        System.out.println("\n=== 演示完成 ===");
+        System.out.println("\n=== Demo complete ===");
     }
 }
 ```

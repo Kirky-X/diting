@@ -5,20 +5,20 @@
 ## 1. Complete Proxy Pattern Implementation
 
 ```java
-// 抽象主题
+// Abstract subject
 public interface SensitiveResource {
     String readData(String user);
     void writeData(String user, String data);
     void deleteData(String user);
 }
 
-// 真实主题
+// Real subject
 public class RealSensitiveResource implements SensitiveResource {
     private final Map<String, String> dataStore = new HashMap<>();
 
     @Override
     public String readData(String user) {
-        return dataStore.getOrDefault(user, "无数据");
+        return dataStore.getOrDefault(user, "No data");
     }
 
     @Override
@@ -32,24 +32,24 @@ public class RealSensitiveResource implements SensitiveResource {
     }
 }
 
-// 审计日志器
+// Audit logger
 class AuditLogger {
     private static final Logger logger = Logger.getLogger(AuditLogger.class.getName());
 
     public void logAccess(String operation, String user) {
-        String logEntry = String.format("访问: %s 由 %s 于 %s",
+        String logEntry = String.format("Access: %s by %s at %s",
             operation, user, new Date());
         logger.info(logEntry);
     }
 
     public void logSecurityEvent(String eventType, String user) {
-        String logEntry = String.format("安全: %s 由 %s 于 %s",
+        String logEntry = String.format("Security: %s by %s at %s",
             eventType, user, new Date());
         logger.warning(logEntry);
     }
 }
 
-// 安全代理
+// Security proxy
 public class SecurityProxy implements SensitiveResource {
     private final SensitiveResource realResource;
     private final SecurityContext securityContext;
@@ -66,7 +66,7 @@ public class SecurityProxy implements SensitiveResource {
     public String readData(String user) {
         if (!securityContext.authorize("read", user)) {
             auditLogger.logSecurityEvent("UNAUTHORIZED_READ", user);
-            throw new SecurityException("访问被拒绝: " + user);
+            throw new SecurityException("Access denied: " + user);
         }
         auditLogger.logAccess("READ", user);
         return realResource.readData(user);
@@ -74,16 +74,16 @@ public class SecurityProxy implements SensitiveResource {
 
     @Override
     public void writeData(String user, String data) {
-        // 输入验证
+        // Input validation
         if (data == null || data.length() > 1000) {
             auditLogger.logSecurityEvent("INVALID_INPUT", user);
-            throw new IllegalArgumentException("无效数据");
+            throw new IllegalArgumentException("Invalid data");
         }
 
-        // 安全检查
+        // Security check
         if (!securityContext.authorize("write", user)) {
             auditLogger.logSecurityEvent("UNAUTHORIZED_WRITE", user);
-            throw new SecurityException("访问被拒绝: " + user);
+            throw new SecurityException("Access denied: " + user);
         }
 
         auditLogger.logAccess("WRITE", user);
@@ -94,7 +94,7 @@ public class SecurityProxy implements SensitiveResource {
     public void deleteData(String user) {
         if (!securityContext.authorize("delete", user)) {
             auditLogger.logSecurityEvent("UNAUTHORIZED_DELETE", user);
-            throw new SecurityException("访问被拒绝: " + user);
+            throw new SecurityException("Access denied: " + user);
         }
         auditLogger.logAccess("DELETE", user);
         realResource.deleteData(user);
@@ -105,20 +105,20 @@ public class SecurityProxy implements SensitiveResource {
 ## 2. Complete Decorator Pattern Implementation
 
 ```java
-// 抽象组件
+// Abstract component
 public interface DataProcessor {
     String process(String input);
 }
 
-// 基础组件
+// Base component
 public class BasicDataProcessor implements DataProcessor {
     @Override
     public String process(String input) {
-        return "已处理: " + input;
+        return "Processed: " + input;
     }
 }
 
-// 安全装饰器基类
+// Security decorator base class
 public abstract class SecurityDecorator implements DataProcessor {
     protected DataProcessor wrappedProcessor;
 
@@ -127,7 +127,7 @@ public abstract class SecurityDecorator implements DataProcessor {
     }
 }
 
-// 输入验证装饰器
+// Input validation decorator
 public class InputValidationDecorator extends SecurityDecorator {
     private static final int MAX_LENGTH = 1000;
     private static final Pattern DANGEROUS_CHARS =
@@ -140,19 +140,19 @@ public class InputValidationDecorator extends SecurityDecorator {
     @Override
     public String process(String input) {
         if (input == null || input.trim().isEmpty()) {
-            throw new IllegalArgumentException("输入不能为空");
+            throw new IllegalArgumentException("Input cannot be empty");
         }
         if (input.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("输入过长");
+            throw new IllegalArgumentException("Input too long");
         }
         if (DANGEROUS_CHARS.matcher(input).find()) {
-            throw new SecurityException("输入包含危险字符");
+            throw new SecurityException("Input contains dangerous characters");
         }
         return wrappedProcessor.process(input);
     }
 }
 
-// 加密装饰器
+// Encryption decorator
 public class EncryptionDecorator extends SecurityDecorator {
     private final EncryptionService encryptionService;
 
@@ -169,7 +169,7 @@ public class EncryptionDecorator extends SecurityDecorator {
     }
 }
 
-// 审计装饰器
+// Audit decorator
 public class AuditDecorator extends SecurityDecorator {
     private final AuditLogger logger;
 
@@ -196,17 +196,17 @@ public class AuditDecorator extends SecurityDecorator {
 ## 3. Chain of Responsibility Pattern Implementation
 
 ```java
-// 安全请求
+// Security request
 public class SecurityRequest {
     private String user;
     private String operation;
     private String resource;
     private Map<String, Object> data;
 
-    // getters 和 setters
+    // getters and setters
 }
 
-// 安全处理器抽象类
+// Security handler abstract class
 public abstract class SecurityHandler {
     private SecurityHandler next;
 
@@ -222,7 +222,7 @@ public abstract class SecurityHandler {
     }
 }
 
-// 认证处理器
+// Authentication handler
 public class AuthenticationHandler extends SecurityHandler {
     private final AuthService authService;
 
@@ -236,7 +236,7 @@ public class AuthenticationHandler extends SecurityHandler {
     }
 }
 
-// 授权处理器
+// Authorization handler
 public class AuthorizationHandler extends SecurityHandler {
     private final PermissionService permissionService;
 
@@ -251,13 +251,13 @@ public class AuthorizationHandler extends SecurityHandler {
     }
 }
 
-// 使用示例
+// Usage example
 SecurityHandler chain = new AuthenticationHandler(authService)
     .setNext(new AuthorizationHandler(permissionService))
     .setNext(new ValidationHandler(validator))
     .setNext(new EncryptionHandler(encryptionService));
 
 if (chain.check(request)) {
-    // 执行操作
+    // Execute operation
 }
 ```
