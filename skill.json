@@ -2,7 +2,7 @@
   "name": "diting",
   "description": "Unified code quality review suite with three engines: A - Dimension Review (16 dimensions, confidence + severity) + B - Decay Diagnosis (6 major decay risks) + C - Simplification & Refinement (over-engineering review / minimal solution ladder / refinement pass).",
   "license": "MIT",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "author": "Kirky-X",
   "repo": "https://github.com/Kirky-X/diting",
   "homepage": "https://github.com/Kirky-X/diting",
