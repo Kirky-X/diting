@@ -11,8 +11,9 @@ Architectural note — why this module emits CLI commands, not MCP calls:
   commands. The agent layer then runs those commands — the only place they can
   actually execute. See SKILL.md "Step 1.5 — CodeNexus Blast Radius Pre-check" for the contract.
 
-The embedded CodeNexus skill under `.claude/skills/codenexus/SKILL.md` describes the
-full CLI workflow; this module is the scanner-side adapter that feeds it.
+The CodeNexus CLI reference at `references/codenexus.md` (in the diting skill
+directory) describes the full CLI workflow; this module is the scanner-side
+adapter that feeds it.
 """
 
 from __future__ import annotations
@@ -211,7 +212,7 @@ def format_codenexus_section(
     lines.append(
         "> Scanner-side adapter. The listed `codenexus` CLI commands must be run "
         "by the agent (the CLI is not invoked from the scanner subprocess). See "
-        "`.claude/skills/codenexus/SKILL.md`.\n"
+        "`references/codenexus.md`.\n"
     )
     if targets:
         lines.append("**Impact analysis** (critical/high findings → upstream callers):")

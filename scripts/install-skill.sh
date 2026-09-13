@@ -297,6 +297,13 @@ cmd_update() {
       git -C "$PROJECT_ROOT" fetch origin 2>/dev/null || true
       local current_branch
       current_branch="$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null || echo "main")"
+      # Safety guard: never 'git reset --hard' over a dirty working tree — it
+      # would irreversibly destroy uncommitted changes. Abort and let the user decide.
+      if [[ -n "$(git -C "$PROJECT_ROOT" status --porcelain 2>/dev/null || true)" ]]; then
+        err "Working tree of $PROJECT_ROOT has uncommitted changes; refusing 'git reset --hard'."
+        info "Commit or stash them first, then rerun update."
+        exit 1
+      fi
       git -C "$PROJECT_ROOT" reset --hard "origin/$current_branch" 2>/dev/null || {
         err "Unable to pull latest version, please run git pull manually"
         exit 1
@@ -363,6 +370,13 @@ cmd_uninstall() {
   shift
   parse_target_agent "$@"
 
+  # Safety guard 1: skill_name must be a plain directory name (non-empty, no
+  # slashes, not "." / ".."). Blocks "../.." style path escape before any rm -rf.
+  if [[ -z "$skill_name" || "$skill_name" == */* || "$skill_name" == "." || "$skill_name" == ".." ]]; then
+    err "Invalid skill-name: '$skill_name' (must be a plain directory name, no slashes)"
+    exit 1
+  fi
+
   [[ -d "$TARGET_DIR" ]] || { err "Target directory not found: $TARGET_DIR"; exit 1; }
   TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
 
@@ -374,13 +388,20 @@ cmd_uninstall() {
 
   local agent
   while IFS= read -r agent; do
-    local cfg folder subdir dest
+    local cfg folder subdir dest dest_real
     cfg="$(agent_config "$agent")" || continue
     folder="${cfg%%|*}"
     subdir="${cfg##*|}"
     dest="$TARGET_DIR/$folder/$subdir/$skill_name"
 
     if [[ -d "$dest" ]]; then
+      # Safety guard 2: only remove when the real path resolves strictly inside
+      # TARGET_DIR (guards against symlinked skill dirs pointing elsewhere).
+      dest_real="$(readlink -f "$dest" 2>/dev/null || true)"
+      if [[ -z "$dest_real" || "$dest_real" != "$TARGET_DIR"/* ]]; then
+        err "Refusing to remove $dest: real path does not resolve inside $TARGET_DIR"
+        exit 1
+      fi
       rm -rf "$dest"
       printf '%-10s %-58s %s%s%s\n' "$agent" "$dest" "$GREEN" "REMOVED" "$RESET"
     else
