@@ -31,6 +31,8 @@ bash scripts/sync-skills.sh diting
 
 # Option 2: manual copy into an agent skills directory
 cp -r diting/ ~/.zcode/skills/diting/
+# Option 3: Remote install (GitHub repo)
+npx skills add Kirky-X/diting --agent claude-code -y
 ```
 
 First-run requirements: Python 3.8+ only (the script layer uses the standard library exclusively); no requirements.txt.
