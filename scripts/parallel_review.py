@@ -13,6 +13,9 @@ Fixes applied:
   - generate_markdown_report: description truncation only adds '...' when actually truncated
   - generate_markdown_report: verdict aligned with score-based thresholds from report template
   - Agent references: security-checklist path corrected to references/quality/
+  - Confidence handling: three-state adjudication — >= 80 confirmed (scored),
+    55-79 needs-verification bucket (reported, unscored), below-floor dropped
+    with the dropped count disclosed in every report
 """
 
 import asyncio
@@ -24,9 +27,12 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-CONFIDENCE_THRESHOLD = 80
+# Three-State Adjudication (references/review-workflow.md): candidates are never
+# silently discarded at a confidence cliff.
+CONFIDENCE_CONFIRMED = 80  # >= 80 → confirmed: scored, may drive the verdict
+CONFIDENCE_CANDIDATE = 55  # 55-79 → needs-verification bucket: reported, no score/verdict impact
 
 SEVERITY_LEVELS = {
     "critical": 1,
@@ -49,6 +55,8 @@ class ReviewResult:
     execution_time: float
     status: str
     error: Optional[str] = None
+    needs_verification: List[Dict[str, Any]] = field(default_factory=list)
+    below_floor_dropped: int = 0
 
 
 def get_review_agents() -> Dict[str, Dict[str, Any]]:
@@ -210,11 +218,32 @@ def calculate_confidence(issue: Dict[str, Any]) -> int:
     return max(0, min(100, base_score))
 
 
-def filter_by_confidence(
+def adjudicate_by_confidence(
     issues: List[Dict[str, Any]],
-    threshold: int = CONFIDENCE_THRESHOLD,
-) -> List[Dict[str, Any]]:
-    return [i for i in issues if i.get("confidence", 0) >= threshold]
+    confirmed_at: int = CONFIDENCE_CONFIRMED,
+    candidate_at: int = CONFIDENCE_CANDIDATE,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], int]:
+    """Split raw issues into (confirmed, needs_verification, below_floor_dropped).
+
+    confirmed: confidence >= confirmed_at — scored, may drive the verdict.
+    needs_verification: candidate_at <= confidence < confirmed_at — tagged and
+    reported in the Needs Verification bucket, never scored or verdict-driving.
+    below_floor_dropped: count of candidates under candidate_at — not report
+    entries, but the count is disclosed so nothing is dropped silently.
+    """
+    confirmed: List[Dict[str, Any]] = []
+    needs_verification: List[Dict[str, Any]] = []
+    below_floor = 0
+    for issue in issues:
+        confidence = issue.get("confidence", 0)
+        if confidence >= confirmed_at:
+            confirmed.append(issue)
+        elif confidence >= candidate_at:
+            issue["needs_verification"] = True
+            needs_verification.append(issue)
+        else:
+            below_floor += 1
+    return confirmed, needs_verification, below_floor
 
 
 def deduplicate_issues(issues: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -587,6 +616,7 @@ def _get_process_executor() -> Optional[ProcessPoolExecutor]:
 async def run_review_agent(
     agent_config: Dict[str, Any],
     target_files: List[str],
+    min_confidence: int = CONFIDENCE_CANDIDATE,
 ) -> ReviewResult:
     start_time = datetime.now()
     dimension = agent_config["dimension"]
@@ -636,9 +666,15 @@ async def run_review_agent(
             issue.setdefault("has_fix_suggestion", True)
             issue["confidence"] = calculate_confidence(issue)
 
-        issues = filter_by_confidence(issues)
+        issues, needs_verification, below_floor = adjudicate_by_confidence(
+            issues, candidate_at=min_confidence
+        )
         issues = deduplicate_issues(issues)
         issues = sort_by_severity(issues)
+        needs_verification = deduplicate_issues(needs_verification)
+        needs_verification = sorted(
+            needs_verification, key=lambda x: -x.get("confidence", 0)
+        )
 
         execution_time = (datetime.now() - start_time).total_seconds()
         return ReviewResult(
@@ -648,6 +684,8 @@ async def run_review_agent(
             confidence_scores=[i["confidence"] for i in issues],
             execution_time=execution_time,
             status="completed",
+            needs_verification=needs_verification,
+            below_floor_dropped=below_floor,
         )
 
     except Exception as e:
@@ -666,12 +704,16 @@ async def run_review_agent(
 async def run_parallel_review(
     target_files: List[str],
     agent_keys: Optional[List[str]] = None,
+    min_confidence: int = CONFIDENCE_CANDIDATE,
 ) -> List[ReviewResult]:
     agents = get_review_agents()
     if agent_keys:
         agents = {k: v for k, v in agents.items() if k in agent_keys}
 
-    tasks = [run_review_agent(cfg, target_files) for cfg in agents.values()]
+    tasks = [
+        run_review_agent(cfg, target_files, min_confidence=min_confidence)
+        for cfg in agents.values()
+    ]
     return list(await asyncio.gather(*tasks))
 
 
@@ -681,20 +723,27 @@ async def run_parallel_review(
 
 
 def generate_report(
-    results: List[ReviewResult], output_format: str = "markdown"
+    results: List[ReviewResult],
+    output_format: str = "markdown",
+    candidate_floor: int = CONFIDENCE_CANDIDATE,
 ) -> str:
     all_issues: List[Dict[str, Any]] = []
+    all_needs_verification: List[Dict[str, Any]] = []
     for r in results:
         all_issues.extend(r.issues)
+        all_needs_verification.extend(r.needs_verification)
     all_issues = sort_by_severity(all_issues)
+    all_needs_verification = sorted(
+        all_needs_verification, key=lambda x: -x.get("confidence", 0)
+    )
 
     if output_format == "json":
-        return _report_json(results, all_issues)
+        return _report_json(results, all_issues, all_needs_verification, candidate_floor)
     if output_format == "text":
-        return _report_text(results, all_issues)
+        return _report_text(results, all_issues, all_needs_verification, candidate_floor)
     if output_format == "sarif":
         return _report_sarif(results)
-    return _report_markdown(results, all_issues)
+    return _report_markdown(results, all_issues, all_needs_verification, candidate_floor)
 
 
 def _report_sarif(results: List[ReviewResult]) -> str:
@@ -728,7 +777,10 @@ def _truncate(text: str, max_len: int = 60) -> str:
 
 
 def _report_markdown(
-    results: List[ReviewResult], all_issues: List[Dict[str, Any]]
+    results: List[ReviewResult],
+    all_issues: List[Dict[str, Any]],
+    all_needs_verification: List[Dict[str, Any]],
+    candidate_floor: int,
 ) -> str:
     lines: List[str] = []
     lines.append("## 🔍 Code Review Report\n")
@@ -767,7 +819,15 @@ def _report_markdown(
         verdict = "⚠️ **Changes Requested** — Fix Critical/High issues before merge."
     else:
         verdict = "❌ **Rejected** — Major rework required."
-    lines.append(f"**Verdict**: {verdict}\n")
+    lines.append(f"**Verdict**: {verdict}")
+
+    below_floor_total = sum(r.below_floor_dropped for r in results)
+    if all_needs_verification or below_floor_total:
+        lines.append(
+            f"**Needs Verification**: {len(all_needs_verification)} candidate(s) reported without score | "
+            f"Below candidate floor (< {candidate_floor}): {below_floor_total} dropped (count disclosed, never silently)"
+        )
+    lines.append("")
 
     # Per-severity sections
     icons = {
@@ -794,6 +854,25 @@ def _report_markdown(
             lines.append(f"**[{issue_id}]** {file_ref} — {desc}  ")
             lines.append(f"Confidence: {issue.get('confidence', '?')} | {rec}\n")
 
+    # Needs-verification bucket — reported formally, never scored or verdict-driving
+    # (Three-State Adjudication in references/review-workflow.md).
+    if all_needs_verification:
+        lines.append(f"### 🔎 Needs Verification ({len(all_needs_verification)})\n")
+        lines.append(
+            "Grounded in code but one decisive fact unconfirmed. Formal output — "
+            "**no severity, no score deduction, no impact on the verdict**.\n"
+        )
+        for idx, issue in enumerate(all_needs_verification, 1):
+            file_ref = f"`{issue['file']}:{issue['line']}`"
+            desc = _truncate(issue.get("description", ""))
+            lines.append(f"**[NEEDS-{idx:03d}]** {file_ref} — {desc}  ")
+            lines.append(
+                f"Confidence: {issue.get('confidence', '?')} | "
+                "Blocker: heuristic match — decisive fact unconfirmed by model-side reading | "
+                "Verification Plan: read the cited lines in context; promote only if the "
+                "fact resolves in this review, otherwise reject with reason\n"
+            )
+
     # CodeNexus blast-radius pre-check (P1): if a `codenexus.lbug` index is present,
     # emit a structured worklist of `codenexus impact` / `codenexus query`
     # commands for critical/high findings. The agent executes them (the CLI isn't
@@ -811,7 +890,12 @@ def _report_markdown(
     return "\n".join(lines)
 
 
-def _report_json(results: List[ReviewResult], all_issues: List[Dict[str, Any]]) -> str:
+def _report_json(
+    results: List[ReviewResult],
+    all_issues: List[Dict[str, Any]],
+    all_needs_verification: List[Dict[str, Any]],
+    candidate_floor: int,
+) -> str:
     sev_counts: Dict[str, int] = {}
     for issue in all_issues:
         s = issue.get("severity", "info")
@@ -822,7 +906,10 @@ def _report_json(results: List[ReviewResult], all_issues: List[Dict[str, Any]]) 
         "score": calculate_score(all_issues),
         "summary": {
             "total_issues": len(all_issues),
-            "confidence_threshold": CONFIDENCE_THRESHOLD,
+            "confidence_confirmed": CONFIDENCE_CONFIRMED,
+            "confidence_candidate_floor": candidate_floor,
+            "needs_verification_count": len(all_needs_verification),
+            "below_floor_dropped": sum(r.below_floor_dropped for r in results),
             "agents_run": len(results),
             "severity_counts": sev_counts,
         },
@@ -833,16 +920,24 @@ def _report_json(results: List[ReviewResult], all_issues: List[Dict[str, Any]]) 
                 "status": r.status,
                 "execution_time": r.execution_time,
                 "issue_count": len(r.issues),
+                "needs_verification_count": len(r.needs_verification),
+                "below_floor_dropped": r.below_floor_dropped,
                 "error": r.error,
             }
             for r in results
         ],
         "issues": all_issues,
+        "needs_verification": all_needs_verification,
     }
     return json.dumps(report, indent=2)
 
 
-def _report_text(results: List[ReviewResult], all_issues: List[Dict[str, Any]]) -> str:
+def _report_text(
+    results: List[ReviewResult],
+    all_issues: List[Dict[str, Any]],
+    all_needs_verification: List[Dict[str, Any]],
+    candidate_floor: int,
+) -> str:
     lines = [
         "=" * 60,
         "CODE REVIEW REPORT",
@@ -850,12 +945,21 @@ def _report_text(results: List[ReviewResult], all_issues: List[Dict[str, Any]]) 
         f"Generated: {datetime.now().isoformat()}",
         f"Score: {calculate_score(all_issues)} / 100",
         f"Total Issues: {len(all_issues)}",
+        f"Needs Verification (unscored): {len(all_needs_verification)}",
+        f"Below candidate floor (< {candidate_floor}) dropped: "
+        f"{sum(r.below_floor_dropped for r in results)}",
         "",
     ]
     for r in results:
         lines.append(f"\n[{r.dimension}] {r.status} — {len(r.issues)} issues")
         for issue in r.issues[:5]:
             lines.append(f"  {issue['file']}:{issue['line']} [{issue['severity']}]")
+            lines.append(f"    {issue['description']}")
+        for issue in r.needs_verification[:5]:
+            lines.append(
+                f"  {issue['file']}:{issue['line']} [needs-verification] "
+                f"confidence {issue.get('confidence', '?')}"
+            )
             lines.append(f"    {issue['description']}")
     return "\n".join(lines)
 
@@ -885,6 +989,16 @@ async def main() -> None:
         help="Specific agents to run (default: all)",
     )
     parser.add_argument("--output", "-o", help="Output file path")
+    parser.add_argument(
+        "--min-confidence",
+        type=int,
+        default=CONFIDENCE_CANDIDATE,
+        help=(
+            "Lowest confidence still reported (the needs-verification bucket floor); "
+            f"the confirmed threshold stays at {CONFIDENCE_CONFIRMED}. Default: "
+            f"{CONFIDENCE_CANDIDATE}"
+        ),
+    )
     args = parser.parse_args()
 
     SUPPORTED_EXTS = {
@@ -918,8 +1032,10 @@ async def main() -> None:
         file=sys.stderr,
     )
 
-    results = await run_parallel_review(target_files, args.agents)
-    report = generate_report(results, args.format)
+    results = await run_parallel_review(
+        target_files, args.agents, min_confidence=args.min_confidence
+    )
+    report = generate_report(results, args.format, candidate_floor=args.min_confidence)
 
     if args.output:
         with open(args.output, "w", encoding="utf-8") as fp:
