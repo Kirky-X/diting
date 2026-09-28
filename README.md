@@ -10,7 +10,7 @@
 
 | 引擎 | 回答的问题 | 产出 |
 | ---- | ---------- | ---- |
-| **A. 维度审查** | 这段代码正确、安全、快、设计好吗？ | Confidence（0–100，仅报 ≥80）+ Severity（Critical/High/Medium/Low）双打分问题清单，100 分制总分，Approved/Changes/Rejected 裁决 |
+| **A. 维度审查** | 这段代码正确、安全、快、设计好吗？ | Confidence（0–100，≥80 confirmed / 55–79 needs-verification 三态裁决）+ Severity（Critical/High/Medium/Low）双打分问题清单，100 分制总分，Approved/Changes/Rejected 裁决 |
 | **B. 衰减诊断** | 这段代码为什么难维护？哪条原则能解释？ | Symptom→Source→Consequence→Remedy 推理链发现，Health Score，模块依赖图 |
 | **C. 简化与精炼** | 这段代码超出问题所需了吗？足够清晰吗？ | 最小实现阶梯（写码时）· 删除清单（只报告不改码）· 精炼/清晰化（写码后，保持行为） |
 

@@ -105,6 +105,27 @@ for order in orders:
 
 *(same format as above)*
 
+#### 🔎 Needs Verification (N)
+
+Candidates grounded in real code but blocked on one decisive fact. Formal output — **no severity, no score deduction, no impact on the verdict**. Each entry must carry the exact missing fact and a verification plan.
+
+---
+
+**[NEEDS-001]** `src/queue.py:120` — Possible race condition in job claim  
+**Blocker**: concurrency model unconfirmed — a single-worker deployment would make the interleaving impossible  
+**Verification Plan**: confirm worker concurrency in the deployment config; if multi-worker, add a deterministic interleaving test against the claim path
+
+---
+
+#### 🗄️ Rejected (archived) (N)
+
+Candidates disproven during this review, archived with the falsification reason so the same issue is not re-reported in later rounds. Not defects — do not act on these.
+
+---
+
+**[REJ-001]** `src/api.py:33` — "Missing auth check"  
+**Reason**: auth is enforced by router-level middleware (`src/middleware.py:12`), which covers this route
+
 ---
 
 ### Recommendations
@@ -120,6 +141,14 @@ for order in orders:
 - [ ] ✅ **Approved** — No blocking issues found
 - [x] ⚠️ **Changes Requested** — Fix Critical / High before merge
 - [ ] ❌ **Rejected** — Major rework required
+
+---
+
+### Coverage
+
+- **Reviewed**: `<files / modules>` — sampling strategy: `<how reviewed paths were chosen>`
+- **Not covered**: `<paths>` — reason: `<why excluded>`
+- **Explicit negatives**: checked `<X>` — no findings
 ```
 
 ---
@@ -154,6 +183,8 @@ Floor: 0 (cannot go negative)
 | `MED-` | Medium |
 | `LOW-` | Low |
 | `INFO-` | Info |
+| `NEEDS-` | Needs Verification (no severity) |
+| `REJ-` | Rejected, archived (no severity) |
 
 Sequential numbering: `CRIT-001`, `CRIT-002`, `HIGH-001`, etc.
 

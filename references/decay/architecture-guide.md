@@ -165,6 +165,15 @@ After completing the six-risk scan, evaluate the relationship between architectu
 
 ## Output
 
+Before writing the report, run one lightweight coverage critic pass: dispatch a fresh
+critic subagent that took no part in Steps 0–6 and ask exactly two questions:
+- Which entry point, parallel path, lifecycle pattern, or risk category did no step cover?
+- Which module was classified without any scanned dependency edge?
+
+Accepted gaps are
+scanned once with the Steps 2–6 checklists and the graph and colors updated; no
+accepted gaps → output as planned. One pass only — no loop.
+
 Use the standard report template in `common.md`. Mode: Architecture Audit.
 
 Place the Mermaid dependency graph at the top under "Module Dependency Graph". Reference relevant node names in findings. Add `classDef` color assignments last, after all findings are identified.

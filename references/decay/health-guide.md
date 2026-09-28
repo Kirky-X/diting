@@ -65,6 +65,14 @@ dividing each remaining weight by (1 − 0.25) = 0.75. Compute the redistributio
 
 ### Step 3: Output the Dashboard
 
+Before rendering, run one lightweight coverage critic pass: dispatch a fresh critic
+subagent that took no part in the Step 1 scans and ask exactly two questions:
+- Which dimension, entry point, or risk category did no scan touch?
+- Which area was scored without any scanned path?
+
+Accepted gaps are scanned once under the Step 1 caps and the
+score recomputed; no accepted gaps → render as-is. One pass only — no loop.
+
 Use the dashboard report template below instead of the standard common.md template.
 
 ---

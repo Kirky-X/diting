@@ -103,6 +103,22 @@ Eventual consistency compensation mechanism
 Concurrent update conflict handling
 ```
 
+### 10. Cross-Component Handoffs
+
+```
+For every handoff (parser → policy, service boundary, inter-process):
+Compare what upstream actually guarantees with what downstream assumes
+A downstream check that "should re-validate" is an assumption, not a guarantee
+Normalization form: Unicode NFC/NFD, URL/path canonicalization — same form on both sides?
+Units: seconds vs milliseconds, bytes vs characters — converted at the boundary or assumed?
+Truncation: length limit enforced upstream, or assumed enforced downstream?
+Type coercion: "01" vs 1, "1e3", truthy strings — coerced on which side of the boundary?
+Encoding: UTF-8 declared on both sides, percent-encoding decoded exactly once?
+Tenant scope: tenant_id validated upstream — still bound after async/serialized handoff?
+Sibling controls: two checks of the same kind → compare equivalence (same accept/reject set), not presence
+Upstream guarantee weaker than downstream assumption → finding
+```
+
 ---
 
 ## Language-Specific Checks

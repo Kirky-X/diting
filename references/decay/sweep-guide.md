@@ -1,8 +1,8 @@
 # Decay Diagnosis — Full Sweep Guide
 
 Sequential autonomous pipeline: **review → test → debt → audit**. Fix findings in place,
-iterate until clean or cap is hit, report residuals. One interaction point:
-Step 0 (pre-flight consent) — once approved, the pipeline runs unattended through Step 8.
+iterate until clean or cap is hit, run a coverage critic, report residuals. One interaction point:
+Step 0 (pre-flight consent) — once approved, the pipeline runs unattended through Step 9.
 
 Every finding follows the Iron Law: **Symptom → Source → Consequence → Remedy**.
 
@@ -55,7 +55,7 @@ so subsequent steps don't need to ask again.
    3. **Soft pause** (`wait`, `hold on`, `let me`): one-line acknowledgment ("Understood, waiting"), then wait for the user's next message and re-evaluate from Rule 1.
    4. **Question**: answer the question, then display the notification verbatim again and wait for the next reply. If the next reply is not consent (Rule 2) — whether a second question, another pause, or anything else — abort and output "Aborted — did not receive consent after clarification."
 
-0d. After consent, ask no more questions until Step 8.
+0d. After consent, ask no more questions until Step 9.
 
 ---
 
@@ -71,9 +71,10 @@ so subsequent steps don't need to ask again.
 
    - **`unresolvable`** (set): findings retired after 3 failed attempts — keyed by `(file, line_range, risk_code)`; `signature` for tiebreaking. Never re-queued.
    - **`non_critical_rounds`** (int, 0): incremented each round that produces Warning/Suggestion findings; reset on a clean round.
+   - **`critic_passes`** (int, 0): incremented each time the Step 7 Coverage Critic dispatches the pipeline back to 6a; hard budget of 2 dispatches per sweep — without it, a critic-triggered clean round would reset `non_critical_rounds` and the iteration cap could never be reached again. When the budget blocks a dispatch, Step 7 goes to Step 8 with no coverage verdict — the Step 9 report must state `budget exhausted` in its Coverage critic line; an exhausted budget is never evidence of complete coverage.
    - **`fix_log`** (list): each fix entry contains file, line range, risk code, description, and result (`applied` / `reverted` / `retired`).
 
-1d. Record the final scope file list in the Step 8 Fix Report output buffer.
+1d. Record the final scope file list in the Step 9 Fix Report output buffer.
 
 ---
 
@@ -92,7 +93,7 @@ Scan every file in scope against all R-series risks defined in `decay-risks.md`.
    |-------|----------|
    | **Safe** | Single-file and fully local: renaming non-exported symbols, extracting constants, removing dead code, adding null guards at leaves, adding test scaffolds for untested pure functions. Any change that modifies or removes an exported symbol is not Safe even in a single file. |
    | **Extended-Safe** | Multi-file but (a) a project test command exists and passes before the fix, AND (b) changes do not rename, remove, or alter the signature of any publicly exported symbol, AND (c) this round touches ≤ 5 files. |
-   | **Residual** | Public API break, cross-service boundary change, no test coverage to roll back to, or ambiguous fix. Do not apply — goes to Step 8 residual report. |
+   | **Residual** | Public API break, cross-service boundary change, no test coverage to roll back to, or ambiguous fix. Do not apply — goes to Step 9 residual report. |
 
 2c. Skip any finding that matches an entry in the `unresolvable` set.
 
@@ -175,13 +176,13 @@ hitting the cap, or no progress.
 
 6c. Classify the round after all fix attempts:
    - **Clean round** (no new findings outside `unresolvable`): pipeline
-     converged → proceed to Step 7.
+     converged → proceed to Step 7 (Coverage Critic).
    - **Critical-only round**: do not increment `non_critical_rounds`; return
      to 6a.
    - **Mixed or non-critical round** (produces any Warning / Suggestion):
      increment `non_critical_rounds` by 1. If cap is reached (default 3,
-     or `sweep.max_iterations` in `.decay-review.yaml`), proceed to Step 7,
-     recording remaining non-critical findings as
+     or `sweep.max_iterations` in `.decay-review.yaml`), proceed to Step 7
+     (Coverage Critic), recording remaining non-critical findings as
      `"Unresolved — iteration cap reached"`. Otherwise return to 6a.
 
 6d. Fix retry rule: if a single finding fails validation (Step 2e) across any combination of
@@ -190,22 +191,57 @@ hitting the cap, or no progress.
 
 ---
 
-### Step 7 — Residual Aggregation
+### Step 7 — Coverage Critic
+
+**Goal:** Fresh-eyes coverage check — the critic proposes coverage gaps, not findings.
+Dispatched only at Step 6c's two exits — a clean round, or the iteration cap reached
+with remaining non-critical findings (critical-only and below-cap mixed rounds return
+to 6a without a critic) — and only while the budget lasts: if `critic_passes` already
+equals 2, skip the dispatch and proceed to Step 8. Each dispatch is one fresh critic
+subagent that took no part in any scan or fix of this sweep. Coverage is complete only
+when a critic returns no accepted items; accepted items arriving at the iteration cap
+(7c) are disclosed as residuals instead of opening another round.
+
+7a. Brief the critic with the scope file list, dimension summaries, `fix_log`, and the
+   `unresolvable` set — never the working notes of earlier rounds. The critic reads
+   source code but does not edit or fix anything.
+
+7b. The critic answers exactly two questions:
+   - Which entry points, parallel paths, lifecycle patterns, and risk categories were
+     not covered by any round?
+   - Which units (scope areas, dimensions, rounds) were closed without recorded paths
+     and checks?
+
+7c. Route by verdict:
+   - **No accepted items** → coverage complete → proceed to Step 8.
+   - **Accepted items, cap not reached** (6c exited here from a clean round) →
+     increment `critic_passes`, treat each item as additional re-scan scope
+     and return to 6a; the next wrap-up dispatches a fresh critic again, while
+     the budget lasts (`critic_passes` < 2, checked before dispatch).
+   - **Accepted items, cap reached** (6c exited here at the iteration cap) →
+     do not open a new round; record each item as a residual collected in
+     Step 8 with reason `coverage gap disclosed by critic`. An iteration cap —
+     or an exhausted critic budget — is never evidence of complete coverage.
+
+---
+
+### Step 8 — Residual Aggregation
 
 Collect everything not fixed in place, deduplicated:
 
 - All Residual-class findings from Steps 2–5 (first pass + re-scan rounds)
 - All `unresolvable` entries with their retirement reasons
 - All iteration-cap residuals from Step 6c
+- All Coverage Critic items recorded when the cap or the critic budget blocked a covering round (Step 7c)
 
 Sort by Critical → Warning → Suggestion. Within each severity, list file path,
 risk code, Symptom (one line), Remedy (one line), and reason not applied
 (`public API break` / `no test coverage` / `3-retry budget` /
-`iteration cap`).
+`iteration cap` / `coverage gap disclosed by critic`).
 
 ---
 
-### Step 8 — Sweep Report
+### Step 9 — Sweep Report
 
 Output the final report. Use the standard report template from `common.md`, with these additions:
 
@@ -226,6 +262,7 @@ Config: .decay-review.yaml applied (N risks disabled, M paths ignored)   # omit 
 Round 1: <classification — clean / critical-only / mixed>, <N> new findings
 Round 2: ...
 Stopped at: clean round | iteration cap | no outstanding criticals
+Coverage critic: complete (no accepted items) | residuals (accepted items at the iteration cap) | budget exhausted after <N> passes — coverage check truncated, gaps beyond it undisclosed
 
 ## Fix Log
 | # | File | Lines | Risk | Outcome  | Change |

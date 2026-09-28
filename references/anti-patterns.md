@@ -150,6 +150,116 @@ Avoid these common review pitfalls — they waste time and damage team trust
 
 ---
 
+## Output Quality Anti-Patterns
+
+### 9. 🎈 Severity Inflation
+
+**Description**: Rating issues above what the demonstrated damage supports — treating lint-level findings as High
+
+**Symptoms**:
+- Style or hygiene issues labeled Critical/High
+- Severity assigned without stating the concrete damage
+- Unverified leads carrying final severity ratings
+
+**Consequences**:
+- Triage attention diverted from real defects
+- Authors dispute ratings instead of fixing issues
+- Trust in the severity scale erodes
+
+**Alternative**: Severity follows demonstrated impact — state the concrete damage, or lower the rating
+
+---
+
+### 10. 🛡️ Defense-in-Depth Without Reachable Consequence
+
+**Description**: Reporting hardening advice as findings when no reachable path demonstrates harm
+
+**Symptoms**:
+- "Consider adding validation here" as a top finding
+- Best-practice suggestions with no demonstrated violation
+- Hardening notes counted toward the finding total
+
+**Consequences**:
+- Findings list padded with non-defects
+- Authors dismiss the entire report
+- Real defects buried in noise
+
+**Alternative**: Keep hardening notes separate; findings require a reachable, demonstrated consequence
+
+---
+
+### 11. 🎭 Inventing Findings to Fill the Report
+
+**Description**: Fabricating or stretching findings so the report never comes back empty
+
+**Symptoms**:
+- Marginal observations stretched into LOW findings
+- Known or previously-reported issues re-reported as new
+- Confidence scores pumped up to pass the reporting threshold
+
+**Consequences**:
+- False positives erode trust in every finding
+- Authors waste effort chasing non-issues
+- Signal-to-noise of the report collapses
+
+**Alternative**: Zero findings is a legitimate result — state it with coverage limits instead of inventing findings
+
+---
+
+### 12. 📢 Effect Stronger Than Observed
+
+**Description**: Describing an issue in stronger terms than what was actually observed
+
+**Symptoms**:
+- "Could lead to full compromise" when only a parser anomaly was shown
+- Hypothetical impact chains written as demonstrated fact
+- Reproduction output contradicting the finding's wording
+
+**Consequences**:
+- Readers misjudge the actual risk
+- Credibility collapses when reproduction shows less
+- Effort misallocated to overstated issues
+
+**Alternative**: Report exactly the observed effect; label anything beyond it as unproven hypothesis
+
+---
+
+### 13. 📜 Prose-Only Results
+
+**Description**: Emitting findings as free-form prose that cannot be deduplicated or verified
+
+**Symptoms**:
+- Issues described only in narrative paragraphs
+- The same issue reported twice in different words
+- No structured location or evidence fields to check against
+
+**Consequences**:
+- Duplicates accumulate across reviewers and passes
+- Claims cannot be verified or reconciled
+- Tooling cannot consume or count the results
+
+**Alternative**: Emit structured records — location, evidence, confidence, severity — not narrative prose
+
+---
+
+### 14. 📝 Report Before Verification
+
+**Description**: Writing the report before candidates are verified, or letting prose disagree with the records
+
+**Symptoms**:
+- Report drafted while findings are still unverified candidates
+- Prose claims counts or severities the records do not support
+- Rejected candidates still described as findings
+
+**Consequences**:
+- Report asserts results that verification would refute
+- Readers cannot tell whether prose or records are true
+- Verification forces a rewrite of the finished report
+
+**Alternative**: Verify first, then derive the report from the final verified records
+
+---
+
 ## Quick Reference Table
 
 | Anti-Pattern | One-Liner | Blocking? | Alternative |
@@ -162,6 +272,12 @@ Avoid these common review pitfalls — they waste time and damage team trust
 | Scope Creep | Request unrelated refactoring | ✅ | Create follow-up Issue |
 | Stale Review | Over 24 hours | ✅ | Set SLA or hand off |
 | Emotional Language | Aggressive language | — | Comment on code not person |
+| Severity Inflation | Lint-level rated High | ✅ | Severity follows demonstrated damage |
+| Defense-in-Depth | Hardening advice as finding | — | Keep hardening notes separate |
+| Inventing Findings | Zero-finding report padded | ✅ | Report zero findings as legitimate |
+| Effect Stronger Than Observed | Claimed more than observed | ✅ | Report the observed effect only |
+| Prose-Only Results | Cannot deduplicate or verify | — | Emit structured records |
+| Report Before Verification | Report drafted before checking | ✅ | Verify first, derive report from records |
 
 ---
 
@@ -176,6 +292,7 @@ Avoid these common review pitfalls — they waste time and damage team trust
 □ Are my requests within PR scope?
 □ Will I respond within 24 hours?
 □ Is my language objective and professional?
+□ If I found nothing, did I report zero findings as a legitimate result instead of inventing findings?
 ```
 
 ---

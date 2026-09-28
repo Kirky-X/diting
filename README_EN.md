@@ -10,7 +10,7 @@ English | [中文](README.md)
 
 | Engine | Question Answered | Output |
 | ------ | ----------------- | ------ |
-| **A. Dimensional Review** | Is this code correct, secure, fast, well-designed? | Issue list scored by Confidence (0–100, only ≥80 reported) + Severity (Critical/High/Medium/Low), 100-point total, Approved/Changes/Rejected verdict |
+| **A. Dimensional Review** | Is this code correct, secure, fast, well-designed? | Issue list scored by Confidence (0–100, ≥80 confirmed / 55–79 needs-verification per three-state adjudication) + Severity (Critical/High/Medium/Low), 100-point total, Approved/Changes/Rejected verdict |
 | **B. Decay Diagnosis** | Why is this code painful to maintain? Which principle explains it? | Symptom→Source→Consequence→Remedy findings, Health Score, module dependency graph |
 | **C. Simplification & Refinement** | Does this code exceed what the problem needs? Is it clear enough? | Minimal-solution ladder (while writing) · Deletion checklist (report only, no edits) · Refinement/clarity pass (after writing, behavior-preserving) |
 

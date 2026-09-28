@@ -36,6 +36,8 @@ review architecture [target-path]
 - Shotgun Surgery: a single change requires touching 10+ files
 - Parallel class hierarchies always growing in sync
 
+**Boundary Contracts**: beyond structural metrics, audit every component handoff (parser → policy, service boundary, inter-process) — compare what upstream actually guarantees (normalization form, units, truncation, type coercion, encoding, tenant scope) with the stronger form downstream assumes, and compare same-kind controls for equivalence, not presence. See [correctness.md](correctness.md) — Cross-Component Handoffs.
+
 ### Design Pattern Application
 
 | Scenario                    | Recommended Pattern                 |
