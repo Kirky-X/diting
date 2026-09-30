@@ -220,3 +220,4 @@ Use this format for quick checks or CI integration — Critical and High issues 
 
 - [review-workflow.md](../review-workflow.md)
 - [commands/security.md](../commands/security.md)
+- [receiving-review.md](receiving-review.md) — how the report's recipient should read, verify, push back on, and act on findings

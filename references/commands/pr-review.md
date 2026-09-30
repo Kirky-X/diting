@@ -116,6 +116,29 @@ No issues found. Checked for bugs, security (tiangang), architecture/quality (di
 Generated with diting PR Review
 ```
 
+## Author Pushback Adjudication
+
+When the PR author rebuts a posted finding (in a PR comment or a follow-up message), adjudicate before changing anything. Do not silently edit the report, and do not accept or dismiss a rebuttal without checking it.
+
+**Grounds that uphold a rebuttal** — mechanically checkable; cite the evidence either way:
+
+1. The rebuttal cites a verifiable fact the review lacked (deployment shape, callers, prior incident) that negates the finding's core claim.
+2. Applying the suggestion would break existing behavior or a documented guarantee.
+3. The suggestion contradicts project docs (`CLAUDE.md` / `AGENTS.md` / ADRs).
+4. The suggestion extends a feature with no callers — run the search yourself before accepting this ground (YAGNI).
+5. The suggestion conflicts with a deliberate architectural decision on record.
+
+**Tie-breaking hierarchy** when grounds conflict or neither side is conclusive: verified facts and measurements > project standards > engineering principles > codebase consistency. Still tied after that → escalate to the human operator; do not split the difference.
+
+**Outcomes** — reuse the three-state records (see [review-workflow.md](../review-workflow.md) Three-State Adjudication), never a new status:
+
+| Outcome | Handling |
+|---|---|
+| Rebuttal upheld | Move the finding to **rejected** — archive with the rebuttal and the ruling evidence; recompute score and verdict; post the change as a thread reply |
+| Rebuttal rejected | Finding stands; reply in-thread citing the evidence (file:line, doc path) that overrules it |
+
+**Reply mechanics**: always reply inside the original review thread (`gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies`), never as a new top-level comment. State the ruling and its evidence in one or two sentences — no agreement rituals, no concession theater. The author-side counterpart of this process is [receiving-review.md](../templates/receiving-review.md).
+
 ## False Positive Examples
 
 Skip these during scoring:

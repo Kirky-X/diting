@@ -260,6 +260,21 @@ Avoid these common review pitfalls — they waste time and damage team trust
 
 ---
 
+## Rationalizations That Weaken a Review
+
+Statements a reviewer makes to talk themselves out of a finding. Each sounds reasonable; each is wrong. When you catch one forming, run the False Positive Reduction checklist instead ([review-workflow.md](review-workflow.md)) — dismiss the finding with a stated reason, or report it.
+
+| Rationalization | Why It Fails |
+|---|---|
+| "It runs, so the code is fine" | Not crashing says nothing about security, architecture, or readability — runtime success covers one dimension of five. |
+| "The author is confident, so it's correct" | Authors are the least reliable judges of their own blind spots. Demand the verification story, not the confidence. |
+| "Cleanup can wait for a later pass" | Later passes rarely happen. Cleanup happens now, or gets an explicit record (a `lazy:` comment naming the ceiling and trigger, or a ledger entry) — never a verbal promise. |
+| "Tests pass, so the change is sound" | Tests are necessary, not sufficient: they do not catch architecture drift, security holes, or the readability tax on future readers. |
+| "The code was generated, it's probably fine" | Generated code gets the same dimensions at the same rigor — a confident tone is not a review. |
+| "I'll soften the wording to be kind" | Understating a real defect is as false as overstating a non-defect. Kindness lives in tone, not in suppressed findings. |
+
+---
+
 ## Quick Reference Table
 
 | Anti-Pattern | One-Liner | Blocking? | Alternative |
@@ -278,6 +293,7 @@ Avoid these common review pitfalls — they waste time and damage team trust
 | Effect Stronger Than Observed | Claimed more than observed | ✅ | Report the observed effect only |
 | Prose-Only Results | Cannot deduplicate or verify | — | Emit structured records |
 | Report Before Verification | Report drafted before checking | ✅ | Verify first, derive report from records |
+| Self-Dismissal Talk | Rationalizing a finding away | — | Run False Positive Reduction, or report it |
 
 ---
 
@@ -293,6 +309,7 @@ Avoid these common review pitfalls — they waste time and damage team trust
 □ Will I respond within 24 hours?
 □ Is my language objective and professional?
 □ If I found nothing, did I report zero findings as a legitimate result instead of inventing findings?
+□ Did I dismiss any finding for a reason that is actually a rationalization (it runs / author is confident / cleanup later / tests pass)?
 ```
 
 ---

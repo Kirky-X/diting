@@ -74,7 +74,7 @@ Findings are never silently discarded at a confidence cliff. Every candidate is 
 |---|---|---|
 | **confirmed** | Confidence ≥ 80 and it survives False Positive Reduction | Severity assigned, score deducted, may drive verdict |
 | **needs-verification** | Confidence 55–79: grounded in real code, but one decisive fact is unconfirmed | Formal output — **no severity, no score deduction, no verdict impact**; must carry a **Blocker** (the exact missing fact) and a **Verification Plan** (how to resolve it) |
-| **rejected** | Falsified by False Positive Reduction or the Verification Pass | Archived with the falsification reason so the same issue is not re-reported in later rounds |
+| **rejected** | Falsified by False Positive Reduction or the Verification Pass, or a rebuttal is upheld by the author (`commands/pr-review.md`) | Archived with the falsification reason so the same issue is not re-reported in later rounds |
 
 Typical blockers: concurrency model unclear (possible race condition), a deployment-only control absent from the repo (proxy rate limit, WAF), runtime behavior not derivable from source. A needs-verification candidate is promoted to confirmed only when the missing fact is resolved within this review; otherwise it stays in the report's **Needs Verification** section — it is never upgraded to a scored finding by assumption.
 
