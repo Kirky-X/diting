@@ -1,0 +1,33 @@
+{
+  "skill_name": "diting",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "review this PR diff for auth.py, no dimension specified",
+      "expected_output": "Full Review: triggers fused report, Engine A main dimension + verdict, Engine B decay risk section, Engine C deletable code section, the three do not mix",
+      "assertions": [
+        "The fused report includes the Engine A main dimension with a verdict",
+        "The fused report includes the Engine B decay risk section",
+        "The fused report includes the Engine C deletable code section"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "help me audit this codebase architecture, check if it follows clean architecture",
+      "expected_output": "Route to Engine B architecture-guide.md, first read common.md (Iron Law/config/report template), output includes Module Dependency Graph",
+      "assertions": [
+        "The output includes a Module Dependency Graph"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "can this function be written more simply, no over-engineering",
+      "expected_output": "Route to Simplicity Lens (code-writing scenario), follow ladder.md ladder logic, not overengineering-review.md (the latter reviews existing diffs, not writing new code)"
+    },
+    {
+      "id": 4,
+      "prompt": "only check if this code has security issues",
+      "expected_output": "Route to Engine A security dimension, only read commands/security.md etc., do not falsely trigger engines B/C"
+    }
+  ]
+}

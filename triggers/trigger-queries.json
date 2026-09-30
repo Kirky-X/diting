@@ -1,0 +1,27 @@
+{
+  "skill": "diting",
+  "queries": [
+    {"q": "帮我 review 一下这个 PR", "expect": "trigger"},
+    {"q": "审一下这个 PR，改动有点大", "expect": "trigger"},
+    {"q": "全面审计一下这个代码库的质量，给个体检报告", "expect": "trigger"},
+    {"q": "我们项目技术债太重了，先修哪些？帮我排个路线图", "expect": "trigger"},
+    {"q": "这个模块过度设计了吧？看看有哪些东西可以删", "expect": "trigger"},
+    {"q": "帮我把这些工具函数清理一下，太乱了", "expect": "trigger"},
+    {"q": "审计一下这些 agent 的 prompt、工具调用循环符不符合 12-factor", "expect": "trigger"},
+    {"q": "review security 这个模块，重点看注入和越权的代码质量面", "expect": "trigger"},
+    {"q": "我们的测试老是挂，是不是 mock 撒太多了", "expect": "trigger"},
+    {"q": "langgraph、crewai、autogen 选哪个，还是自己写一个？", "expect": "trigger"},
+    {"q": "这个模块重构一下，让它更简洁易读", "expect": "trigger"},
+    {"q": "代码库整体健康度怎么样？把所有检查都跑一遍", "expect": "trigger"},
+    {"q": "扫描这个项目的 SQL 注入和硬编码密钥", "expect": "no", "owner": "tiangang"},
+    {"q": "发布前做一次安全检查，漏洞清单发我", "expect": "no", "owner": "tiangang"},
+    {"q": "用 semgrep 扫一遍这个仓库的安全漏洞", "expect": "no", "owner": "tiangang"},
+    {"q": "新项目初始化，把 pre-commit、CI 和安全审计都配上", "expect": "no", "owner": "pangu"},
+    {"q": "commit 前帮我走一遍三维度并行审查的流程", "expect": "no", "owner": "pua"},
+    {"q": "这个方法用哪个设计模式好？帮我分析下权衡", "expect": "no", "owner": "kueiku"},
+    {"q": "优化这个热点函数的执行性能", "expect": "no", "owner": "ouyezi"},
+    {"q": "帮我总结这次 code review 会议的纪要", "expect": "no", "owner": "cangjie"},
+    {"q": "在 langgraph 里怎么定义带循环的 graph？", "expect": "no", "owner": "none"},
+    {"q": "直接把登录功能开发出来就行，不用审查", "expect": "no", "owner": "none"}
+  ]
+}

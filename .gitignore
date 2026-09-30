@@ -42,8 +42,6 @@ yarn-error.log*
 # Meta
 .meta
 # 测试代码（开发期使用，不入仓库）
-tests/
-**/tests/
 **/test/
 # Darwin skill 优化产物（开发期使用，不入仓库）
 results.tsv
