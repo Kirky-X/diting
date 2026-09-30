@@ -260,7 +260,7 @@ When a method receives > 4 parameters (e.g. `create_user(name, email, age, addre
 
 ## Code Smells to Address
 
-> For the full classification of smells, detection signals, and solutions, see [code-smells.md](code-smells.md).
+> For the full classification of smells, detection signals, and solutions, see [code-smells.md](../quality/code-smells.md).
 
 **Priority cheat sheet**: High (long methods >50 lines / deep nesting >4 levels / god classes >300 lines / long parameter lists >4 / duplicated code) → Medium (dead code / magic numbers / speculative generality / feature envy) → Low (comments / inconsistent naming / unused parameters).
 
