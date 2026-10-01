@@ -13,6 +13,7 @@
     {"q": "langgraph、crewai、autogen 选哪个，还是自己写一个？", "expect": "trigger"},
     {"q": "这个模块重构一下，让它更简洁易读", "expect": "trigger"},
     {"q": "代码库整体健康度怎么样？把所有检查都跑一遍", "expect": "trigger"},
+    {"q": "帮我 review 这个 PR 的代码质量", "expect": "trigger", "mirror": "cangjie"},
     {"q": "扫描这个项目的 SQL 注入和硬编码密钥", "expect": "no", "owner": "tiangang"},
     {"q": "发布前做一次安全检查，漏洞清单发我", "expect": "no", "owner": "tiangang"},
     {"q": "用 semgrep 扫一遍这个仓库的安全漏洞", "expect": "no", "owner": "tiangang"},
