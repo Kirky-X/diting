@@ -25,9 +25,10 @@ English | [中文](README.md)
 ## 📦 Installation
 
 ```bash
-# Option 1: one-command deploy from this repository root
-# (syncs to ~/.zcode/skills/ and ~/.claude/skills/, LF-normalized)
-bash scripts/sync-skills.sh diting
+# Option 1: one-command deploy from the multi-skill workspace root
+# (the script lives in the workspace's scripts/, not inside this repo;
+#  syncs to ~/.zcode/skills/ and ~/.claude/skills/, LF-normalized)
+bash scripts/sync-skills.sh diting      # run from the workspace root (this repo's parent directory)
 
 # Option 2: manual copy into an agent skills directory
 cp -r diting/ ~/.zcode/skills/diting/
@@ -75,7 +76,7 @@ flowchart LR
 
 ## ✅ Tests & Verification
 
-No standalone pytest suite; verification is script smoke-testing plus structural checks (measured 2026-09-13):
+The skill ships an offline test suite (`tests/`, 6 test files, `python3 -m pytest tests/ -q` → 136 passed, measured 2026-10-04; no network, no third-party dependencies), complemented by script smoke-testing plus structural checks (measured 2026-09-13):
 
 | Check | Command | Measured result |
 | ----- | ------- | --------------- |
@@ -89,18 +90,20 @@ No standalone pytest suite; verification is script smoke-testing plus structural
 ```text
 diting/
 ├── SKILL.md                 # Entry: three-engine routing table + Full Review workflow
-├── skill.json               # Metadata (v0.1.2, MIT)
+├── skill.json               # Metadata (v0.1.4, MIT)
 ├── references/
 │   ├── commands/            # Engine A: 16 dimension guides + pr-review orchestration
 │   ├── security|performance|quality|correctness|architecture|simplification/
 │   │                        # Engine A deep materials per dimension
-│   ├── decay/               # Engine B: risk definitions + 7 mode guides + common.md (Iron Law/config)
+│   ├── decay/               # Engine B: risk definitions + 9 guides + common.md (Iron Law/config)
 │   ├── simplicity/          # Engine C: ladder / overengineering / debt-ledger / refinement / clarity-pass
 │   ├── agent-factors/       # 12-factor agent factor specs and processes
 │   ├── templates/           # Merged report skeleton and feedback examples
 │   └── codenexus.md         # CodeNexus CLI reference (Step 1.5)
-├── scripts/                 # parallel_review / security_check / analyzer / sarif_report / codenexus_helpers / install-skill.sh
-└── test-prompts.json        # Trigger acceptance cases
+├── scripts/                 # parallel_review / security_check / analyzer / sarif_report / codenexus_helpers / skill_lint / install-skill.sh
+├── tests/                   # Offline smoke test suite (6 test files + SKIPPED.md not-tested list)
+├── evals/                   # evals.json: 4 evals (2 with assertions)
+└── triggers/                # trigger-queries.json: 23 trigger-adjudication queries (13 trigger / 10 no)
 ```
 
 ## 🔮 Boundaries

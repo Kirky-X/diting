@@ -25,8 +25,9 @@
 ## 📦 安装
 
 ```bash
-# 方式 1：从本仓库根一键部署（同步到 ~/.zcode/skills/ 与 ~/.claude/skills/，LF 强制归一）
-bash scripts/sync-skills.sh diting
+# 方式 1：多 skill 工作区一键部署（脚本在工作区根的 scripts/ 下，不在本仓内；
+#        同步到 ~/.zcode/skills/ 与 ~/.claude/skills/，LF 强制归一）
+bash scripts/sync-skills.sh diting      # 在工作区根（本仓的上一级目录）执行
 
 # 方式 2：手动拷贝到 agent 技能目录
 cp -r diting/ ~/.zcode/skills/diting/
@@ -74,7 +75,7 @@ flowchart LR
 
 ## ✅ 测试与验证
 
-本 skill 无独立 pytest 套件，采用脚本冒烟 + 结构校验（2026-09-13 实测）：
+本 skill 自带离线测试套件（`tests/`，6 个测试文件，`python3 -m pytest tests/ -q` → 136 passed，2026-10-04 实测；无网络、无第三方依赖），另以脚本冒烟 + 结构校验补充验证（2026-09-13 实测）：
 
 | 验证项 | 命令 | 实测结果 |
 | ------ | ---- | -------- |
@@ -88,18 +89,20 @@ flowchart LR
 ```text
 diting/
 ├── SKILL.md                 # 入口：三引擎路由表 + Full Review 工作流
-├── skill.json               # 元数据（v0.1.2，MIT）
+├── skill.json               # 元数据（v0.1.4，MIT）
 ├── references/
 │   ├── commands/            # Engine A：16 维度审查指南 + pr-review 编排
 │   ├── security|performance|quality|correctness|architecture|simplification/
 │   │                        # Engine A 各维度深度材料
-│   ├── decay/               # Engine B：风险定义 + 7 个模式 guide + common.md（Iron Law/配置）
+│   ├── decay/               # Engine B：风险定义 + 9 个 guide + common.md（Iron Law/配置）
 │   ├── simplicity/          # Engine C：ladder / overengineering / debt-ledger / refinement / clarity-pass
 │   ├── agent-factors/       # 12-factor agent 因子规范与流程
 │   ├── templates/           # 合并报告骨架与反馈示例
 │   └── codenexus.md         # CodeNexus CLI 参考（Step 1.5）
-├── scripts/                 # parallel_review / security_check / analyzer / sarif_report / codenexus_helpers / install-skill.sh
-└── test-prompts.json        # 触发验收用例
+├── scripts/                 # parallel_review / security_check / analyzer / sarif_report / codenexus_helpers / skill_lint / install-skill.sh
+├── tests/                   # 离线冒烟测试套件（6 个测试文件 + SKIPPED.md 未测脚本清单）
+├── evals/                   # evals.json：4 条 eval（其中 2 条带 assertions 断言）
+└── triggers/                # trigger-queries.json：23 条触发判定查询（13 触发 / 10 不触发）
 ```
 
 ## 🔮 边界

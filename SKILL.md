@@ -108,7 +108,7 @@ Follow the linked reference file directly; it's self-contained. Engine A files (
 
 When user asks for plain review without dimension name, run all three engines and merge into **one** report:
 
-0. **Deterministic skeleton (script-first)** — when the target spans more than 20 files, or a deterministic/reproducible score is required, first run `python3 {SKILL_DIR}/scripts/parallel_review.py <target> --format markdown` and use its output as Engine A's skeleton input (candidate findings, per-dimension scores), then verify and extend with model-side reading. The script output already follows Three-State Adjudication: ≥80 confirmed candidates feed the skeleton score, while its 55–79 items sit in a Needs Verification bucket — adjudicate each of them model-side during Engine A (confirm, or reject with reason); they are candidates, never silently discarded. Only if the script is unavailable or fails, fall back to fully manual scanning and note `DEGRADED: manual scan (script unavailable)` in the report. SARIF output for CI: pipe `--format json` through `scripts/sarif_report.py`.
+0. **Deterministic skeleton (script-first)** — when the target spans more than 20 files, or a deterministic/reproducible score is required, first run `python3 {SKILL_DIR}/scripts/parallel_review.py <target> --format markdown` and use its output as Engine A's skeleton input (candidate findings, per-dimension scores), then verify and extend with model-side reading. The script output already follows Three-State Adjudication: ≥80 confirmed candidates feed the skeleton score, while its 55–79 items sit in a Needs Verification bucket — adjudicate each of them model-side during Engine A (confirm, or reject with reason); they are candidates, never silently discarded. Only if the script is unavailable or fails, fall back to fully manual scanning and note `DEGRADED: manual scan (script unavailable)` in the report. SARIF output for CI: first write the JSON with `--format json --output report.json`, then run `python3 {SKILL_DIR}/scripts/sarif_report.py report.json` — it takes the JSON file path as a required positional `input` argument and does not read stdin.
 1. **Engine A** — scan security, performance, quality, architecture, simplification (the five default dimensions from [review-workflow.md](references/review-workflow.md)), find concrete, well-located issues. Score each with Confidence (0–100; ≥ 80 confirmed, 55–79 needs-verification per Three-State Adjudication in [review-workflow.md](references/review-workflow.md)) and Severity (Critical/High/Medium/Low).
 2. **Engine B** — run PR-Review decay scan on same scope ([decay/pr-review-guide.md](references/decay/pr-review-guide.md)): Six Decay Risks (R1–R6), each written as Symptom → Source → Consequence → Remedy. Apply Iron Law from [decay/common.md](references/decay/common.md): no remedy without diagnosed consequence.
 3. **Engine C** — do a single over-engineering pass using tags from [simplicity/overengineering-review.md](references/simplicity/overengineering-review.md) (`delete:` `stdlib:` `native:` `yagni:` `shrink:`). Scope-limited — correctness/security/performance stay in Engine A, no duplication here.
@@ -159,10 +159,17 @@ scripts/
 ├── security_check.py     — Pattern-based security scan (Engine A; single source for security patterns)
 ├── parallel_review.py    — Fan-out multi-dimension review (Engine A); its per-dimension
 │                             reference paths remain valid after this merge; CPU-bound
-│                             analysis via multiprocessing.Pool, --format sarif outputs SARIF
-├── sarif_report.py       — Aggregates three scanner results into SARIF 2.1.0 (with structural validation)
-└── codenexus_helpers.py  — Detects codenexus.lbug index, extracts blast radius targets, produces
-                              codenexus impact/query command lists for agent execution (CLI runs on agent layer)
+│                             analysis via ProcessPoolExecutor, --format sarif outputs SARIF
+├── sarif_report.py       — Converts a parallel_review JSON report (--format json) into
+│                             SARIF 2.1.0 (with structural validation); the library-level
+│                             to_sarif() can additionally merge analyzer/security_check results
+├── codenexus_helpers.py  — Detects codenexus.lbug index, extracts blast radius targets, produces
+│                             codenexus impact/query command lists for agent execution (CLI runs on agent layer)
+├── skill_lint.py         — Engineering-baseline self-check for skill repos (SKILL.md frontmatter,
+│                             JSON assets parseable, version consistency, referenced .md paths,
+│                             optional lint-checks.json rules); exit 0 = no FAIL, 1 = any FAIL
+└── install-skill.sh      — Install/update/uninstall this skill into agent skill directories
+                              (supports standalone skill repo mode; deployment helper)
 ```
 
 ## Notes

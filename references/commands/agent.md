@@ -11,18 +11,18 @@ review agent <factor> [target]  # 单 factor 精细审计，<factor> 见下表
 
 | `<factor>` 别名 | 对应检测器 | 类型 |
 | --------------- | ---------- | ---- |
-| `tool-calls`/f1 | `processes/tool-calls.md` | detect |
-| `prompts`/f2 | `processes/prompts.md` | detect |
-| `context`/f3 | `processes/context.md` | detect |
-| `structured-outputs`/f4 | `processes/structured-outputs.md` | detect |
-| `state`/f5 | `processes/state.md` | detect |
-| `pause-resume`/f6 | `processes/pause-resume.md` | reference-only |
-| `contact-humans`/f7 | `processes/contact-humans.md` | detect |
-| `control-flow`/f8 | `processes/control-flow.md` | detect (core) |
-| `errors`/f9 | `processes/errors.md` | detect |
-| `scope`/f10 | `processes/scope.md` | reference-only |
-| `triggers`/f11 | `processes/triggers.md` | reference-only |
-| `reducer`/f12 | `processes/reducer.md` | reference-only |
+| `tool-calls`/f1 | `agent-factors/processes/tool-calls.md` | detect |
+| `prompts`/f2 | `agent-factors/processes/prompts.md` | detect |
+| `context`/f3 | `agent-factors/processes/context.md` | detect |
+| `structured-outputs`/f4 | `agent-factors/processes/structured-outputs.md` | detect |
+| `state`/f5 | `agent-factors/processes/state.md` | detect |
+| `pause-resume`/f6 | `agent-factors/processes/pause-resume.md` | reference-only |
+| `contact-humans`/f7 | `agent-factors/processes/contact-humans.md` | detect |
+| `control-flow`/f8 | `agent-factors/processes/control-flow.md` | detect (core) |
+| `errors`/f9 | `agent-factors/processes/errors.md` | detect |
+| `scope`/f10 | `agent-factors/processes/scope.md` | reference-only |
+| `triggers`/f11 | `agent-factors/processes/triggers.md` | reference-only |
+| `reducer`/f12 | `agent-factors/processes/reducer.md` | reference-only |
 
 单 factor 调用时，读对应 `agent-factors/processes/<factor>.md` 执行；reference 型 factor（F6/F10/F11/F12）无静态信号，只输出说明不产生发现。全量 aggregate 审计（无 factor 参数）执行下方 Detection Methods 的检测逻辑。
 
@@ -260,7 +260,7 @@ triggering this dimension for non-agent code (should be silently skipped).
 ## References
 
 - **Factor spec 原文**（权威引用）：`agent-factors/content/factor-01-natural-language-to-tool-calls.md` … `factor-12-stateless-reducer.md`（每个 factor 的完整原文，引用本维度准则时 cite 对应文件的具体小节）。另含 `appendix-13-pre-fetch.md`、`brief-history-of-software.md`。
-- **单 factor 精细检测器**（`agent-factors/processes/`）：每个 factor 一份独立检测脚本（`audit.md` 汇总，`control-flow.md`/`prompts.md`/`context.md`/`state.md`/`contact-humans.md`/`errors.md`/`structured-outputs.md`/`tool-calls.md` 为 detect 型，`pause-resume.md`/`scope.md`/`triggers.md`/`reducer.md` 为 reference 型）。当用户要审计**单个 factor**（如 "只看 prompt ownership"、"审查控制流"）时，读对应 `processes/<factor>.md` 而非本文件的 aggregate 检测逻辑。
+- **单 factor 精细检测器**（`agent-factors/processes/`）：每个 factor 一份独立检测脚本（`audit.md` 汇总，`control-flow.md`/`prompts.md`/`context.md`/`state.md`/`contact-humans.md`/`errors.md`/`structured-outputs.md`/`tool-calls.md` 为 detect 型，`pause-resume.md`/`scope.md`/`triggers.md`/`reducer.md` 为 reference 型）。当用户要审计**单个 factor**（如 "只看 prompt ownership"、"审查控制流"）时，读对应 `agent-factors/processes/<factor>.md` 而非本文件的 aggregate 检测逻辑。
 - [review-workflow.md](../review-workflow.md) — Engine A shared workflow
 - [templates/report.md](../templates/report.md) — finding report shell
   (this dimension's findings are embedded in Engine A's Issues section, prefixed with `[FNN-level]`
