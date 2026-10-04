@@ -3,7 +3,7 @@ name: diting
 description: "Code quality review suite (A: dimensional review, B: decay diagnosis, C: simplification & refinement). Triggers: review/audit/code quality/tech debt/over-engineering/simplify/clean up code/agent audit/12-factor agents/agent loop/tool-calling/agent prompts/agent reducer/framework selection (langgraph/crewai/autogen vs roll your own). 中文触发：代码审查/审一下/评审/审计/技术债/过度设计/简化/精简/健康度/腐化. Exclusive boundaries: a pure code rewrite/clarity pass is Engine C's clarity-pass protocol (references/simplicity/clarity-pass.md, applies only after this skill is already loaded); security scanning belongs to the tiangang skill; plain feature development with no review/audit/simplify request does not trigger this skill"
 license: MIT
 metadata:
-  version: "0.1.4"
+  version: "0.1.5"
   author: "Kirky-X"
   repo: "https://github.com/Kirky-X/diting"
   tags: "code-review, security, performance, quality, architecture, decay, simplification, tech-debt, health-dashboard"
