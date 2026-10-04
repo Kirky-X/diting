@@ -31,7 +31,8 @@ bash scripts/sync-skills.sh diting      # 在工作区根（本仓的上一级�
 
 # 方式 2：手动拷贝到 agent 技能目录
 cp -r diting/ ~/.zcode/skills/diting/
-# 方式三：远程安装（GitHub 仓库）
+
+# 方式 3：远程安装（GitHub 仓库）
 npx skills add Kirky-X/diting --agent claude-code -y
 ```
 

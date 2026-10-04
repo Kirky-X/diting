@@ -32,6 +32,7 @@ bash scripts/sync-skills.sh diting      # run from the workspace root (this repo
 
 # Option 2: manual copy into an agent skills directory
 cp -r diting/ ~/.zcode/skills/diting/
+
 # Option 3: Remote install (GitHub repo)
 npx skills add Kirky-X/diting --agent claude-code -y
 ```
